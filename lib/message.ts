@@ -72,3 +72,54 @@ function randHex(bytes: number): string {
 
 export const ref = () => randHex(4);
 export const session = () => randHex(5);
+
+/**
+ * What each side of a Trust round reads in the signing dialog.
+ *
+ * Same rule as Split: this is copy, not a payload. It is the last thing someone sees
+ * before committing real money, so it says what they chose in sentences a person can
+ * check, never a JSON blob.
+ */
+export function trustMessage(a: {
+  seat: "a" | "b";
+  pairId: string;
+  /** luna A is deciding over */
+  stake: number;
+  multiplier: number;
+  /** A: 0 or stake. B: luna returned out of the tripled pot. */
+  move: number;
+  /** A: what they expect back. B: what they think A expected. */
+  predict: number;
+  ref: string;
+}): string {
+  const pot = a.stake * a.multiplier;
+
+  const body =
+    a.seat === "a"
+      ? a.move === 0
+        ? [
+            `You keep ${nim(a.stake)} NIM.`,
+            `The other person gets nothing.`,
+          ]
+        : [
+            `You hand over ${nim(a.stake)} NIM.`,
+            `It becomes ${nim(pot)} NIM in their hands.`,
+            `They decide what comes back to you.`,
+            `You expect ${nim(a.predict)} NIM.`,
+          ]
+      : [
+          `You are holding ${nim(pot)} NIM.`,
+          `You send back ${nim(a.move)} NIM.`,
+          `You keep ${nim(pot - a.move)} NIM.`,
+          `You think they expected ${nim(a.predict)} NIM back.`,
+        ];
+
+  return [
+    `${NAME} · Trust`,
+    "",
+    ...body,
+    "",
+    "Signing locks this answer in.",
+    `ref ${a.pairId}·${a.ref}`,
+  ].join(String.fromCharCode(10));
+}
