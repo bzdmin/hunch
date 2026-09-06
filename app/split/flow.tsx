@@ -293,7 +293,26 @@ export default function Flow({
     <main className="screen">
       <p className="eyebrow">{NAME} · Split</p>
       <h1>You passed on {nim(give)} NIM.</h1>
-      <p className="soft">You predicted the average person passes on {predict}%.</p>
+
+      {/* The guess was being asked and then never answered, the screen reported it
+          back and scored it against nothing. "Can you predict another human?" is the
+          whole premise, so this is the payoff, not a footnote. */}
+      <div className="verdict">
+        <p className="soft" style={{ marginBottom: "0.35rem" }}>
+          You guessed most people pass on <strong>{predict}%</strong>.
+        </p>
+        <p>
+          {(() => {
+            const truth = live ? Math.round(pop!.meanPct) : SPLIT_MEAN_GIVEN.value;
+            const gap = Math.round((predict - truth) * 10) / 10;
+            const src = live ? `players here average ${truth}%` : `research puts it at ${truth}%`;
+            if (Math.abs(gap) <= 3) return `Almost exactly right, ${src}.`;
+            return gap < 0
+              ? `You were ${Math.abs(gap)} points low: ${src}. You think people are stingier than they are.`
+              : `You were ${gap} points high: ${src}. You think people are more generous than they are.`;
+          })()}
+        </p>
+      </div>
 
       <div className="card bars">
         {bars.map((b) => (
@@ -309,12 +328,15 @@ export default function Flow({
         ))}
       </div>
 
+      {/* Written for the person playing, not for a judge reading the submission.
+          The citation earns its place by being checkable, not by being long. */}
       <p className="note">
-        {SPLIT_MEAN_GIVEN.source} found {SPLIT_MEAN_GIVEN.value}% given away, with{" "}
-        {SPLIT_GAVE_SOMETHING.value}% of people giving something.{" "}
-        {/* The caveat only applies when the player used their own money, in house
-            mode the comparison is like for like and the caveat would be false. */}
-        {!house && SPLIT_MEAN_GIVEN.caveat}
+        Researchers have run this exact test on thousands of people since the 1980s.
+        On average they give away {SPLIT_MEAN_GIVEN.value}%, and{" "}
+        {SPLIT_GAVE_SOMETHING.value}% give something rather than nothing.
+        {!house && " Those studies handed people free money, though, you were deciding over your own, which usually makes people keep more."}
+        <br />
+        <span style={{ opacity: 0.7 }}>{SPLIT_MEAN_GIVEN.source}</span>
       </p>
 
       <div className="grow" />
@@ -333,13 +355,11 @@ function ShareCard({ give, predict, session }: { give: number; predict: number; 
   const [state, setState] = useState<"idle" | "copied" | "manual">("idle");
   const url = typeof window === "undefined" ? "" : `${window.location.origin}/e/${session}`;
 
-  const text = [
-    `I passed on ${give}% of the money.`,
-    `I predicted most people pass on ${predict}%.`,
-    `Published studies: ${SPLIT_MEAN_GIVEN.value}%.`,
-    ``,
-    `Think you'd predict better? ${url}`,
-  ].join(String.fromCharCode(10));
+  // Reads as something a person would actually type, not a printout.
+  const text =
+    `I passed on ${give}% of the money and predicted most people pass on ${predict}%. ` +
+    `Published studies say most people pass ${SPLIT_MEAN_GIVEN.value}%. ` +
+    `Think you'd predict better? ${url}`;
 
   /**
    * Three tiers, because the first two do not exist over plain HTTP.

@@ -72,7 +72,7 @@ export default async function Landing({
           someone to install an app they are currently using reads as broken. */}
       <Enter waiting={waiting} session={session} />
 
-      <Link href="/" className="faint" style={{ textAlign: "center" }}>
+      <Link href="/about" className="faint" style={{ textAlign: "center" }}>
         What is {NAME}?
       </Link>
     </main>
