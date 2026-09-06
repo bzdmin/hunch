@@ -1,0 +1,262 @@
+/* Hunch, one screen at a time, on a phone, in a WebView.
+   Everything is sized for a thumb and a 375px-wide viewport first. */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Public+Sans:wght@400;500;600&display=swap");
+
+:root {
+  --paper: #f6f5f2;
+  --card: #ffffff;
+  --ink: #14181d;
+  --ink-soft: #5a6570;
+  --ink-faint: #8b959d;
+  --line: #e2e0da;
+  --accent: #9a6a12;
+  --accent-soft: #f4ecdb;
+  --good: #2c6650;
+  --warm: #b04a33;
+
+  --display: "Fraunces", Georgia, serif;
+  --body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #101519;
+    --card: #181f25;
+    --ink: #e7ebee;
+    --ink-soft: #a3afb9;
+    --ink-faint: #7a858f;
+    --line: #2a333b;
+    --accent: #d9a442;
+    --accent-soft: #262015;
+    --good: #71bf97;
+    --warm: #dd8b74;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #101519;
+  --card: #181f25;
+  --ink: #e7ebee;
+  --ink-soft: #a3afb9;
+  --ink-faint: #7a858f;
+  --line: #2a333b;
+  --accent: #d9a442;
+  --accent-soft: #262015;
+  --good: #71bf97;
+  --warm: #dd8b74;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* html carries the background too. Without it, scrolling or rubber-banding past the
+   body reveals the WebView's default white behind a dark page. */
+html {
+  background: var(--paper);
+  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.screen {
+  min-height: 100svh;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-family: var(--body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+p { margin: 0; }
+.soft { color: var(--ink-soft); }
+.faint { color: var(--ink-faint); font-size: 0.88rem; }
+
+.grow { flex: 1; }
+
+button, .btn {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.15rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  font-size: 1.02rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+button:active, .btn:active { opacity: 0.8; }
+button[disabled] { opacity: 0.35; cursor: default; }
+
+button.ghost, .btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.15rem 1.2rem;
+}
+
+/* the amount being decided over, the one big number on the page */
+.amount {
+  font-family: var(--display);
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.amount small {
+  font-family: var(--body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink-faint);
+  letter-spacing: 0;
+  margin-left: 0.35rem;
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 2.5rem;
+  accent-color: var(--accent);
+  background: transparent;
+}
+
+.split-readout {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.split-readout div { display: grid; gap: 0.15rem; }
+.split-readout .k {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.split-readout .v { font-size: 1.15rem; font-weight: 600; }
+.split-readout .right { text-align: right; }
+
+/* result comparison bars */
+.bars { display: grid; gap: 0.85rem; }
+.bar { display: grid; gap: 0.3rem; }
+.bar .top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.bar .track {
+  height: 9px;
+  background: var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.bar .fill { height: 100%; border-radius: 5px; background: var(--ink-faint); }
+.bar.you .fill { background: var(--accent); }
+.bar.research .fill { background: var(--good); }
+
+.note {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  border-left: 2px solid var(--line);
+  padding-left: 0.75rem;
+}
+
+.err {
+  font-size: 0.9rem;
+  color: var(--warm);
+  border: 1px solid var(--warm);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* The locked answer bar. Its whole job is to break the visual rhythm between the
+   decide screen and the guess screen, two identical slider cards in a row read as
+   one continuing question, which is exactly how the builder mis-answered his own app. */
+.locked {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--accent-soft);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+}
+.locked .k {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.locked .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* The guess card is deliberately not the decide card: no border, inset ground. */
+.card.guess {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+
+/* Slider end labels. The drag direction was only discoverable by trying it. */
+.ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  margin-top: -0.35rem;
+}
