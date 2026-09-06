@@ -7,11 +7,7 @@
  * module so that swap is one file, not a refactor.
  */
 
-import { promises as fs } from "fs";
-import path from "path";
-
-const DIR = path.join(process.cwd(), ".data");
-const FILE = path.join(DIR, "store.json");
+import { db } from "./db";
 
 export type Commit = {
   session: string;
@@ -41,37 +37,22 @@ export type Commit = {
   at: number;
 };
 
-type Shape = { commits: Commit[] };
+const COLL = "commits";
 
-async function read(): Promise<Shape> {
-  try {
-    return JSON.parse(await fs.readFile(FILE, "utf8")) as Shape;
-  } catch {
-    return { commits: [] };
-  }
-}
-
-async function write(s: Shape): Promise<void> {
-  await fs.mkdir(DIR, { recursive: true });
-  await fs.writeFile(FILE, JSON.stringify(s, null, 2), "utf8");
+async function readAll(): Promise<Commit[]> {
+  return (await db().all(COLL)).map((r) => r.data as Commit);
 }
 
 export async function put(c: Commit): Promise<void> {
-  const s = await read();
-  const i = s.commits.findIndex((x) => x.session === c.session);
-  if (i >= 0) s.commits[i] = c;
-  else s.commits.push(c);
-  await write(s);
+  await db().put(COLL, c.session, c);
 }
 
 export async function get(session: string): Promise<Commit | null> {
-  const s = await read();
-  return s.commits.find((c) => c.session === session) ?? null;
+  return (await db().get(COLL, session)) as Commit | null;
 }
 
 export async function settled(): Promise<Commit[]> {
-  const s = await read();
-  return s.commits.filter((c) => c.payer !== null);
+  return (await readAll()).filter((c) => c.payer !== null);
 }
 
 /**
@@ -80,8 +61,7 @@ export async function settled(): Promise<Commit[]> {
  * is paid to whoever plays next, and what you keep you simply never send.
  */
 export async function nextUnclaimedGift(prefer?: string): Promise<Commit | null> {
-  const s = await read();
-  const open = s.commits.filter(
+  const open = (await readAll()).filter(
     (c) => c.payer !== null && c.give > 0 && c.giftClaimedBy === null,
   );
   // A shared link is personal, it says "someone passed YOU this much". Handing
@@ -95,11 +75,10 @@ export async function nextUnclaimedGift(prefer?: string): Promise<Commit | null>
 }
 
 export async function claimGift(session: string, by: string): Promise<void> {
-  const s = await read();
-  const c = s.commits.find((x) => x.session === session);
+  const c = await get(session);
   if (c && c.giftClaimedBy === null) {
     c.giftClaimedBy = by;
-    await write(s);
+    await put(c);
   }
 }
 

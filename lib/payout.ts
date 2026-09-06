@@ -25,11 +25,7 @@
  * can reach. It belongs in a server-only env var.
  */
 
-import { promises as fs } from "fs";
-import path from "path";
-
-const DIR = path.join(process.cwd(), ".data");
-const FILE = path.join(DIR, "payouts.json");
+import { db } from "./db";
 
 /**
  * Is the house able to fund a windfall right now?
@@ -62,17 +58,10 @@ export type Payout = {
   at: number;
 };
 
-async function read(): Promise<Payout[]> {
-  try {
-    return JSON.parse(await fs.readFile(FILE, "utf8")) as Payout[];
-  } catch {
-    return [];
-  }
-}
+const COLL = "payouts";
 
-async function write(p: Payout[]): Promise<void> {
-  await fs.mkdir(DIR, { recursive: true });
-  await fs.writeFile(FILE, JSON.stringify(p, null, 2), "utf8");
+async function read(): Promise<Payout[]> {
+  return (await db().all(COLL)).map((r) => r.data as Payout);
 }
 
 /** Total already committed today, so the cap counts queued money as spent. */
@@ -97,7 +86,6 @@ export async function send(args: {
   value: number;
   reason: "keep" | "gift";
 }): Promise<Payout> {
-  const all = await read();
   const rec: Payout = {
     id: `${args.session}-${args.reason}`,
     session: args.session,
@@ -118,7 +106,7 @@ export async function send(args: {
   // TODO(gate 2): broadcast here once a server-side send path is proven.
   // Until then the record stands and the payout is settled manually.
 
-  await write([...all.filter((p) => p.id !== rec.id), rec]);
+  await db().put(COLL, rec.id, rec);
   return rec;
 }
 
