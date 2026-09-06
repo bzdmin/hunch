@@ -58,9 +58,19 @@ export async function POST(req: Request) {
   // The relay means the endowment varies, so it cannot simply be trusted, a client
   // claiming a 50,000 NIM stake would otherwise have us record a decision over money
   // that was never passed to it. Recompute what this player was actually entitled to.
+  // Must mirror app/split/page.tsx exactly, including the terminal case. It did not,
+  // so a player at the end of a chain was told "stake does not match what was passed
+  // to you" while looking at the correct amount on screen.
   const gift = await nextUnclaimedGift(from);
-  const inherited = gift && gift.give >= FLOOR ? gift : null;
-  const expectedStake = inherited ? inherited.give : STAKE;
+  const isTerminal = gift !== null && gift.give > 0 && gift.give < FLOOR;
+  const inherited = gift && !isTerminal ? gift : null;
+  const expectedStake = isTerminal ? gift!.give : inherited ? inherited.give : STAKE;
+  if (isTerminal && give !== 0) {
+    return NextResponse.json(
+      { error: "the chain ends here, there is nothing to pass on" },
+      { status: 400 },
+    );
+  }
   if (stake !== expectedStake) {
     return NextResponse.json(
       { error: "stake does not match what was passed to you", expected: expectedStake },
@@ -127,13 +137,14 @@ export async function POST(req: Request) {
   // 5. consume the gift that funded this turn. It was the endowment, not a bonus
   //    handed out alongside one, claiming it here is what stops the next player
   //    inheriting the same money twice.
-  if (inherited && payTo) {
-    await claimGift(inherited.session, decision.session);
+  const consumed = inherited ?? (isTerminal ? gift : null);
+  if (consumed && payTo) {
+    await claimGift(consumed.session, decision.session);
     payouts.push(
       await send({
-        session: inherited.session,
+        session: consumed.session,
         to: payTo,
-        value: inherited.give,
+        value: consumed.give,
         reason: "gift",
       }),
     );
@@ -145,6 +156,6 @@ export async function POST(req: Request) {
     payouts: payouts.map((p) => ({ value: p.value, reason: p.reason, status: p.status })),
     mode,
     population: await population(mode),
-    inherited: inherited ? { amount: inherited.give } : null,
+    inherited: consumed ? { amount: consumed.give } : null,
   });
 }

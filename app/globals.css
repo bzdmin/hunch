@@ -43,7 +43,7 @@
     --line:       #362b20;
     --accent:     #eaa441;
     --accent-soft:#2a2015;
-    --highlight:  #8a6410;
+    --highlight:  #c8892a;
     --hl-ink:     #fff6e2;
     --good:       #74c39a;
     --warm:       #e08d74;
@@ -61,7 +61,7 @@
   --line:       #362b20;
   --accent:     #eaa441;
   --accent-soft:#2a2015;
-  --highlight:  #8a6410;
+  --highlight:  #c8892a;
   --hl-ink:     #fff6e2;
   --good:       #74c39a;
   --warm:       #e08d74;
@@ -134,16 +134,18 @@ p { margin: 0; }
 /* The signature move. Behind the number that matters, nowhere else. Slightly uneven
    edges so it reads as drawn rather than as a filled box. */
 .hl {
+  /* A marker stroke, not a filled box. Covering the full line height rendered as a
+     heavy slab behind the words and forced a text-colour change to stay readable;
+     sweeping only the lower half leaves the text its own colour, keeps contrast in
+     both themes, and actually looks like something drawn over the words. */
   background: linear-gradient(
-    100deg,
-    transparent 0.4%,
-    var(--highlight) 0.9%,
-    var(--highlight) 98.5%,
-    transparent 99.2%
+    to top,
+    var(--highlight) 0%,
+    var(--highlight) 46%,
+    transparent 46%,
+    transparent 100%
   );
-  color: var(--hl-ink);
-  padding: 0.02em 0.18em;
-  border-radius: 0.15em;
+  padding: 0 0.1em 0.04em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }

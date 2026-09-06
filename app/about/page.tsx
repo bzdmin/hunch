@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { NAME, TAGLINE } from "@/lib/brand";
-import { SPLIT_MEAN_GIVEN } from "@/lib/benchmarks";
 
 export const metadata = { title: `What is ${NAME}?` };
 
@@ -67,10 +66,12 @@ export default function About() {
         </p>
       </div>
 
+      {/* Deliberately no figures here. The number people are trying to guess must
+          not be readable before they guess it, printing it on the way in turns the
+          only interesting question in the product into a reading comprehension test. */}
       <p className="note">
-        Figures come from published research, cited on screen wherever they appear.
-        The dictator-game average of {SPLIT_MEAN_GIVEN.value}% is from{" "}
-        {SPLIT_MEAN_GIVEN.source}.
+        Every figure you&rsquo;re shown comes from published research and is cited on
+        screen, after you&rsquo;ve made your own guess, never before.
       </p>
 
       <div className="grow" />

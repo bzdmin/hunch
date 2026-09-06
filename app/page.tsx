@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { NAME, TAGLINE, STAKE_NIM } from "@/lib/brand";
-import { SPLIT_MEAN_GIVEN } from "@/lib/benchmarks";
 import { totalPlayers } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -47,8 +46,8 @@ export default async function Home() {
           <span className="l">{played === 1 ? "person has played" : "people have played"}</span>
         </div>
         <div>
-          <span className="n">{SPLIT_MEAN_GIVEN.value}%</span>
-          <span className="l">what research says</span>
+          <span className="n">{STAKE_NIM.toLocaleString()}</span>
+          <span className="l">NIM to decide over</span>
         </div>
         <div>
           <span className="n">60s</span>
