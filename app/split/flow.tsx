@@ -91,6 +91,22 @@ export default function Flow({
 
       const { publicKey, signature } = await w.sign(message);
 
+      // Ask the server to validate BEFORE any money moves. In self mode the payment
+      // used to go first, so any rejection, a stale gift, someone else claiming it
+      // in between, trying to claim your own, arrived after the player had already
+      // paid, and took their NIM for nothing.
+      const pre = await fetch("/api/commit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          decision, message, publicKey, signature, payTo, anchor, from, precheck: true,
+        }),
+      });
+      if (!pre.ok) {
+        const why = await pre.json();
+        throw new Error(why.error ?? "That turn is no longer valid.");
+      }
+
       // Only self mode moves the player's own money. In house mode they send
       // nothing at all, we pay them.
       if (!house && give > 0) {

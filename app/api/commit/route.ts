@@ -27,6 +27,8 @@ export async function POST(req: Request) {
     payTo?: string;
     anchor?: number;
     from?: string;
+    /** validate only, used before any money moves */
+    precheck?: boolean;
   };
 
   try {
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "malformed request" }, { status: 400 });
   }
 
-  const { decision, message, publicKey, signature, payTo, anchor, from } = body ?? {};
+  const { decision, message, publicKey, signature, payTo, anchor, from, precheck } = body ?? {};
   if (!decision || !message || !publicKey || !signature) {
     return NextResponse.json(
       { error: "missing decision, message, publicKey or signature" },
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
   // Must mirror app/split/page.tsx exactly, including the terminal case. It did not,
   // so a player at the end of a chain was told "stake does not match what was passed
   // to you" while looking at the correct amount on screen.
-  const gift = await nextUnclaimedGift(from);
+  const gift = await nextUnclaimedGift(from, publicKey);
   const isTerminal = gift !== null && gift.give > 0 && gift.give < FLOOR;
   const inherited = gift && !isTerminal ? gift : null;
   const expectedStake = isTerminal ? gift!.give : inherited ? inherited.give : STAKE;
@@ -107,6 +109,13 @@ export async function POST(req: Request) {
         { status: 503 },
       );
     }
+  }
+
+  // Everything above is validation. In self mode the client pays before calling for
+  // real, so it asks once in precheck mode first, otherwise a rejection here would
+  // arrive after the player had already sent NIM, and take their money for nothing.
+  if (precheck) {
+    return NextResponse.json({ ok: true, stake: expectedStake, terminal: isTerminal });
   }
 
   await put({

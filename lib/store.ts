@@ -60,9 +60,20 @@ export async function settled(): Promise<Commit[]> {
  * This is what makes solo Split real money at zero house cost: what you pass on
  * is paid to whoever plays next, and what you keep you simply never send.
  */
-export async function nextUnclaimedGift(prefer?: string): Promise<Commit | null> {
+export async function nextUnclaimedGift(
+  prefer?: string,
+  /** signing key of whoever is claiming, their own gifts are skipped */
+  claimantKey?: string,
+): Promise<Commit | null> {
   const open = (await readAll()).filter(
-    (c) => c.payer !== null && c.give > 0 && c.giftClaimedBy === null,
+    (c) =>
+      c.payer !== null &&
+      c.give > 0 &&
+      c.giftClaimedBy === null &&
+      // A chain that never leaves one person is not a chain. Without this you can
+      // pass money on and immediately take it back, and the app still reports it
+      // as having travelled from stranger to stranger.
+      !(claimantKey && c.publicKey === claimantKey),
   );
   // A shared link is personal, it says "someone passed YOU this much". Handing
   // the visitor a different gift than the one the page advertised makes the page
