@@ -292,7 +292,7 @@ export default function Flow({
   return (
     <main className="screen">
       <p className="eyebrow">{NAME} · Split</p>
-      <h1>You passed on {nim(give)} NIM.</h1>
+      <h1>You passed on <span className="hl">{nim(give)} NIM</span>.</h1>
 
       {/* The guess was being asked and then never answered, the screen reported it
           back and scored it against nothing. "Can you predict another human?" is the
@@ -306,10 +306,16 @@ export default function Flow({
             const truth = live ? Math.round(pop!.meanPct) : SPLIT_MEAN_GIVEN.value;
             const gap = Math.round((predict - truth) * 10) / 10;
             const src = live ? `players here average ${truth}%` : `research puts it at ${truth}%`;
-            if (Math.abs(gap) <= 3) return `Almost exactly right, ${src}.`;
-            return gap < 0
-              ? `You were ${Math.abs(gap)} points low: ${src}. You think people are stingier than they are.`
-              : `You were ${gap} points high: ${src}. You think people are more generous than they are.`;
+            if (Math.abs(gap) <= 3) {
+              return <>Almost exactly right, {src}.</>;
+            }
+            return (
+              <>
+                You were <span className="hl">{Math.abs(gap)} points {gap < 0 ? "low" : "high"}</span>
+                , {src}. You think people are{" "}
+                {gap < 0 ? "stingier" : "more generous"} than they are.
+              </>
+            );
           })()}
         </p>
       </div>

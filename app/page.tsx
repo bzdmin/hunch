@@ -19,7 +19,7 @@ export default async function Home() {
   return (
     <main className="screen">
       <p className="eyebrow">{NAME}</p>
-      <h1>{TAGLINE}</h1>
+      <h1>Can you predict <span className="hl">another human</span>?</h1>
       <p className="soft">
         Real money, one decision, and then you find out what everyone else did,
         and what researchers found running the same test on thousands of people.
@@ -40,12 +40,21 @@ export default async function Home() {
 
       <div className="grow" />
 
-      <p className="faint">
-        {played > 0
-          ? `${played} ${played === 1 ? "person has" : "people have"} played so far.`
-          : "Nobody has played yet. You'd be first."}{" "}
-        Published studies put the average at {SPLIT_MEAN_GIVEN.value}%.
-      </p>
+      {/* Big number, small label. Says what this is at a glance, without a paragraph. */}
+      <div className="stats">
+        <div>
+          <span className="n">{played}</span>
+          <span className="l">{played === 1 ? "person has played" : "people have played"}</span>
+        </div>
+        <div>
+          <span className="n">{SPLIT_MEAN_GIVEN.value}%</span>
+          <span className="l">what research says</span>
+        </div>
+        <div>
+          <span className="n">60s</span>
+          <span className="l">a round</span>
+        </div>
+      </div>
     </main>
   );
 }
