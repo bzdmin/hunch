@@ -22,7 +22,10 @@ export async function GET() {
     houseFundedValue: e.NIMLAB_HOUSE_FUNDED ?? null,
     houseFunded: e.NIMLAB_HOUSE_FUNDED === "1",
     houseAddressSet: Boolean(e.NIMLAB_HOUSE_ADDRESS && e.NIMLAB_HOUSE_ADDRESS.trim()),
-    adminKeyLength: (e.NIMLAB_ADMIN_KEY ?? "").length,
+    // A Nimiq address is public, so its shape can be checked without exposing anything.
+    houseAddressLooksValid: /^NQ\d{2}( ?[0-9A-Z]{4}){8}$/.test((e.NIMLAB_HOUSE_ADDRESS ?? "").trim().toUpperCase()),
+    adminKeyLength: (e.NIMLAB_ADMIN_KEY ?? "").trim().length,
+    adminKeyHadWhitespace: (e.NIMLAB_ADMIN_KEY ?? "") !== (e.NIMLAB_ADMIN_KEY ?? "").trim(),
     splitMode: e.NIMLAB_SPLIT_MODE === "house" ? "house" : "self",
   });
 }

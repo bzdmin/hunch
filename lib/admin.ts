@@ -9,9 +9,11 @@ import { timingSafeEqual } from "crypto";
  * time from response timings.
  */
 export function authorised(key?: string | null): boolean {
-  const real = process.env.NIMLAB_ADMIN_KEY ?? "";
+  // Trimmed because a trailing space or line break pasted into the Vercel dashboard
+  // is invisible there, and would otherwise refuse the builder's correct key.
+  const real = (process.env.NIMLAB_ADMIN_KEY ?? "").trim();
   if (real.length < 16 || !key) return false;
-  const a = Buffer.from(key);
+  const a = Buffer.from(key.trim());
   const b = Buffer.from(real);
   return a.length === b.length && timingSafeEqual(a, b);
 }
