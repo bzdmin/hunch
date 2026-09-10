@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { build, type Decision } from "@/lib/message";
 import { STAKE, FLOOR } from "@/lib/brand";
 import { put, get, nextUnclaimedGift, claimGift, population } from "@/lib/store";
-import { send, houseFunded } from "@/lib/payout";
+import { send, splitHouseMode } from "@/lib/payout";
 
 export const dynamic = "force-dynamic";
 
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     if (!payTo) {
       return NextResponse.json({ error: "no address to pay you at" }, { status: 400 });
     }
-    if (!(await houseFunded(stake))) {
+    if (!(await splitHouseMode(stake))) {
       return NextResponse.json(
         { error: "Today's funding is used up. Come back tomorrow.", capped: true },
         { status: 503 },

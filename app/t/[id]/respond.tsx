@@ -64,7 +64,7 @@ export default function Respond({
       const res = await fetch("/api/pair", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, move: give, predict, message, publicKey, signature, payTo }),
+        body: JSON.stringify({ id, move: give, predict, ref, message, publicKey, signature, payTo }),
       });
       const out = await res.json();
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");

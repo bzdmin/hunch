@@ -28,7 +28,11 @@ import type { Mode } from "./brand";
 import { db } from "./db";
 
 export type PairExperiment = "trust" | "ultimatum";
-export type PairStatus = "open" | "joined" | "sealed" | "revealed";
+/**
+ * "closed" is a Trust round where the first player kept the money. There is no
+ * second player, so it must stop accepting one rather than sit open forever.
+ */
+export type PairStatus = "open" | "joined" | "sealed" | "revealed" | "closed";
 
 export type Side = {
   /** identity is the signing key, never a self-reported address */
@@ -118,8 +122,18 @@ export function redact(p: Pair, viewer: "a" | "b" | "stranger") {
     stake: p.stake,
     multiplier: p.multiplier,
     status: p.status,
-    waitingOn: p.a && !p.b ? "b" : !p.a ? "a" : null,
+    waitingOn: p.status === "closed" ? null : p.a && !p.b ? "b" : !p.a ? "a" : null,
   };
+
+  // Keeping ends a round with no second player, so there is nothing left to hide.
+  if (p.status === "closed" && p.a) {
+    return {
+      ...base,
+      a: { move: p.a.move, predict: p.a.predict },
+      payoff: { a: p.stake, b: 0, note: "kept it" },
+      youAre: viewer,
+    };
+  }
 
   if (p.status !== "revealed") return base;
 

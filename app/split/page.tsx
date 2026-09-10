@@ -1,5 +1,5 @@
 import { STAKE, FLOOR } from "@/lib/brand";
-import { houseFunded } from "@/lib/payout";
+import { splitHouseMode } from "@/lib/payout";
 import { nextUnclaimedGift } from "@/lib/store";
 import Flow from "./flow";
 
@@ -12,7 +12,9 @@ export const dynamic = "force-dynamic";
  *
  * Today the house wallet is deliberately unfunded, so everyone gets self mode and
  * nothing is promised that cannot be paid. Fund the wallet, set NIMLAB_HOUSE_FUNDED=1,
- * and house mode turns on for everyone with no code change.
+ * and set NIMLAB_SPLIT_MODE=house to switch Split to the windfall. Funding alone
+ * does not do it on purpose: Trust needs the house and Split does not, and opening
+ * one must never silently change the other.
  */
 export default async function SplitPage({
   searchParams,
@@ -34,7 +36,7 @@ export default async function SplitPage({
   const inherited = gift && !terminal ? gift : null;
   const stake = terminal ? gift!.give : inherited ? inherited.give : STAKE;
 
-  const mode = (await houseFunded(stake)) ? "house" : "self";
+  const mode = (await splitHouseMode(stake)) ? "house" : "self";
   return (
     <Flow
       mode={mode}

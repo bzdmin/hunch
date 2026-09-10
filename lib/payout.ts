@@ -46,12 +46,18 @@ export async function houseFunded(need: number): Promise<boolean> {
 /** Hard bound on what the house can spend in a day, in luna. */
 export const DAILY_CAP = Number(process.env.NIMLAB_DAILY_CAP_LUNA ?? 0) || 50_000 * 100_000;
 
+/**
+ * Why money is owed. Each pair of (session, reason) is paid at most once, since the
+ * payout id is built from both.
+ */
+export type PayoutReason = "keep" | "gift" | "trust-a" | "trust-b";
+
 export type Payout = {
   id: string;
   session: string;
   to: string;
   value: number;
-  reason: "keep" | "gift";
+  reason: PayoutReason;
   status: "queued" | "sent" | "failed";
   txHash: string | null;
   error: string | null;
@@ -84,7 +90,7 @@ export async function send(args: {
   session: string;
   to: string;
   value: number;
-  reason: "keep" | "gift";
+  reason: PayoutReason;
 }): Promise<Payout> {
   const rec: Payout = {
     id: `${args.session}-${args.reason}`,
@@ -112,4 +118,43 @@ export async function send(args: {
 
 export async function pending(): Promise<Payout[]> {
   return (await read()).filter((p) => p.status === "queued");
+}
+
+/**
+ * Trust opens when the house can cover a whole handed-over round, which is the
+ * tripled pot, not the stake. Checked against the pot so the daily cap cannot be
+ * overrun by a round that was affordable only on paper.
+ */
+export async function trustOpen(pot: number): Promise<boolean> {
+  return houseFunded(pot);
+}
+
+/**
+ * Split only uses the windfall when asked to explicitly. Funding the house is what
+ * opens Trust, and that must not silently change how Split works for everyone:
+ * the two modes produce different data, and a player mid-chain would suddenly be
+ * deciding over different money. NIMLAB_SPLIT_MODE=house switches it deliberately.
+ */
+export async function splitHouseMode(stake: number): Promise<boolean> {
+  if (process.env.NIMLAB_SPLIT_MODE !== "house") return false;
+  return houseFunded(stake);
+}
+
+/** Every payout, newest first. For the settlement page only. */
+export async function allPayouts(): Promise<Payout[]> {
+  return (await read()).sort((a, b) => b.at - a.at);
+}
+
+/**
+ * Record that a payout was settled by hand. The hash is required so the ledger can
+ * never say money moved without pointing at the transaction that moved it.
+ */
+export async function markSent(id: string, txHash: string): Promise<Payout | null> {
+  const p = (await db().get(COLL, id)) as Payout | null;
+  if (!p || p.status !== "queued") return null;
+  p.status = "sent";
+  p.txHash = txHash;
+  p.error = null;
+  await db().put(COLL, id, p);
+  return p;
 }

@@ -66,7 +66,7 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          id: pair.id, move, predict, message, publicKey, signature, payTo,
+          id: pair.id, move, predict, ref, message, publicKey, signature, payTo,
         }),
       });
       const out = await res.json();

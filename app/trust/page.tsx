@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { NAME, STAKE, STAKE_NIM } from "@/lib/brand";
-import { houseFunded } from "@/lib/payout";
+import { trustOpen } from "@/lib/payout";
 import Flow from "./flow";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,9 @@ export const dynamic = "force-dynamic";
  * degrade into a different game, the experiment refuses to open when it cannot pay.
  */
 export default async function TrustPage() {
-  const funded = await houseFunded(STAKE);
+  // A handed-over round costs the whole tripled pot, so that is what the cap is
+  // checked against, not the stake.
+  const funded = await trustOpen(STAKE * 3);
 
   if (!funded) {
     return (
