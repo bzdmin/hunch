@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { backend } from "@/lib/db";
+import { canSign, balanceOf, rpcUrl, keyConfigured } from "@/lib/broadcast";
+import { autopayEnabled } from "@/lib/payout";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,16 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const e = process.env;
+
+  // Proves the signing library loads in this runtime, without sending anything. If
+  // Vercel's bundling ever breaks it, this says so before a real payout does.
+  const signer = keyConfigured() ? await canSign() : null;
+  let houseBalanceNim: number | null = null;
+  if (signer?.ok) {
+    try { houseBalanceNim = (await balanceOf(signer.address)) / 1e5; } catch { houseBalanceNim = null; }
+  }
+  const norm = (a: string) => a.replace(/\s+/g, "").toUpperCase();
+
   return NextResponse.json({
     commit: (e.VERCEL_GIT_COMMIT_SHA ?? "local").slice(0, 7),
     env: e.VERCEL_ENV ?? "local",
@@ -27,5 +39,15 @@ export async function GET() {
     adminKeyLength: (e.NIMLAB_ADMIN_KEY ?? "").trim().length,
     adminKeyHadWhitespace: (e.NIMLAB_ADMIN_KEY ?? "") !== (e.NIMLAB_ADMIN_KEY ?? "").trim(),
     splitMode: e.NIMLAB_SPLIT_MODE === "house" ? "house" : "self",
+    // automatic payouts
+    autopay: autopayEnabled(),
+    autopayValue: e.NIMLAB_AUTOPAY ?? null,
+    houseKeySet: keyConfigured(),
+    canSign: signer ? signer.ok : null,
+    signError: signer && !signer.ok ? signer.error : null,
+    keyControlsAddress: signer?.ok ? signer.address : null,
+    keyMatchesHouseAddress: signer?.ok ? norm(signer.address) === norm(e.NIMLAB_HOUSE_ADDRESS ?? "") : null,
+    houseBalanceNim,
+    rpc: rpcUrl(),
   });
 }

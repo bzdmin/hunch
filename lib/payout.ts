@@ -1,31 +1,24 @@
 /**
  * Paying players from the house wallet.
  *
- * House funding (locked 5 Sep) means the player never sends anything. They sign a
- * decision, and we settle it:
+ * House funding means the player never sends anything. They sign a decision, and we
+ * settle it. Every payout in the app, Split and Trust alike, goes through send().
  *
- *     keep  -> paid to the player now
- *     give  -> queued for whoever plays next
+ * Automatic sending (Gate 2, proven on mainnet 13 Sep) is lib/broadcast.ts: sign
+ * offline, broadcast through a public node. It only runs when all three are true:
  *
- * Total outflow is STAKE per player either way, so the daily cap is what bounds cost.
+ *   NIMIQ_NETWORK=main      the only public node is mainnet
+ *   NIMLAB_AUTOPAY=1        a deliberate switch, never on by accident
+ *   NIMLAB_HOUSE_KEY        a valid key, server-only
  *
- * THE OPEN PROBLEM: the mini-app SDK only exists in the player's browser, so the
- * server needs its own route onto the Nimiq network. Neither option is a drop-in:
+ * Otherwise payouts are recorded as "queued" and settled by hand from /admin, which
+ * is still the fallback whenever a broadcast fails.
  *
- *   @nimiq/core 2.21.0        WASM client, must reach consensus before sending.
- *                             Needs a long-lived process; will not work inside a
- *                             Vercel serverless function that cold-starts per request.
- *   nimiq-rpc-client-ts       Assumes we run a Nimiq node with RPC enabled.
- *
- * Until one is proven, send() records the intent and returns "queued". Nothing is
- * lost, pending payouts can be settled by hand from Nimiq Pay, which is the agreed
- * fallback if the automated path does not land in time.
- *
- * NEVER put the house private key in NEXT_PUBLIC_* or anywhere the client bundle
- * can reach. It belongs in a server-only env var.
+ * NEVER put the house key in NEXT_PUBLIC_* or anywhere the client bundle can reach.
  */
 
 import { db } from "./db";
+import { pay, keyConfigured } from "./broadcast";
 
 /**
  * Is the house able to fund a windfall right now?
@@ -58,7 +51,11 @@ export type Payout = {
   to: string;
   value: number;
   reason: PayoutReason;
-  status: "queued" | "sent" | "failed";
+  /**
+   * sending: a broadcast was started. If a record is ever stuck here, the node may or
+   * may not have the transaction, so check the chain before paying it by hand.
+   */
+  status: "queued" | "sending" | "sent" | "failed";
   txHash: string | null;
   error: string | null;
   at: number;
@@ -82,9 +79,25 @@ export async function withinCap(add: number): Promise<boolean> {
   return (await spentToday()) + add <= DAILY_CAP;
 }
 
+export function autopayEnabled(): boolean {
+  return (
+    process.env.NIMIQ_NETWORK === "main" &&
+    process.env.NIMLAB_AUTOPAY === "1" &&
+    keyConfigured()
+  );
+}
+
 /**
- * Record a payout and attempt to send it.
- * Returns the stored record; status is "queued" until the network path is proven.
+ * Record a payout and, when autopay is on, send it.
+ *
+ * Idempotent by id. The id is (session, reason), and a record that already exists is
+ * returned untouched. This used to overwrite the record on every call, which was
+ * harmless while payouts were manual and would pay twice once they are not: a
+ * retried request would broadcast a second transaction for the same debt.
+ *
+ * The record is written as "sending" BEFORE the broadcast, so if the process dies
+ * mid-send the ledger shows an unknown outcome rather than silently inviting a
+ * second payment.
  */
 export async function send(args: {
   session: string;
@@ -92,8 +105,13 @@ export async function send(args: {
   value: number;
   reason: PayoutReason;
 }): Promise<Payout> {
+  const id = `${args.session}-${args.reason}`;
+
+  const existing = (await db().get(COLL, id)) as Payout | null;
+  if (existing) return existing;
+
   const rec: Payout = {
-    id: `${args.session}-${args.reason}`,
+    id,
     session: args.session,
     to: args.to,
     value: args.value,
@@ -107,12 +125,29 @@ export async function send(args: {
   if (!(await withinCap(args.value))) {
     rec.status = "failed";
     rec.error = "daily cap reached";
+    await db().put(COLL, id, rec);
+    return rec;
   }
 
-  // TODO(gate 2): broadcast here once a server-side send path is proven.
-  // Until then the record stands and the payout is settled manually.
+  if (!autopayEnabled()) {
+    await db().put(COLL, id, rec);
+    return rec;
+  }
 
-  await db().put(COLL, rec.id, rec);
+  rec.status = "sending";
+  await db().put(COLL, id, rec);
+
+  try {
+    rec.txHash = await pay({ to: args.to, luna: args.value, note: `hunch:${args.session}` });
+    rec.status = "sent";
+  } catch (e) {
+    // Nothing left this process if pay() threw before broadcasting, so it is safe to
+    // leave for manual settlement. The message says which case it was.
+    rec.status = "queued";
+    rec.error = e instanceof Error ? e.message.slice(0, 300) : String(e);
+  }
+
+  await db().put(COLL, id, rec);
   return rec;
 }
 
@@ -151,7 +186,7 @@ export async function allPayouts(): Promise<Payout[]> {
  */
 export async function markSent(id: string, txHash: string): Promise<Payout | null> {
   const p = (await db().get(COLL, id)) as Payout | null;
-  if (!p || p.status !== "queued") return null;
+  if (!p || (p.status !== "queued" && p.status !== "sending")) return null;
   p.status = "sent";
   p.txHash = txHash;
   p.error = null;
