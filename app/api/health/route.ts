@@ -43,6 +43,10 @@ export async function GET() {
     autopay: autopayEnabled(),
     autopayValue: e.NIMLAB_AUTOPAY ?? null,
     houseKeySet: keyConfigured(),
+    // Length only, never the value. 0 means the name is wrong or it is not in this
+    // environment; anything but 64 means the wrong thing was pasted.
+    houseKeyLength: (e.NIMLAB_HOUSE_KEY ?? "").trim().length,
+    houseKeyIsHex: /^[0-9a-fA-F]*$/.test((e.NIMLAB_HOUSE_KEY ?? "").trim()),
     canSign: signer ? signer.ok : null,
     signError: signer && !signer.ok ? signer.error : null,
     keyControlsAddress: signer?.ok ? signer.address : null,
