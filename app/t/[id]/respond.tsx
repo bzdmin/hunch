@@ -107,7 +107,6 @@ export default function Respond({
   // ----------------------------------------------------------------- reveal
   if (stage === "done" && reveal) {
     const expected = reveal.a?.predict ?? 0;
-    const gap = give - expected;
     const sharePct = Math.round((give / pot) * 100);
 
     // You were asked to guess what they expected, and the app used to ask that
@@ -129,44 +128,27 @@ export default function Respond({
               ? "but they actually expected a lot less than you thought."
               : "but they actually expected a lot more than you thought.";
 
+    const gapPct = sharePct - TRUST_RETURNED_SHARE.value;
+    const vsStudy =
+      Math.abs(gapPct) <= 3 ? "about the study average"
+      : gapPct < 0 ? "less generous than the study average"
+      : "more generous than the study average";
+
+    // Rebuilt after the first version stacked five separate blocks that mostly
+    // repeated the same handful of numbers, the tally and the "you kept / sent"
+    // sentence both said the same two figures in different words. Down to three:
+    // the headline feeling, one card that tells the whole money story once, and one
+    // compact line for the two secondary stats, prediction accuracy and the
+    // research comparison, that used to each get a full emphasized block of their own.
     return (
       <>
         <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
 
-        {/* Everything B was not shown while deciding arrives here, all at once and
-            in full. The decision is made on feel; the consequence is spelled out in
-            real numbers afterwards. */}
-        <div className="verdict">
-          <p className="soft" style={{ marginBottom: "0.35rem" }}>
-            They had {nim(stake)} NIM and could have kept it. Handing it over
-            tripled it to {nim(pot)} NIM in your hands.
-          </p>
-          <p>
-            You kept <span className="hl">{nim(pot - give)} NIM</span> and sent back{" "}
-            {nim(give)} NIM.{" "}
-            {reveal.payoff.a > stake
-              ? `They came out ${nim(reveal.payoff.a - stake)} NIM ahead.`
-              : reveal.payoff.a === stake
-                ? "They broke even."
-                : `They lost ${nim(stake - reveal.payoff.a)} NIM by trusting you.`}
-          </p>
-        </div>
-
-        <div className="verdict">
-          <p className="soft" style={{ marginBottom: "0.35rem" }}>
-            You guessed they expected {nim(predict)} NIM back. They actually hoped
-            for {nim(expected)} NIM, {guessLine}
-          </p>
-          <p>
-            {Math.abs(gap) < stake * 0.05
-              ? "You landed almost exactly where they hoped."
-              : gap > 0
-                ? "You sent more than they dared expect."
-                : "You sent less than they were hoping for."}
-          </p>
-        </div>
-
         <div className="card">
+          <p className="soft" style={{ marginBottom: "0.75rem" }}>
+            They had {nim(stake)} NIM and could have kept it. Trusting you
+            tripled it to {nim(pot)} NIM.
+          </p>
           <div className="split-readout">
             <div>
               <span className="k">They end with</span>
@@ -177,29 +159,22 @@ export default function Respond({
               <span className="v">{nim(reveal.payoff.b)} NIM</span>
             </div>
           </div>
+          <p className="faint" style={{ marginTop: "0.6rem" }}>
+            {reveal.payoff.a > stake
+              ? `Trusting you paid off, they came out ${nim(reveal.payoff.a - stake)} NIM ahead.`
+              : reveal.payoff.a === stake
+                ? "They broke even."
+                : `They lost ${nim(stake - reveal.payoff.a)} NIM by trusting you.`}
+          </p>
         </div>
 
-        {/* Computed, not a static quote, and it appears only after they have
-            confirmed their own choice. Same reasoning as Split's scored prediction:
-            printing the benchmark before someone acts turns the question into
-            something to answer correctly rather than something to actually decide. */}
-        {(() => {
-          const gapPct = sharePct - TRUST_RETURNED_SHARE.value;
-          const verdict =
-            Math.abs(gapPct) <= 3
-              ? <>You sent back <span className="hl">{sharePct}%</span> of the pot, about the same as the study average.</>
-              : gapPct < 0
-                ? <>You sent back <span className="hl">{sharePct}%</span> of the pot, less generous than the study average.</>
-                : <>You sent back <span className="hl">{sharePct}%</span> of the pot, more generous than the study average.</>;
-          return (
-            <p className="note">
-              {verdict} People in the original study returned about{" "}
-              {TRUST_RETURNED_SHARE.value}% of what they held.
-              <br />
-              <span style={{ opacity: 0.7 }}>{TRUST_RETURNED_SHARE.source}</span>
-            </p>
-          );
-        })()}
+        <p className="note">
+          You guessed <span className="hl">{predictPct}%</span> would come back,
+          they actually hoped for {expectedPct}%, {guessLine} You sent back{" "}
+          {sharePct}% of the pot, {vsStudy}, {TRUST_RETURNED_SHARE.value}%.
+          <br />
+          <span style={{ opacity: 0.7 }}>{TRUST_RETURNED_SHARE.source}</span>
+        </p>
 
         <a className="btn" href="/trust">Now try it yourself</a>
       </>

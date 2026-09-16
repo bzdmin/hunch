@@ -308,7 +308,10 @@ export default function Flow() {
       <div className="grow" />
       <button
         onClick={async () => {
-          const text = `I just handed a stranger ${nim(stake)} NIM. It tripled in their hands and now they decide what comes back to me. I reckon ${nim(predict)}. ${link}`;
+          // No figures here on purpose. B's whole screen is built around never
+          // seeing the exact pot before deciding, this message reaches B before the
+          // app even opens, so a NIM amount here would spoil it before it starts.
+          const text = `I just trusted a complete stranger with real money. It tripled in their hands, and now it's entirely up to them what comes back to me. ${link}`;
           if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
             try { await navigator.share({ text }); return; } catch { /* fall through */ }
           }
