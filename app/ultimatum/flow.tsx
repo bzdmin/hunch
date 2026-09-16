@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
-import { wallet, firstAddress, readable, available, deviceId } from "@/lib/nimiq";
+import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 
 type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "sent";
 type Round = { id: string; stake: number };
@@ -42,6 +42,10 @@ export default function Flow({ example }: { example: WorkedExample }) {
         new Promise<boolean>((r) => setTimeout(() => r(false), 2500)),
       ]);
       if (!dead) setHasWallet(found);
+      // Fired here, not at commit time, so the one-time consent prompt (if any)
+      // happens while the player is still reading the opening screen, not as a
+      // surprise second dialog right when they expect signing to be the only step.
+      if (found) void deviceId(DEVICE_ID_REASON);
     })();
     return () => { dead = true; };
   }, []);
@@ -103,7 +107,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
         seat: "a", pairId: round.id, stake, move: offer, predictPct, ref,
       });
       const { publicKey, signature } = await w.sign(message);
-      const device = await deviceId("Limit how many house-funded rounds one device can play per day");
+      const device = await deviceId(DEVICE_ID_REASON);
 
       const res = await fetch("/api/pair", {
         method: "PUT",

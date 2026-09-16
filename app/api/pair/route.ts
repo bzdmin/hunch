@@ -6,7 +6,7 @@ import {
   getPair, putPair, redact, payoff,
   type Pair, type PairExperiment, type Side,
 } from "@/lib/pair";
-import { tooManyRounds, alreadyPairedForHouseMoney } from "@/lib/abuse";
+import { tooManyRounds, alreadyPairedForHouseMoney, isTestKey } from "@/lib/abuse";
 import { verifySignedMessage } from "@/lib/verify";
 
 export const dynamic = "force-dynamic";
@@ -155,7 +155,7 @@ export async function PUT(req: Request) {
     // Only checkable once B's payout address is known, which is now. Two real
     // devices, each honestly under their own cap, can still be one person, or
     // two people splitting a repeated house-funded outcome between themselves.
-    if (seat === "b" && p.a) {
+    if (seat === "b" && p.a && !isTestKey(p.a.publicKey) && !isTestKey(publicKey)) {
       const paired = await alreadyPairedForHouseMoney(p.a.payTo, payTo);
       if (paired) {
         return NextResponse.json(

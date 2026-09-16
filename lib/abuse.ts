@@ -12,16 +12,12 @@
  * cap on how many rounds a signing key or a device can enter per day bounds
  * total exposure without touching payoff math at all.
  *
- * A signing key is free, anyone can generate as many as they like, and nothing
- * here proves the caller actually holds the key it claims (the signature itself
- * is never cryptographically verified against it yet, a known gap, tracked to
- * fix once it can be tested against a real signed message from a real phone,
- * getting the verification wrong with nobody able to check would silently
- * reject every genuine round instead). Until then, deviceId is the one signal
- * a plain script cannot fake: requestDeviceIdentifier() only exists inside the
- * real Nimiq Pay app, so it is required outright for house money below, not
- * merely preferred. It also returns the same 64-char id across reinstalls and
- * across accounts on the same phone, which the key cap cannot see at all.
+ * A signing key is free, anyone can generate as many as they like, publicKey is
+ * now proven, not merely claimed (lib/verify.ts), so this is a real per-identity
+ * cap rather than one a script can walk through by inventing a fresh string.
+ * deviceId still matters on top of that: it survives reinstalls and reaches
+ * across every key generated on the same phone, which the key cap alone cannot
+ * see.
  */
 
 import { db } from "./db";
@@ -30,6 +26,26 @@ import type { Pair } from "./pair";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOLDOWN_MS = (Number(process.env.NIMLAB_ROUND_COOLDOWN_SECONDS ?? 0) || 10) * 1000;
 const PAIRS = "pairs";
+
+/**
+ * The builder's own test wallets, exempt from every cap below. Testing two
+ * games across two real phones, repeatedly, in one sitting is indistinguishable
+ * from farming to a count-based rule, there is no honest way to tell them apart
+ * from inside the request. An explicit allowlist is the one way to let it
+ * through without loosening the rule for everyone else. Comma-separated 64-hex
+ * publicKeys, found via /api/admin/identities. Empty by default, so leaving
+ * this unset changes nothing for anyone.
+ */
+const TEST_KEYS = new Set(
+  (process.env.NIMLAB_TEST_KEYS ?? "")
+    .split(",")
+    .map((k) => k.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+export function isTestKey(publicKey: string): boolean {
+  return TEST_KEYS.has(publicKey.toLowerCase());
+}
 
 export const KEY_DAILY_ROUNDS = Number(process.env.NIMLAB_KEY_DAILY_ROUNDS ?? 0) || 3;
 export const DEVICE_DAILY_ROUNDS = Number(process.env.NIMLAB_DEVICE_DAILY_ROUNDS ?? 0) || 3;
@@ -78,6 +94,8 @@ export async function tooManyRounds(
   publicKey: string,
   deviceId: string | null,
 ): Promise<string | null> {
+  if (isTestKey(publicKey)) return null;
+
   if (!deviceId) {
     return "This round needs your device to check in first. Update Nimiq Pay, allow the " +
       "prompt when it asks, or play Split instead.";

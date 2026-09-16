@@ -63,6 +63,12 @@ export async function firstAddress(): Promise<string> {
  */
 let deviceCache: string | null | undefined;
 
+/**
+ * Shared across every call site so the one-time consent prompt reads the same
+ * way regardless of which screen triggers it first.
+ */
+export const DEVICE_ID_REASON = "So one device can't play more than its fair share of house-funded rounds";
+
 export async function deviceId(reason: string): Promise<string | null> {
   if (deviceCache !== undefined) return deviceCache;
   try {

@@ -5,7 +5,7 @@ import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
 import { trustReturnTier } from "@/lib/copy";
-import { wallet, firstAddress, readable, available, deviceId } from "@/lib/nimiq";
+import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -52,6 +52,10 @@ export default function Respond({
         new Promise<boolean>((r) => setTimeout(() => r(false), 2500)),
       ]);
       if (!dead) setInWallet(found);
+      // Fired here, not at commit time, so the one-time consent prompt (if any)
+      // happens while the player is still reading the opening screen, not as a
+      // surprise second dialog right when they expect signing to be the only step.
+      if (found) void deviceId(DEVICE_ID_REASON);
     })();
     return () => { dead = true; };
   }, []);
@@ -67,7 +71,7 @@ export default function Respond({
         seat: "b", pairId: id, stake, multiplier, move: give, predict, ref,
       });
       const { publicKey, signature } = await w.sign(message);
-      const device = await deviceId("Limit how many house-funded rounds one device can play per day");
+      const device = await deviceId(DEVICE_ID_REASON);
 
       const res = await fetch("/api/pair", {
         method: "PUT",
