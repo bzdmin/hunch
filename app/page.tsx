@@ -20,6 +20,18 @@ export const dynamic = "force-dynamic";
  * app rather than inventing new colour: --good is "it paid off" on Trust's reveal,
  * --warm is risk and refusal on Ultimatum's. Someone who plays all three should
  * feel the same colour meaning the same thing twice, not three unrelated brands.
+ *
+ * "Another human" in the headline undersold Split: Split's guess is against a
+ * population, "what most people do", not one other person the way Trust and
+ * Ultimatum are. "People" covers both without Split reading as a mismatch with
+ * its own card. Research framing moved off this screen entirely, it belongs in
+ * the result experience where it earns its place. This screen's only job is to
+ * get a decision started, not to sound like a paper abstract first.
+ *
+ * The short line under each heading is notation, not illustration: KEEP <-> GIVE,
+ * YOU -> THEM -> YOU, OFFER <-> ACCEPT. Each shape is recognisable before anyone
+ * reads the paragraph under it, the three experiments should look different from
+ * each other at a glance, not just read different once you commit to reading.
  */
 function range(nums: number[]): string {
   return `${Math.min(...nums)}-${Math.max(...nums)} NIM`;
@@ -31,10 +43,10 @@ export default async function Home() {
   return (
     <main className="screen">
       <p className="eyebrow">{NAME}</p>
-      <h1>Can you predict <span className="hl">another human</span>?</h1>
+      <h1>Can you predict <span className="hl">people</span>?</h1>
       <p className="soft">
-        Three short experiments, real money, and a benchmark from published
-        research to check your guess against. Pick one.
+        Three experiments. Real NIM. Make your prediction. See what humans
+        actually do.
       </p>
 
       <Link
@@ -44,6 +56,7 @@ export default async function Home() {
       >
         <p className="eyebrow">Split</p>
         <h2>What would you keep?</h2>
+        <p className="metaphor">KEEP &harr; GIVE</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
           You have {STAKE_NIM.toLocaleString()} NIM and one choice, how much of it
           to pass to a stranger. Then find out what most people actually do.
@@ -62,6 +75,7 @@ export default async function Home() {
       >
         <p className="eyebrow">Trust</p>
         <h2>Hand it over, or keep it?</h2>
+        <p className="metaphor">YOU &rarr; THEM &rarr; YOU</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
           Trust a stranger with your stake and it triples in their hands. They
           decide what comes back. Could be everything. Could be nothing.
@@ -80,6 +94,7 @@ export default async function Home() {
       >
         <p className="eyebrow">Ultimatum</p>
         <h2>Offer a share, or lose it all?</h2>
+        <p className="metaphor">OFFER &harr; ACCEPT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
           Offer a stranger a cut of what you have. Too low, and you both walk
           away with nothing, not even the part you meant to keep.

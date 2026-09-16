@@ -345,7 +345,17 @@ input[type="range"] {
   box-shadow: 0 0 0 var(--ink);
 }
 .pick .eyebrow { color: var(--pick-color, var(--accent)); margin: 0 0 0.3rem; }
-.pick h2 { margin-bottom: 0.3rem; }
+.pick h2 { margin-bottom: 0.35rem; }
+/* Notation, not illustration. KEEP <-> GIVE, YOU -> THEM -> YOU, OFFER <-> ACCEPT,
+   a recognisable shape for each game before anyone reads the paragraph under it. */
+.pick .metaphor {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--pick-color, var(--accent));
+  margin: 0 0 0.55rem;
+}
 .pick .meta {
   display: flex;
   flex-wrap: wrap;
