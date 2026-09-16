@@ -118,6 +118,35 @@ export async function putPair(p: Pair): Promise<void> {
 }
 
 /**
+ * A real completed round, to show before someone's first decision instead of
+ * instructions.
+ *
+ * The 2025 comprehension study across five standard economic games (Johannesson,
+ * n=1568) found the trust game misunderstood by 62%, rising to 70% online, worse
+ * than every other paradigm tested. The canonical implementation most platforms
+ * build on (oTree's tutorial trust game) never explains the multiplier at all, it
+ * only appears as a computed number on the receiver's screen, which is likely part
+ * of why. The worked-example effect is well established for teaching procedures,
+ * but a single fixed example causes learners to fixate on its surface details
+ * rather than the underlying principle. Pulling a real, different, recent round
+ * each time sidesteps that for free, we already store every completed round.
+ *
+ * Picked at random from the last few finished rounds rather than always the most
+ * recent one, so a person refreshing does not see the identical example twice and
+ * a network of testers does not all see the same one.
+ */
+export async function randomWorkedExample(exp: PairExperiment): Promise<Pair | null> {
+  const rows = await db().all(COLL);
+  const finished = rows
+    .map((r) => r.data as Pair)
+    .filter((p) => p.exp === exp && p.status === "revealed" && p.a && p.b)
+    .sort((a, b) => (b.revealedAt ?? 0) - (a.revealedAt ?? 0))
+    .slice(0, 10);
+  if (finished.length === 0) return null;
+  return finished[Math.floor(Math.random() * finished.length)];
+}
+
+/**
  * What a viewer is allowed to see. Never return a Pair straight to a client, the
  * whole point is that one side cannot read the other's move before both have
  * committed, and forgetting that once undoes the entire experiment.

@@ -22,7 +22,9 @@ type Round = { id: string; stake: number };
  * built for Trust, and for the same reason: B risks nothing of their own, so a
  * big number would only anchor a decision that should be made on feel.
  */
-export default function Flow() {
+type WorkedExample = { stake: number; offerPct: number; thresholdPct: number; accepted: boolean } | null;
+
+export default function Flow({ example }: { example: WorkedExample }) {
   const [stage, setStage] = useState<Stage>("loading");
   const [round, setRound] = useState<Round | null>(null);
   const [offerPct, setOfferPct] = useState(0);
@@ -132,6 +134,21 @@ export default function Flow() {
           <span className="hl">you both walk away with nothing</span>, including
           the part you meant to keep.
         </p>
+
+        {example && (
+          <div className="card guess">
+            <p className="faint" style={{ marginBottom: "0.5rem" }}>
+              A round that already happened
+            </p>
+            <p className="soft">
+              Someone offered {example.offerPct}% of {nim(example.stake)} NIM. The
+              other person&rsquo;s line was {example.thresholdPct}%.{" "}
+              {example.accepted
+                ? "The offer cleared it, so the deal went through."
+                : "The offer fell short, so neither of them got anything."}
+            </p>
+          </div>
+        )}
 
         <div className="card">
           <div className="split-readout">

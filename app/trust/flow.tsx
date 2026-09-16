@@ -24,7 +24,9 @@ type Round = { id: string; stake: number; multiplier: number };
  * Keeping ending the round instantly matters: someone who does not want to involve
  * anyone else still gets a complete experience rather than a dead end.
  */
-export default function Flow() {
+type WorkedExample = { stake: number; returned: number; final: number } | null;
+
+export default function Flow({ example }: { example: WorkedExample }) {
   const [stage, setStage] = useState<Stage>("loading");
   const [round, setRound] = useState<Round | null>(null);
 
@@ -152,6 +154,30 @@ export default function Flow() {
           more than you started with. It could be nothing.
         </p>
 
+        {/* The trust game is the worst-understood of all five standard economic
+            games, misunderstood by 62-70% of participants in the 2025 comprehension
+            study across 1568 people, and the canonical implementation most platforms
+            build on never explains the multiplier at all. A real completed round,
+            pulled at random from recent play so it is not the same one twice, does
+            that work instead of an instructions block. */}
+        {example && (
+          <div className="card guess">
+            <p className="faint" style={{ marginBottom: "0.5rem" }}>
+              A round that already happened
+            </p>
+            <p className="soft">
+              Someone had {nim(example.stake)} NIM and handed it over. The other
+              person sent back {nim(example.returned)} NIM, leaving the first
+              player with <strong>{nim(example.final)} NIM</strong>
+              {example.final < example.stake
+                ? `, ${nim(example.stake - example.final)} NIM less than if they'd just kept it.`
+                : example.final === example.stake
+                  ? ", almost exactly what they'd have had by keeping it."
+                  : `, ${nim(example.final - example.stake)} NIM more than if they'd just kept it.`}
+            </p>
+          </div>
+        )}
+
         <div className="card">
           <div className="split-readout">
             <div>
@@ -244,16 +270,25 @@ export default function Flow() {
             />
             <span className="faint">%</span>
           </div>
-          {/* Break-even for A is a third of the pot, that is exactly the stake A
-              handed over. The old version compared against `stake` directly since
-              predict was a NIM figure; now it is a percent of the pot, so the same
-              boundary is 100/3, not 100. */}
-          <p className="faint" style={{ marginTop: "0.5rem" }}>
+        </div>
+
+        {/* This is the specific fact the trust game loses people on: not the
+            multiplier, the COMPARISON against what they'd have had by keeping it.
+            It was a faint one-line footnote here before, easy to skip. Now it is
+            its own block, live, using the same styling the reveal screens use for
+            the one sentence on the page that actually matters. Break-even is a
+            third of the pot, that is exactly the stake handed over. */}
+        <div className="verdict">
+          <p className="soft" style={{ marginBottom: "0.35rem" }}>
+            If that&rsquo;s what comes back, here&rsquo;s where you end up.
+          </p>
+          <p>
+            <span className="hl">{nim(predict)} NIM</span>.{" "}
             {predictPct < 33
-              ? `Less than what you started with, you'd be down overall.`
+              ? `That's ${nim(stake - predict)} NIM less than the ${nim(stake)} NIM you'd have had by just keeping it.`
               : predictPct < 34
-                ? `Roughly what you started with, you'd break even.`
-                : `More than what you started with, you'd come out ahead.`}
+                ? `That's almost exactly the ${nim(stake)} NIM you'd have had by keeping it.`
+                : `That's ${nim(predict - stake)} NIM more than the ${nim(stake)} NIM you'd have had by keeping it.`}
           </p>
         </div>
 

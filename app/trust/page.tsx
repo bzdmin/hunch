@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NAME, TRUST_MAX_STAKE, TRUST_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { trustOpen } from "@/lib/payout";
+import { randomWorkedExample, payoff } from "@/lib/pair";
 import Flow from "./flow";
 
 export const dynamic = "force-dynamic";
@@ -53,5 +54,12 @@ export default async function TrustPage() {
     );
   }
 
-  return <Flow />;
+  // A real completed round, shown before A's first decision instead of
+  // instructions. See randomWorkedExample() in lib/pair.ts for why.
+  const example = await randomWorkedExample("trust");
+  const worked = example
+    ? { stake: example.stake, returned: example.b!.move, final: payoff(example).a }
+    : null;
+
+  return <Flow example={worked} />;
 }

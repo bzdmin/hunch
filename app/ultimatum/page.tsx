@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NAME, ULTIMATUM_MAX_STAKE, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { ultimatumOpen } from "@/lib/payout";
+import { randomWorkedExample, payoff } from "@/lib/pair";
 import Flow from "./flow";
 
 export const dynamic = "force-dynamic";
@@ -51,5 +52,20 @@ export default async function UltimatumPage() {
     );
   }
 
-  return <Flow />;
+  // A real completed round, shown before A's first offer instead of instructions.
+  // Ultimatum is already one of the better-understood paradigms (26% misunderstood
+  // versus Trust's 62-70%, Johannesson 2025), so this is a smaller fix than Trust's,
+  // but it costs almost nothing to add and reinforces the one consequence that
+  // matters: an offer that falls short costs both sides everything.
+  const example = await randomWorkedExample("ultimatum");
+  const worked = example
+    ? {
+        stake: example.stake,
+        offerPct: Math.round((example.a!.move / example.stake) * 100),
+        thresholdPct: example.b!.move,
+        accepted: payoff(example).note === "accepted",
+      }
+    : null;
+
+  return <Flow example={worked} />;
 }
