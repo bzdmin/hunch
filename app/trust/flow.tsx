@@ -2,29 +2,36 @@
 
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
-import { nim, ref as makeRef, trustMessage } from "@/lib/message";
+import { nim, LUNA, ref as makeRef, trustMessage } from "@/lib/message";
+import { trustOpeningTier } from "@/lib/copy";
 import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
 
-type Stage = "choose" | "predict" | "working" | "sent" | "kept";
+type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable";
+type Round = { id: string; stake: number; multiplier: number };
 
 /**
  * The first player's turn.
  *
- * Two paths, and only one of them needs a second person:
+ * The stake is random per round (200 to 500 NIM, see lib/brand.ts), chosen by the
+ * server, not the client. So the round has to be created before this can show a
+ * real number, that happens once on mount, before the "choose" screen renders,
+ * rather than at commit time the way a fixed-stake version could get away with.
+ *
+ * Two paths after that, and only one needs a second person:
  *   keep      -> the round is over immediately. No link, no waiting.
  *   hand over -> predict what comes back, sign, then share a link.
  *
  * Keeping ending the round instantly matters: someone who does not want to involve
  * anyone else still gets a complete experience rather than a dead end.
  */
-export default function Flow({ stake, multiplier }: { stake: number; multiplier: number }) {
-  const pot = stake * multiplier;
-
-  const [stage, setStage] = useState<Stage>("choose");
+export default function Flow() {
+  const [stage, setStage] = useState<Stage>("loading");
+  const [round, setRound] = useState<Round | null>(null);
   const [predict, setPredict] = useState(0);
   const [err, setErr] = useState("");
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [gaveAway, setGaveAway] = useState(false);
 
   const [hasWallet, setHasWallet] = useState<boolean | null>(null);
   useEffect(() => {
@@ -40,25 +47,40 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
   }, []);
   const noWallet = hasWallet === false;
 
+  useEffect(() => {
+    let dead = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/pair", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ exp: "trust" }),
+        });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error ?? "Trust isn't open right now.");
+        if (!dead) {
+          setRound({ id: out.id, stake: out.stake, multiplier: out.multiplier });
+          setStage("choose");
+        }
+      } catch (e) {
+        if (!dead) { setErr(readable(e)); setStage("unavailable"); }
+      }
+    })();
+    return () => { dead = true; };
+  }, []);
+
   async function commit(move: number) {
+    if (!round) return;
     setErr("");
     setStage("working");
 
     try {
       const w = await wallet();
       const payTo = await firstAddress();
-
-      const made = await fetch("/api/pair", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ exp: "trust" }),
-      });
-      const pair = await made.json();
-      if (!made.ok) throw new Error(pair.error ?? "Could not start a round.");
-
       const ref = makeRef();
       const message = trustMessage({
-        seat: "a", pairId: pair.id, stake, multiplier, move, predict, ref,
+        seat: "a", pairId: round.id, stake: round.stake, multiplier: round.multiplier,
+        move, predict, ref,
       });
       const { publicKey, signature } = await w.sign(message);
 
@@ -66,7 +88,7 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          id: pair.id, move, predict, ref, message, publicKey, signature, payTo,
+          id: round.id, move, predict, ref, message, publicKey, signature, payTo,
         }),
       });
       const out = await res.json();
@@ -75,7 +97,8 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
       if (move === 0) {
         setStage("kept");
       } else {
-        setLink(`${window.location.origin}/t/${pair.id}`);
+        setGaveAway(true);
+        setLink(`${window.location.origin}/t/${round.id}`);
         setStage("sent");
       }
     } catch (e) {
@@ -83,6 +106,31 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
       setStage(predict > 0 ? "predict" : "choose");
     }
   }
+
+  // -------------------------------------------------------------- loading
+  if (stage === "loading") {
+    return (
+      <main className="screen">
+        <p className="eyebrow">{NAME} · Trust</p>
+        <h1>Setting up your round&hellip;</h1>
+      </main>
+    );
+  }
+
+  if (stage === "unavailable" || !round) {
+    return (
+      <main className="screen">
+        <p className="eyebrow">{NAME} · Trust</p>
+        <h1>Trust isn&rsquo;t open right now.</h1>
+        <p className="soft">{err || "Try again in a moment, or play Split instead."}</p>
+        <div className="grow" />
+        <a className="btn" href="/split">Play Split instead</a>
+      </main>
+    );
+  }
+
+  const { stake, multiplier } = round;
+  const pot = stake * multiplier;
 
   // ---------------------------------------------------------------- choose
   if (stage === "choose") {
@@ -159,11 +207,32 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
           </p>
           <div className="amount">{nim(predict)}<small>NIM</small></div>
           <input
-            type="range" min={0} max={pot} step={Math.round(pot / 100)} value={predict}
+            type="range" min={0} max={pot} step={1} value={predict}
             onChange={(e) => setPredict(Number(e.target.value))}
             disabled={busy}
             aria-label="How much you expect back"
           />
+          {/* A slider alone cannot land on an exact figure like 1,111, only on
+              whatever the drag granularity happens to hit. Typing bypasses that. */}
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+            <input
+              type="number" inputMode="decimal" min={0} max={pot / LUNA} step={0.01}
+              value={(predict / LUNA).toFixed(2)}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                const luna = Math.round((Number.isFinite(n) ? n : 0) * LUNA);
+                setPredict(Math.min(pot, Math.max(0, luna)));
+              }}
+              disabled={busy}
+              aria-label="Type an exact amount"
+              style={{
+                flex: 1, background: "var(--paper)", color: "var(--ink)",
+                border: "2px solid var(--ink)", borderRadius: "8px",
+                padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
+              }}
+            />
+            <span className="faint">NIM</span>
+          </div>
           <div className="ends">
             <span>&larr; Nothing</span>
             <span>All of it &rarr;</span>
@@ -195,10 +264,11 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
     return (
       <main className="screen">
         <p className="eyebrow">{NAME} · Trust</p>
+        <div className="card"><h2>{trustOpeningTier(false)}</h2></div>
         <h1>You kept the {nim(stake)} NIM.</h1>
         <p className="soft">
-          No one else was involved, and nothing was risked. That&rsquo;s a real answer
-, in the original studies most people did hand it over, and on average
+          No one else was involved, and nothing was risked. That&rsquo;s a real answer,
+          in the original studies most people did hand it over, and on average
           they got back slightly less than they gave.
         </p>
         <div className="grow" />
@@ -212,6 +282,7 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
   return (
     <main className="screen">
       <p className="eyebrow">{NAME} · Trust</p>
+      {gaveAway && <div className="card"><h2>{trustOpeningTier(true)}</h2></div>}
       <h1>It&rsquo;s out of your hands.</h1>
       <p className="soft">
         Send this to someone. They&rsquo;ll be holding {nim(pot)} NIM and deciding

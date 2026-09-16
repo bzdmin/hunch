@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NAME, STAKE, STAKE_NIM } from "@/lib/brand";
+import { NAME, TRUST_MAX_STAKE, TRUST_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { trustOpen } from "@/lib/payout";
 import Flow from "./flow";
 
@@ -8,15 +8,17 @@ export const dynamic = "force-dynamic";
 /**
  * Trust, the first player's side.
  *
- * Unlike Split, this CANNOT run on the player's own money. Handing over 1,000 NIM
- * and having 3,000 arrive means someone funded the difference, and that someone is
- * the house. There is no self-funded version of a multiplier, so rather than quietly
+ * Unlike Split, this CANNOT run on the player's own money. Handing over the stake
+ * and having it triple means someone funded the difference, and that someone is the
+ * house. There is no self-funded version of a multiplier, so rather than quietly
  * degrade into a different game, the experiment refuses to open when it cannot pay.
+ *
+ * The stake is random per round (see randomTrustStake in lib/brand.ts), so the gate
+ * checks the worst case, the largest possible draw, tripled, not any one value.
+ * Flow discovers the actual stake for its own round by creating it on mount.
  */
 export default async function TrustPage() {
-  // A handed-over round costs the whole tripled pot, so that is what the cap is
-  // checked against, not the stake.
-  const funded = await trustOpen(STAKE * 3);
+  const funded = await trustOpen(TRUST_MAX_STAKE * 3);
 
   if (!funded) {
     return (
@@ -24,7 +26,9 @@ export default async function TrustPage() {
         <p className="eyebrow">{NAME} · Trust</p>
         <h1>Trust isn&rsquo;t open yet.</h1>
         <p className="soft">
-          In this one you hand over {STAKE_NIM.toLocaleString()} NIM and it{" "}
+          In this one you hand over somewhere between{" "}
+          {TRUST_STAKE_OPTIONS_NIM[0]} and{" "}
+          {TRUST_STAKE_OPTIONS_NIM[TRUST_STAKE_OPTIONS_NIM.length - 1]} NIM, and it{" "}
           <span className="hl">triples</span> in the other person&rsquo;s hands. They
           then decide how much comes back to you, possibly nothing.
         </p>
@@ -49,5 +53,5 @@ export default async function TrustPage() {
     );
   }
 
-  return <Flow stake={STAKE} multiplier={3} />;
+  return <Flow />;
 }

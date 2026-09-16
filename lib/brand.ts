@@ -56,3 +56,30 @@ export const MODE_LABEL: Record<Mode, string> = {
  * 100 NIM is a tenth of the stake, still a real decision, not yet an insult.
  */
 export const FLOOR = 100 * 100_000;
+
+/**
+ * Trust's stake pool, in NIM. Picked once per round on the server when it is
+ * created, and both players see and are bound by that same number.
+ *
+ * Two reasons to randomise rather than use one fixed number:
+ *
+ *   1. A fixed, known stake means a repeat player already knows the exact tripled
+ *      total before a round even starts, and can plan an answer in advance instead
+ *      of reacting to it. The relay floor and the random Split slider start exist
+ *      for the same reason, do not let the player pre-compute the "correct" move.
+ *   2. It lets the house run at a lower ceiling per round while funds are tight.
+ *
+ * Safe to vary because every comparison to research is a PERCENTAGE of the pot,
+ * which is scale invariant, 30% of 600 NIM and 30% of 1,000 NIM are the same finding.
+ * A separate, smaller stake-size effect on generosity is documented in the
+ * literature, but at these sub-dollar amounts it is not worth correcting for.
+ */
+export const TRUST_STAKE_OPTIONS_NIM = [200, 300, 400, 500];
+
+export function randomTrustStake(): number {
+  const n = TRUST_STAKE_OPTIONS_NIM[Math.floor(Math.random() * TRUST_STAKE_OPTIONS_NIM.length)];
+  return n * 100_000;
+}
+
+/** Worst case for the house-funding gate: the largest possible draw, tripled. */
+export const TRUST_MAX_STAKE = Math.max(...TRUST_STAKE_OPTIONS_NIM) * 100_000;

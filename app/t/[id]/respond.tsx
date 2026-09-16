@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
-import { nim, ref as makeRef, trustMessage } from "@/lib/message";
+import { nim, LUNA, ref as makeRef, trustMessage } from "@/lib/message";
 import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
+import { trustReturnTier } from "@/lib/copy";
 import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
@@ -102,11 +103,27 @@ export default function Respond({
   if (stage === "done" && reveal) {
     const expected = reveal.a?.predict ?? 0;
     const gap = give - expected;
+    const sharePct = Math.round((give / pot) * 100);
+
+    // You were asked to guess what they expected, and the app used to ask that
+    // question and never say whether the guess was any good. This is that missing
+    // stat: predict is your own guess, expected is what they actually put down.
+    const guessGap = predict - expected;
+    const guessLine =
+      Math.abs(guessGap) < pot * 0.05
+        ? "and you read them almost exactly right."
+        : guessGap > 0
+          ? "but they actually expected less than you thought."
+          : "but they actually expected more than you thought.";
+
     return (
       <>
+        <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
+
         <div className="verdict">
           <p className="soft" style={{ marginBottom: "0.35rem" }}>
-            They expected {nim(expected)} NIM back.
+            You guessed they expected {nim(predict)} NIM back. They actually hoped
+            for {nim(expected)} NIM, {guessLine}
           </p>
           <p>
             You sent <span className="hl">{nim(give)} NIM</span>.{" "}
@@ -144,14 +161,13 @@ export default function Respond({
             printing the benchmark before someone acts turns the question into
             something to answer correctly rather than something to actually decide. */}
         {(() => {
-          const actualPct = Math.round((give / pot) * 100);
-          const gapPct = actualPct - TRUST_RETURNED_SHARE.value;
+          const gapPct = sharePct - TRUST_RETURNED_SHARE.value;
           const verdict =
             Math.abs(gapPct) <= 3
-              ? <>You sent back <span className="hl">{actualPct}%</span> of the pot, about the same as the study average.</>
+              ? <>You sent back <span className="hl">{sharePct}%</span> of the pot, about the same as the study average.</>
               : gapPct < 0
-                ? <>You sent back <span className="hl">{actualPct}%</span> of the pot, less generous than the study average.</>
-                : <>You sent back <span className="hl">{actualPct}%</span> of the pot, more generous than the study average.</>;
+                ? <>You sent back <span className="hl">{sharePct}%</span> of the pot, less generous than the study average.</>
+                : <>You sent back <span className="hl">{sharePct}%</span> of the pot, more generous than the study average.</>;
           return (
             <p className="note">
               {verdict} People in the original study returned about{" "}
@@ -189,11 +205,30 @@ export default function Respond({
           </p>
           <div className="amount">{nim(predict)}<small>NIM</small></div>
           <input
-            type="range" min={0} max={pot} step={Math.round(pot / 100)} value={predict}
+            type="range" min={0} max={pot} step={1} value={predict}
             onChange={(e) => setPredict(Number(e.target.value))}
             disabled={busy}
             aria-label="What you think they expected back"
           />
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+            <input
+              type="number" inputMode="decimal" min={0} max={pot / LUNA} step={0.01}
+              value={(predict / LUNA).toFixed(2)}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                const luna = Math.round((Number.isFinite(n) ? n : 0) * LUNA);
+                setPredict(Math.min(pot, Math.max(0, luna)));
+              }}
+              disabled={busy}
+              aria-label="Type an exact amount"
+              style={{
+                flex: 1, background: "var(--paper)", color: "var(--ink)",
+                border: "2px solid var(--ink)", borderRadius: "8px",
+                padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
+              }}
+            />
+            <span className="faint">NIM</span>
+          </div>
         </div>
 
         {err && <p className="err">{err}</p>}
@@ -223,10 +258,28 @@ export default function Respond({
           </div>
         </div>
         <input
-          type="range" min={0} max={pot} step={Math.round(pot / 100)} value={give}
+          type="range" min={0} max={pot} step={1} value={give}
           onChange={(e) => setGive(Number(e.target.value))}
           aria-label="How much to send back"
         />
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+          <input
+            type="number" inputMode="decimal" min={0} max={pot / LUNA} step={0.01}
+            value={(give / LUNA).toFixed(2)}
+            onChange={(e) => {
+              const n = Number(e.target.value);
+              const luna = Math.round((Number.isFinite(n) ? n : 0) * LUNA);
+              setGive(Math.min(pot, Math.max(0, luna)));
+            }}
+            aria-label="Type an exact amount"
+            style={{
+              flex: 1, background: "var(--paper)", color: "var(--ink)",
+              border: "2px solid var(--ink)", borderRadius: "8px",
+              padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
+            }}
+          />
+          <span className="faint">NIM</span>
+        </div>
         <div className="ends">
           <span>&larr; Keep it all</span>
           <span>Send it all &rarr;</span>

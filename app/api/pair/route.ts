@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { STAKE } from "@/lib/brand";
+import { randomTrustStake } from "@/lib/brand";
 import { trustOpen, send } from "@/lib/payout";
 import { session as newId, trustMessage } from "@/lib/message";
 import {
@@ -51,7 +51,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "only Trust is open" }, { status: 400 });
   }
 
-  const pot = STAKE * TRUST_MULTIPLIER;
+  // Picked here, once, and stored on the pair, both players are bound by the same
+  // number for this round even though it varies round to round.
+  const stake = randomTrustStake();
+  const pot = stake * TRUST_MULTIPLIER;
   if (!(await trustOpen(pot))) {
     return NextResponse.json(
       { error: "Trust isn't open right now. Try Split instead.", closed: true },
@@ -63,7 +66,7 @@ export async function POST(req: Request) {
     id: newId(),
     exp: "trust",
     mode: "house",
-    stake: STAKE,
+    stake,
     multiplier: TRUST_MULTIPLIER,
     status: "open",
     a: null,
