@@ -13,6 +13,20 @@ import "server-only";
  * app/api/debug/verify-sign, now removed), not assumed from documentation:
  * sha256('\x16Nimiq Signed Message:\n' + message.length + message), the same
  * convention documented for the Nimiq Hub.
+ *
+ * What that test did not settle: whether "message.length" is Nimiq Pay's own
+ * JS string length (UTF-16 code units, what message.length means in the app's
+ * own code below) or the UTF-8 byte length. They agree for pure ASCII, which
+ * is all that first test happened to use, but lib/message.ts's real copy uses
+ * "·" (U+00B7), one UTF-16 unit, two UTF-8 bytes, so the two interpretations
+ * genuinely diverge on every real Trust and Ultimatum message. First real
+ * round after this shipped failed verification here, confirming the gap.
+ *
+ * Trying both is not a weaker check: each is still exactly
+ * sha256(prefix + N + message) for a specific N, and a valid signature under
+ * either one still proves the same key signed this exact message, nobody can
+ * forge a signature that passes without holding the private key regardless of
+ * which N they used.
  */
 
 type Nimiq = typeof import("@nimiq/core");
@@ -34,9 +48,16 @@ export async function verifySignedMessage(
     const N = await nimiq();
     const pub = N.PublicKey.fromHex(publicKeyHex);
     const sig = N.Signature.fromHex(signatureHex);
-    const data = new TextEncoder().encode(PREFIX + message.length + message);
-    const hash = N.Hash.computeSha256(data);
-    return pub.verify(sig, hash);
+    const enc = new TextEncoder();
+    const byteLength = enc.encode(message).length;
+
+    const candidateLengths = new Set([message.length, byteLength]);
+    for (const len of candidateLengths) {
+      const data = enc.encode(PREFIX + len + message);
+      const hash = N.Hash.computeSha256(data);
+      if (pub.verify(sig, hash)) return true;
+    }
+    return false;
   } catch {
     return false;
   }
