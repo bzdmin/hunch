@@ -322,6 +322,43 @@ input[type="range"] {
 }
 .steps li { padding-left: 0.15rem; }
 
+/* The home screen's game picker. Three peers, not a funnel, so each gets its own
+   accent rather than one primary CTA and two afterthoughts. Colors are borrowed
+   from tokens the app already has meaning for, not invented for this: --good
+   already means "trust paid off" on the reveal screens, --warm already means
+   risk/refusal. Reusing them here means a player who plays all three later
+   recognises the same color meaning the same thing again. */
+.pick {
+  display: block;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-left: 6px solid var(--pick-color, var(--accent));
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+.pick:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.pick .eyebrow { color: var(--pick-color, var(--accent)); margin: 0 0 0.3rem; }
+.pick h2 { margin-bottom: 0.3rem; }
+.pick .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  margin-top: 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.pick .meta span:not(:last-child)::after { content: "\00B7"; margin-left: 0.6rem; color: var(--line); }
+
 .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
 .stats div { display: grid; gap: 0.1rem; }
 .stats .n {
