@@ -37,6 +37,18 @@ export default async function Home() {
         </p>
       </div>
 
+      <div className="card">
+        <h2>Two more, with a friend</h2>
+        <p className="soft" style={{ marginTop: "0.5rem" }}>
+          Trust and Ultimatum need someone else, you make your decisions apart,
+          then find out together.
+        </p>
+        <div style={{ display: "grid", gap: "0.6rem", marginTop: "0.9rem" }}>
+          <Link href="/trust" className="btn ghost">Play Trust</Link>
+          <Link href="/ultimatum" className="btn ghost">Play Ultimatum</Link>
+        </div>
+      </div>
+
       <div className="grow" />
 
       {/* Big number, small label. Says what this is at a glance, without a paragraph. */}

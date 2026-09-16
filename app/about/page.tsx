@@ -52,12 +52,14 @@ export default function About() {
       </div>
 
       <div className="card">
-        <h2>Where it&rsquo;s going</h2>
+        <h2>Three questions</h2>
         <p className="soft" style={{ marginTop: "0.5rem" }}>
-          Split is the first question. Two more are being built: <strong>Trust</strong>,
-          where you hand everything to someone and it triples in their hands,
-          and they decide what comes back. And <strong>Ultimatum</strong>, where a
-          share you consider insulting can be refused, leaving you both with nothing.
+          Split runs solo, right now. <strong>Trust</strong> needs a second
+          person, you hand everything to a stranger and it triples in their
+          hands, then they decide what comes back to you. <strong>Ultimatum</strong>{" "}
+          needs one too, you offer a share, they set the least they&rsquo;ll
+          accept before they&rsquo;ve even seen your offer, and too low costs
+          you both everything.
         </p>
         <p className="faint" style={{ marginTop: "0.6rem" }}>
           Each one is a real experiment behavioural scientists have run for decades.

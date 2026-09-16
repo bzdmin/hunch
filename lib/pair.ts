@@ -89,9 +89,17 @@ export function payoff(p: Pair): Payoff {
 
   // ultimatum: B commits a threshold before seeing the offer, so both sides
   // commit blind and neither can react to the other.
+  //
+  // offer is luna (A always sees real figures), threshold is a PERCENT, 0 to 100
+  // (B never does, same anchor rule as Trust's B). Comparing them directly compares
+  // a number in the millions against one under 101, which is true for every offer
+  // above zero, that bug shipped every Ultimatum round as "accepted" regardless of
+  // B's actual threshold and was only caught by an end-to-end test, not by types.
+  // Convert to the same unit, percent, before comparing.
   const offer = p.a.move;
   const threshold = p.b.move;
-  return offer >= threshold
+  const offerPct = Math.round((offer / p.stake) * 100);
+  return offerPct >= threshold
     ? { a: p.stake - offer, b: offer, note: "accepted" }
     : { a: 0, b: 0, note: "rejected" };
 }

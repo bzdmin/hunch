@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { randomTrustStake } from "@/lib/brand";
-import { trustOpen, send } from "@/lib/payout";
-import { session as newId, trustMessage } from "@/lib/message";
+import { randomTrustStake, randomUltimatumStake } from "@/lib/brand";
+import { trustOpen, ultimatumOpen, send, type PayoutReason } from "@/lib/payout";
+import { session as newId, trustMessage, ultimatumMessage } from "@/lib/message";
 import {
   getPair, putPair, redact, payoff,
   type Pair, type PairExperiment, type Side,
@@ -25,7 +25,6 @@ export async function GET(req: Request) {
   const p = await getPair(id);
   if (!p) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  // The viewer is worked out from the signing key they present, not from a claim.
   const key = new URL(req.url).searchParams.get("key") ?? "";
   const viewer = p.a?.publicKey === key ? "a" : p.b?.publicKey === key ? "b" : "stranger";
 
@@ -35,9 +34,9 @@ export async function GET(req: Request) {
 /**
  * The first player opens a round. Nothing is committed yet, this only reserves the id.
  *
- * Trust is always house-funded: the multiplier creates money that is in nobody's
- * wallet. So a round is refused outright while the house cannot cover a whole
- * handed-over pot, rather than opened and then left unable to pay.
+ * Both experiments are house-funded, refused outright while the house cannot cover
+ * the worst case, rather than opened and then left unable to pay. Trust's worst case
+ * is the pot, one stake tripled. Ultimatum's is one stake, it never multiplies.
  */
 export async function POST(req: Request) {
   let body: { exp?: PairExperiment };
@@ -47,27 +46,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "malformed request" }, { status: 400 });
   }
 
-  if (body.exp !== "trust") {
-    return NextResponse.json({ error: "only Trust is open" }, { status: 400 });
+  if (body.exp !== "trust" && body.exp !== "ultimatum") {
+    return NextResponse.json({ error: "unknown experiment" }, { status: 400 });
   }
 
   // Picked here, once, and stored on the pair, both players are bound by the same
   // number for this round even though it varies round to round.
-  const stake = randomTrustStake();
-  const pot = stake * TRUST_MULTIPLIER;
-  if (!(await trustOpen(pot))) {
+  const stake = body.exp === "trust" ? randomTrustStake() : randomUltimatumStake();
+  const multiplier = body.exp === "trust" ? TRUST_MULTIPLIER : 1;
+  const pot = stake * multiplier;
+
+  const open = body.exp === "trust" ? await trustOpen(pot) : await ultimatumOpen(stake);
+  if (!open) {
     return NextResponse.json(
-      { error: "Trust isn't open right now. Try Split instead.", closed: true },
+      { error: "That one isn't open right now. Try Split instead.", closed: true },
       { status: 503 },
     );
   }
 
   const pair: Pair = {
     id: newId(),
-    exp: "trust",
+    exp: body.exp,
     mode: "house",
     stake,
-    multiplier: TRUST_MULTIPLIER,
+    multiplier,
     status: "open",
     a: null,
     b: null,
@@ -83,12 +85,13 @@ export async function POST(req: Request) {
  * One side commits. The first call fills A, the second fills B and reveals.
  *
  * Nothing here trusts the browser. The seat is decided by the server, the move is
- * bounded by the rules, the signed message is rebuilt from the answer and must match
- * it word for word, and the payoff is computed from what was stored.
+ * bounded by the rules for whichever experiment this is, the signed message is
+ * rebuilt from the answer and must match it word for word, and the payoff is
+ * computed from what was stored.
  *
  * Money is owed from this point on, so every finished round records its payouts:
- *   A keeps      -> the round closes, A is owed the stake
- *   B answers    -> the round reveals, both are owed their share of the pot
+ *   Trust, A keeps      -> the round closes, A is owed the stake
+ *   either, B answers   -> the round reveals, both are owed their share
  */
 export async function PUT(req: Request) {
   let body: {
@@ -116,20 +119,17 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "bad ref" }, { status: 400 });
   }
   if (!Number.isInteger(move) || !Number.isInteger(predict)) {
-    return NextResponse.json({ error: "move and predict must be whole luna" }, { status: 400 });
+    return NextResponse.json({ error: "move and predict must be whole numbers" }, { status: 400 });
   }
 
   const p = await getPair(id);
   if (!p) return NextResponse.json({ error: "not found" }, { status: 404 });
-  if (p.exp !== "trust") {
-    return NextResponse.json({ error: "only Trust is open" }, { status: 400 });
-  }
   if (p.status === "revealed" || p.status === "closed") {
     return NextResponse.json({ error: "this one is already finished" }, { status: 409 });
   }
 
   // The seat follows the order of arrival, and the second seat must be someone else.
-  // Otherwise the first player could hand the money to themselves and keep the pot.
+  // Otherwise the first player could hand the money to themselves and keep it all.
   const seat: "a" | "b" = p.a === null ? "a" : "b";
   if (p.a?.publicKey === publicKey) {
     return NextResponse.json(
@@ -141,26 +141,46 @@ export async function PUT(req: Request) {
   const pot = p.stake * p.multiplier;
   const m = move as number;
   const guess = predict as number;
+  let expectedMessage: string;
 
-  // Bound the move and the guess against the rules, so no client can hand itself a
-  // better game than the one on screen.
-  const cap = seat === "b" ? pot : p.stake;
-  if (m < 0 || m > cap) {
-    return NextResponse.json({ error: `move must be between 0 and ${cap}` }, { status: 400 });
-  }
-  if (seat === "a" && m !== 0 && m !== p.stake) {
-    return NextResponse.json({ error: "trust is all or nothing for the first player" }, { status: 400 });
-  }
-  if (guess < 0 || guess > pot) {
-    return NextResponse.json({ error: `predict must be between 0 and ${pot}` }, { status: 400 });
+  if (p.exp === "trust") {
+    // Bound the move and the guess against the rules, so no client can hand itself
+    // a better game than the one on screen.
+    const cap = seat === "b" ? pot : p.stake;
+    if (m < 0 || m > cap) {
+      return NextResponse.json({ error: `move must be between 0 and ${cap}` }, { status: 400 });
+    }
+    if (seat === "a" && m !== 0 && m !== p.stake) {
+      return NextResponse.json({ error: "trust is all or nothing for the first player" }, { status: 400 });
+    }
+    if (guess < 0 || guess > pot) {
+      return NextResponse.json({ error: `predict must be between 0 and ${pot}` }, { status: 400 });
+    }
+    expectedMessage = trustMessage({
+      seat, pairId: p.id, stake: p.stake, multiplier: p.multiplier, move: m, predict: guess, ref,
+    });
+  } else {
+    // Ultimatum. A's move is a real luna offer out of the stake, any amount is
+    // allowed, unlike Trust there is no all-or-nothing rule here. B's move is a
+    // percent threshold, 0 to 100, never a luna figure, B is never shown one.
+    if (seat === "a") {
+      if (m < 0 || m > p.stake) {
+        return NextResponse.json({ error: `offer must be between 0 and ${p.stake}` }, { status: 400 });
+      }
+    } else if (m < 0 || m > 100) {
+      return NextResponse.json({ error: "threshold must be a percent between 0 and 100" }, { status: 400 });
+    }
+    if (guess < 0 || guess > 100) {
+      return NextResponse.json({ error: "predict must be a percent between 0 and 100" }, { status: 400 });
+    }
+    expectedMessage = ultimatumMessage({
+      seat, pairId: p.id, stake: p.stake, move: m, predictPct: guess, ref,
+    });
   }
 
   // The dialog showed exactly this text. If the answer submitted is not the one the
   // player read and signed, the round would record something they never agreed to.
-  const expected = trustMessage({
-    seat, pairId: p.id, stake: p.stake, multiplier: p.multiplier, move: m, predict: guess, ref,
-  });
-  if (expected !== message) {
+  if (expectedMessage !== message) {
     return NextResponse.json(
       { error: "signed message does not match the answer it claims to describe" },
       { status: 400 },
@@ -171,9 +191,12 @@ export async function PUT(req: Request) {
 
   if (seat === "a") {
     p.a = side;
-    // Keeping ends the round on the spot. Nobody is waiting for a second player.
-    p.status = m === 0 ? "closed" : "open";
-    if (m === 0) p.revealedAt = Date.now();
+    // Trust alone can end here. A keeping the stake needs no second player.
+    // Ultimatum always needs both sides, an offer with nobody to accept it settles
+    // nothing.
+    const instant = p.exp === "trust" && m === 0;
+    p.status = instant ? "closed" : "open";
+    if (instant) p.revealedAt = Date.now();
   } else {
     p.b = side;
     p.status = "revealed";
@@ -183,15 +206,16 @@ export async function PUT(req: Request) {
   await putPair(p);
 
   // Record what is owed now that the round is settled. Payouts are ids of
-  // (round, seat), so replaying this request cannot create a second debt.
+  // (round, reason), so replaying this request cannot create a second debt.
   let settled: { a: number; b: number; note: string } | null = null;
+  const prefix = p.exp === "trust" ? "trust" : "ultimatum";
   if (p.status === "closed" && p.a) {
     settled = { a: p.stake, b: 0, note: "kept it" };
-    await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: "trust-a" });
+    await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: `${prefix}-a` as PayoutReason });
   } else if (p.status === "revealed" && p.a && p.b) {
     settled = payoff(p);
-    if (settled.a > 0) await send({ session: p.id, to: p.a.payTo, value: settled.a, reason: "trust-a" });
-    if (settled.b > 0) await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: "trust-b" });
+    if (settled.a > 0) await send({ session: p.id, to: p.a.payTo, value: settled.a, reason: `${prefix}-a` as PayoutReason });
+    if (settled.b > 0) await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: `${prefix}-b` as PayoutReason });
   }
 
   return NextResponse.json({

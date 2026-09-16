@@ -80,6 +80,53 @@ export const session = () => randHex(5);
  * before committing real money, so it says what they chose in sentences a person can
  * check, never a JSON blob.
  */
+/**
+ * What each side of an Ultimatum round reads in the signing dialog.
+ *
+ * A offers a share of a real stake and risks losing all of it if refused, that is a
+ * real financial decision made with full information, so A's dialog states real NIM.
+ * B never staked anything and is protected from the same anchor a big number would
+ * create, so B's dialog is percent-only, same rule already applied to Trust.
+ *
+ * B sets their threshold before seeing A's offer. Neither side's dialog can leak the
+ * other's number, because at signing time neither side has been told it yet.
+ */
+export function ultimatumMessage(a: {
+  seat: "a" | "b";
+  pairId: string;
+  /** luna A is deciding over */
+  stake: number;
+  /** A: luna offered to B. B: the minimum share, out of 100, they will accept. */
+  move: number;
+  /** A: their guess at B's minimum, as a percent. B: their guess at A's offer, as a percent. */
+  predictPct: number;
+  ref: string;
+}): string {
+  const body =
+    a.seat === "a"
+      ? [
+          `You offer ${nim(a.move)} NIM to a stranger.`,
+          `You keep ${nim(a.stake - a.move)} NIM if they accept.`,
+          `If they refuse, you both get nothing.`,
+          `You guess they'll accept anything above ${a.predictPct}% of your stake.`,
+        ]
+      : [
+          `Someone is offering you a share of what they have.`,
+          `You will accept nothing less than ${a.move}% of it.`,
+          `Below that, you both get nothing.`,
+          `You guess they offered you ${a.predictPct}%.`,
+        ];
+
+  return [
+    `${NAME} · Ultimatum`,
+    "",
+    ...body,
+    "",
+    "Signing locks this answer in.",
+    `ref ${a.pairId}·${a.ref}`,
+  ].join(String.fromCharCode(10));
+}
+
 export function trustMessage(a: {
   seat: "a" | "b";
   pairId: string;

@@ -83,3 +83,20 @@ export function randomTrustStake(): number {
 
 /** Worst case for the house-funding gate: the largest possible draw, tripled. */
 export const TRUST_MAX_STAKE = Math.max(...TRUST_STAKE_OPTIONS_NIM) * 100_000;
+
+/**
+ * Ultimatum's stake pool. Same numbers as Trust, same reasoning, a repeat player
+ * should not know the exact figure before a round starts.
+ *
+ * Ultimatum never multiplies money the way Trust does. Accepted, the stake is
+ * redistributed between the two players and totals exactly what it started as.
+ * Rejected, nothing is paid to either side. So the worst case for the house is one
+ * stake, not one stake tripled, cheaper to fund than Trust round for round.
+ */
+export const ULTIMATUM_STAKE_OPTIONS_NIM = TRUST_STAKE_OPTIONS_NIM;
+
+export function randomUltimatumStake(): number {
+  return randomTrustStake();
+}
+
+export const ULTIMATUM_MAX_STAKE = Math.max(...ULTIMATUM_STAKE_OPTIONS_NIM) * 100_000;

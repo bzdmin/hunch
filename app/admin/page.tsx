@@ -15,6 +15,8 @@ const LABEL: Record<PayoutReason, string> = {
   gift: "Split, passed on",
   "trust-a": "Trust, first player",
   "trust-b": "Trust, second player",
+  "ultimatum-a": "Ultimatum, offerer",
+  "ultimatum-b": "Ultimatum, decider",
 };
 
 const field = {

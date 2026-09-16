@@ -92,3 +92,37 @@ const A_HANDED_OVER = [
 export function trustOpeningTier(handedOver: boolean): string {
   return pick(handedOver ? A_HANDED_OVER : A_KEPT);
 }
+
+// ---------------------------------------------------------------- Ultimatum
+
+const REJECTED = [
+  "Rejected. Both walk away with nothing.",
+  "Too low, and it cost you everything.",
+  "They'd rather have zero than accept that.",
+  "The deal died on the table.",
+];
+
+const ACCEPTED_STINGY = [
+  "Accepted, barely.",
+  "They took it, and they'll remember it.",
+  "A low offer that scraped by.",
+];
+
+const ACCEPTED_FAIR = [
+  "Accepted, and it was fair.",
+  "A reasonable split, taken without hesitation.",
+  "Nobody walked away feeling cheated.",
+];
+
+const ACCEPTED_GENEROUS = [
+  "Accepted, easily.",
+  "More than fair, and it showed.",
+  "A generous offer, taken without a second thought.",
+];
+
+/** offerPct: A's offer as a percentage of the stake. accepted: whether B took it. */
+export function ultimatumTier(offerPct: number, accepted: boolean): string {
+  if (!accepted) return pick(REJECTED);
+  const pool = offerPct < 25 ? ACCEPTED_STINGY : offerPct < 45 ? ACCEPTED_FAIR : ACCEPTED_GENEROUS;
+  return pick(pool);
+}

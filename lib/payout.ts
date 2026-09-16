@@ -63,7 +63,7 @@ export const DAILY_CAP = Number(process.env.NIMLAB_DAILY_CAP_LUNA ?? 0) || 50_00
  * Why money is owed. Each pair of (session, reason) is paid at most once, since the
  * payout id is built from both.
  */
-export type PayoutReason = "keep" | "gift" | "trust-a" | "trust-b";
+export type PayoutReason = "keep" | "gift" | "trust-a" | "trust-b" | "ultimatum-a" | "ultimatum-b";
 
 export type Payout = {
   id: string;
@@ -182,6 +182,15 @@ export async function pending(): Promise<Payout[]> {
  */
 export async function trustOpen(pot: number): Promise<boolean> {
   return houseFunded(pot);
+}
+
+/**
+ * Ultimatum's worst case is one stake, not one stake tripled, accepted redistributes
+ * it between the two players and rejected pays nobody, nothing here ever creates
+ * money the way Trust's multiplier does.
+ */
+export async function ultimatumOpen(stake: number): Promise<boolean> {
+  return houseFunded(stake);
 }
 
 /**
