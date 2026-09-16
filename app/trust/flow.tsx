@@ -315,7 +315,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
           <div className="card">
             <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
             <p className="soft" style={{ marginTop: "0.5rem" }}>
-              Real money moves here, so it has to happen inside the wallet app.
+              Real NIM moves here, so it has to happen inside the wallet app.
             </p>
           </div>
         )}
@@ -462,7 +462,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
           // No figures here on purpose. B's whole screen is built around never
           // seeing the exact pot before deciding, this message reaches B before the
           // app even opens, so a NIM amount here would spoil it before it starts.
-          const text = `I just trusted a complete stranger with real money. It tripled in their hands, and now it's entirely up to them what comes back to me. ${link}`;
+          const text = `I just trusted a complete stranger with real NIM. It tripled in their hands, and now it's entirely up to them what comes back to me. ${link}`;
           if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
             try { await navigator.share({ text }); return; } catch { /* fall through */ }
           }

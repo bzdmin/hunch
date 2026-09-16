@@ -42,7 +42,7 @@ export default async function TrustPage() {
         <div className="card">
           <h2>Meanwhile</h2>
           <p className="soft" style={{ marginTop: "0.5rem" }}>
-            Split is live and runs on real money right now. One decision, one guess,
+            Split is live and runs on real NIM right now. One decision, one guess,
             about a minute.
           </p>
         </div>

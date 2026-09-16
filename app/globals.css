@@ -369,6 +369,26 @@ input[type="range"] {
 }
 .pick .meta span:not(:last-child)::after { content: "\00B7"; margin-left: 0.6rem; color: var(--line); }
 
+/* Split's second, fainter notation line, see app/page.tsx. Sits right under the
+   first line rather than adding its own paragraph gap. */
+.pick .metaphor.chain {
+  color: var(--ink-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+  margin: -0.35rem 0 0.55rem;
+}
+
+/* The compressed "how it works" loop on the home screen, one wrapping line
+   rather than a diagram, small enough to sit under the cards without reading
+   as a fourth section. */
+.flow-steps {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+.flow-steps span { color: var(--ink-faint); margin: 0 0.2rem; }
+
 .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
 .stats div { display: grid; gap: 0.1rem; }
 .stats .n {

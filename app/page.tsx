@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { NAME, STAKE_NIM, TRUST_STAKE_OPTIONS_NIM, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
-import { totalPlayers } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +10,7 @@ export const dynamic = "force-dynamic";
  *
  * Rebuilt as a picker: three peer cards, not one primary CTA with two links buried
  * inside a secondary card. That funnel shape made sense while Split was the only
- * thing reliably open, but all three run on real money now, and a home screen
+ * thing reliably open, but all three run on real NIM now, and a home screen
  * that visibly favours one undersells the other two before anyone has read a
  * word about them. Split still needs no partner and no waiting, that stays true
  * in its card's own meta line, it just no longer gets the only button on the page.
@@ -32,14 +31,21 @@ export const dynamic = "force-dynamic";
  * YOU -> THEM -> YOU, OFFER <-> ACCEPT. Each shape is recognisable before anyone
  * reads the paragraph under it, the three experiments should look different from
  * each other at a glance, not just read different once you commit to reading.
+ * Split gets a second, fainter line, YOU -> NEXT -> NEXT: unlike Trust and
+ * Ultimatum, Split's stake keeps moving after your round ends, see the About
+ * page. That is worth surfacing here, it is the one mechanic none of the other
+ * two has.
+ *
+ * The player-count stat is deliberately gone for now, not deleted, just not
+ * rendered. A true count under maybe a dozen makes the product look empty
+ * rather than alive, and undersells it more than omitting the number does.
+ * Bring totalPlayers() back here once that number is worth showing off.
  */
 function range(nums: number[]): string {
   return `${Math.min(...nums)}-${Math.max(...nums)} NIM`;
 }
 
-export default async function Home() {
-  const played = await totalPlayers();
-
+export default function Home() {
   return (
     <main className="screen">
       <p className="eyebrow">{NAME}</p>
@@ -57,9 +63,10 @@ export default async function Home() {
         <p className="eyebrow">Split</p>
         <h2>What would you keep?</h2>
         <p className="metaphor">KEEP &harr; GIVE</p>
+        <p className="metaphor chain">YOU &rarr; NEXT &rarr; NEXT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          You have {STAKE_NIM.toLocaleString()} NIM and one choice, how much of it
-          to pass to a stranger. Then find out what most people actually do.
+          You have {STAKE_NIM.toLocaleString()} NIM. How much will you pass to
+          the next person? Then see what people actually do.
         </p>
         <div className="meta">
           <span>Solo</span>
@@ -106,17 +113,28 @@ export default async function Home() {
         </div>
       </Link>
 
+      {/* The About page already explains this loop well, choose, guess, find out,
+          compare with research. Bringing a compressed version onto the home means
+          someone understands the shape of the product before ever tapping into it,
+          rather than only after tapping "What is Hunch?". */}
+      <div>
+        <p className="eyebrow">How it works</p>
+        <p className="flow-steps">
+          Make a choice <span>&rarr;</span> Predict <span>&rarr;</span> See what
+          happened <span>&rarr;</span> Compare with humans
+        </p>
+      </div>
+
       <div className="grow" />
 
-      {/* Big number, small label. Says what this is at a glance, without a paragraph. */}
       <div className="stats">
         <div>
-          <span className="n">{played}</span>
-          <span className="l">{played === 1 ? "person has played" : "people have played"}</span>
+          <span className="n">3</span>
+          <span className="l">experiments</span>
         </div>
         <div>
-          <span className="n">3</span>
-          <span className="l">experiments, real money</span>
+          <span className="n">2</span>
+          <span className="l">need a friend</span>
         </div>
         <div>
           <span className="n">60s</span>

@@ -467,7 +467,7 @@ function WalletNotice() {
     <div className="card">
       <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
       <p className="soft" style={{ marginTop: "0.5rem" }}>
-        Real money moves here, so it has to happen inside the wallet app. Open{" "}
+        Real NIM moves here, so it has to happen inside the wallet app. Open{" "}
         {NAME} from Nimiq Pay and you can pick up exactly where you are.
       </p>
       <p className="faint" style={{ marginTop: "0.6rem" }}>

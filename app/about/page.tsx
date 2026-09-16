@@ -28,7 +28,7 @@ export default function About() {
       <div className="card">
         <h2>How a round works</h2>
         <ol className="steps">
-          <li>You&rsquo;re holding an amount of real money.</li>
+          <li>You&rsquo;re holding an amount of real NIM.</li>
           <li>
             You choose how much to pass to the next stranger who plays. Keeping all
             of it is a real option.
@@ -42,7 +42,7 @@ export default function About() {
       </div>
 
       <div className="card">
-        <h2>The money is real, and it travels</h2>
+        <h2>The NIM is real, and it travels</h2>
         <p className="soft" style={{ marginTop: "0.5rem" }}>
           What you pass on becomes the next person&rsquo;s money to decide over. A
           chain moves from stranger to stranger, getting smaller each time, until

@@ -50,7 +50,7 @@ export default async function Landing({
         <>
           <h1>Someone wants to know what you&rsquo;d do.</h1>
           <p className="soft">
-            You&rsquo;ll be given a small sum of real money and one decision to make
+            You&rsquo;ll be given a small sum of real NIM and one decision to make
             about it. No trick, no catch, nothing to pay.
           </p>
         </>

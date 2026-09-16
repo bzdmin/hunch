@@ -305,7 +305,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
           <div className="card">
             <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
             <p className="soft" style={{ marginTop: "0.5rem" }}>
-              Real money moves here, so it has to happen inside the wallet app.
+              Real NIM moves here, so it has to happen inside the wallet app.
             </p>
           </div>
         )}
