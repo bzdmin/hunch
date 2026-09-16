@@ -107,12 +107,21 @@ export function trustMessage(a: {
             `They decide what comes back to you.`,
             `You expect ${nim(a.predict)} NIM.`,
           ]
-      : [
-          `You are holding ${nim(pot)} NIM.`,
-          `You send back ${nim(a.move)} NIM.`,
-          `You keep ${nim(pot - a.move)} NIM.`,
-          `You think they expected ${nim(a.predict)} NIM back.`,
-        ];
+      // B never sees the pot as a figure, not even here. The wallet dialog is the
+      // last screen before committing, so printing the NIM amount in it would undo
+      // the whole reason the decide screen hides it. Percentages describe B's
+      // decision completely, and B is allocating a windfall that was never theirs,
+      // so nothing of theirs is at risk in not seeing it. The full arithmetic
+      // arrives immediately afterwards, on the reveal.
+      : (() => {
+          const pct = (v: number) => `${Math.round((v / pot) * 100)}%`;
+          return [
+            `Someone trusted you with everything they had.`,
+            `You send back ${pct(a.move)} of it.`,
+            `You keep ${pct(pot - a.move)}.`,
+            `You think they expected ${pct(a.predict)} back.`,
+          ];
+        })();
 
   return [
     `${NAME} · Trust`,

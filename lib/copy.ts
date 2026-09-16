@@ -27,16 +27,18 @@ function pick(pool: string[]): string {
 const ICE_COLD = [
   "Ice cold.",
   "Not a single luna came back.",
-  "Kept the lot.",
-  "Held on tight.",
-  "Nothing made the return trip.",
+  "This is the version where trust dies.",
+  "They gambled on a stranger. The stranger was you.",
+  "Kept the lot. Every last bit of it.",
+  "Somewhere, a behavioural economist is nodding grimly.",
 ];
 
 const KEPT_TIGHT = [
   "Kept it tight.",
-  "Played it close to the chest.",
   "A token gesture, at best.",
-  "Barely loosened the grip.",
+  "Technically, something came back.",
+  "Just enough to not be nothing.",
+  "They trusted you with everything. You returned a rounding error.",
 ];
 
 const FAIR_SPLIT = [

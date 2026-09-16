@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
-import { nim, LUNA, ref as makeRef, trustMessage } from "@/lib/message";
+import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
 import { trustReturnTier } from "@/lib/copy";
 import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
@@ -34,8 +34,13 @@ export default function Respond({
 
   const [inWallet, setInWallet] = useState(false);
   const [stage, setStage] = useState<"decide" | "predict" | "working" | "done">("decide");
-  const [give, setGive] = useState(0);
-  const [predict, setPredict] = useState(0);
+
+  // Held as percentages because that is all B ever sees. The luna figures are
+  // derived only at commit time, so the two can never drift apart on screen.
+  const [givePct, setGivePct] = useState(0);
+  const [predictPct, setPredictPct] = useState(0);
+  const give = Math.round((givePct / 100) * pot);
+  const predict = Math.round((predictPct / 100) * pot);
   const [err, setErr] = useState("");
   const [reveal, setReveal] = useState<Reveal | null>(null);
 
@@ -120,18 +125,36 @@ export default function Respond({
       <>
         <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
 
+        {/* Everything B was not shown while deciding arrives here, all at once and
+            in full. The decision is made on feel; the consequence is spelled out in
+            real numbers afterwards. */}
+        <div className="verdict">
+          <p className="soft" style={{ marginBottom: "0.35rem" }}>
+            They had {nim(stake)} NIM and could have kept it. Handing it over
+            tripled it to {nim(pot)} NIM in your hands.
+          </p>
+          <p>
+            You kept <span className="hl">{nim(pot - give)} NIM</span> and sent back{" "}
+            {nim(give)} NIM.{" "}
+            {reveal.payoff.a > stake
+              ? `They came out ${nim(reveal.payoff.a - stake)} NIM ahead.`
+              : reveal.payoff.a === stake
+                ? "They broke even."
+                : `They lost ${nim(stake - reveal.payoff.a)} NIM by trusting you.`}
+          </p>
+        </div>
+
         <div className="verdict">
           <p className="soft" style={{ marginBottom: "0.35rem" }}>
             You guessed they expected {nim(predict)} NIM back. They actually hoped
             for {nim(expected)} NIM, {guessLine}
           </p>
           <p>
-            You sent <span className="hl">{nim(give)} NIM</span>.{" "}
             {Math.abs(gap) < stake * 0.05
-              ? "Almost exactly what they hoped for."
+              ? "You landed almost exactly where they hoped."
               : gap > 0
-                ? "More than they dared expect."
-                : "Less than they were hoping for."}
+                ? "You sent more than they dared expect."
+                : "You sent less than they were hoping for."}
           </p>
         </div>
 
@@ -146,14 +169,6 @@ export default function Respond({
               <span className="v">{nim(reveal.payoff.b)} NIM</span>
             </div>
           </div>
-          <p className="faint" style={{ marginTop: "0.6rem" }}>
-            They started with {nim(stake)} NIM and gave it up.{" "}
-            {reveal.payoff.a > stake
-              ? "Trusting you paid off."
-              : reveal.payoff.a === stake
-                ? "They broke even."
-                : `They ended ${nim(stake - reveal.payoff.a)} NIM down.`}
-          </p>
         </div>
 
         {/* Computed, not a static quote, and it appears only after they have
@@ -190,7 +205,7 @@ export default function Respond({
       <>
         <div className="locked">
           <span className="k">Your answer, locked</span>
-          <span className="v">You send back {nim(give)} NIM</span>
+          <span className="v">You send back {givePct}%</span>
         </div>
 
         <h2>Before you find out, what were they hoping for?</h2>
@@ -203,31 +218,30 @@ export default function Respond({
           <p className="soft" style={{ marginBottom: "0.4rem" }}>
             I think they expected&hellip;
           </p>
-          <div className="amount">{nim(predict)}<small>NIM</small></div>
+          <div className="amount">{predictPct}<small>% back</small></div>
           <input
-            type="range" min={0} max={pot} step={1} value={predict}
-            onChange={(e) => setPredict(Number(e.target.value))}
+            type="range" min={0} max={100} step={1} value={predictPct}
+            onChange={(e) => setPredictPct(Number(e.target.value))}
             disabled={busy}
-            aria-label="What you think they expected back"
+            aria-label="What share you think they expected back"
           />
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
             <input
-              type="number" inputMode="decimal" min={0} max={pot / LUNA} step={0.01}
-              value={(predict / LUNA).toFixed(2)}
+              type="number" inputMode="numeric" min={0} max={100} step={1}
+              value={predictPct}
               onChange={(e) => {
                 const n = Number(e.target.value);
-                const luna = Math.round((Number.isFinite(n) ? n : 0) * LUNA);
-                setPredict(Math.min(pot, Math.max(0, luna)));
+                setPredictPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
               }}
               disabled={busy}
-              aria-label="Type an exact amount"
+              aria-label="Type an exact share"
               style={{
                 flex: 1, background: "var(--paper)", color: "var(--ink)",
                 border: "2px solid var(--ink)", borderRadius: "8px",
                 padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
               }}
             />
-            <span className="faint">NIM</span>
+            <span className="faint">%</span>
           </div>
         </div>
 
@@ -250,46 +264,49 @@ export default function Respond({
         <div className="split-readout">
           <div>
             <span className="k">You keep</span>
-            <span className="v">{nim(pot - give)} NIM</span>
+            <span className="v">{100 - givePct}%</span>
           </div>
           <div className="right">
             <span className="k">You send back</span>
-            <span className="v">{nim(give)} NIM</span>
+            <span className="v">{givePct}%</span>
           </div>
         </div>
         <input
-          type="range" min={0} max={pot} step={1} value={give}
-          onChange={(e) => setGive(Number(e.target.value))}
-          aria-label="How much to send back"
+          type="range" min={0} max={100} step={1} value={givePct}
+          onChange={(e) => setGivePct(Number(e.target.value))}
+          aria-label="What share to send back"
         />
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
           <input
-            type="number" inputMode="decimal" min={0} max={pot / LUNA} step={0.01}
-            value={(give / LUNA).toFixed(2)}
+            type="number" inputMode="numeric" min={0} max={100} step={1}
+            value={givePct}
             onChange={(e) => {
               const n = Number(e.target.value);
-              const luna = Math.round((Number.isFinite(n) ? n : 0) * LUNA);
-              setGive(Math.min(pot, Math.max(0, luna)));
+              setGivePct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
             }}
-            aria-label="Type an exact amount"
+            aria-label="Type an exact share"
             style={{
               flex: 1, background: "var(--paper)", color: "var(--ink)",
               border: "2px solid var(--ink)", borderRadius: "8px",
               padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
             }}
           />
-          <span className="faint">NIM</span>
+          <span className="faint">%</span>
         </div>
         <div className="ends">
           <span>&larr; Keep it all</span>
           <span>Send it all &rarr;</span>
         </div>
+        {/* Says what the choice does to them without naming an amount. A third of
+            the pot is exactly what they handed over, so that is the break-even line. */}
         <p className="faint" style={{ marginTop: "0.5rem" }}>
-          {give === 0
+          {givePct === 0
             ? "They get nothing back. That is allowed."
-            : give < stake
-              ? `They gave up ${nim(stake)} NIM, so this leaves them down.`
-              : `More than they gave up, they come out ahead.`}
+            : givePct < 33
+              ? "They end up worse off than if they had never trusted you."
+              : givePct < 34
+                ? "That is roughly what they handed over. They break even."
+                : "More than they handed over. They come out ahead."}
         </p>
       </div>
 
