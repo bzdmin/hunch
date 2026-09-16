@@ -5,6 +5,7 @@ import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
+import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 
 type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable";
 type Round = { id: string; stake: number; multiplier: number };
@@ -40,6 +41,9 @@ export default function Flow({ example }: { example: WorkedExample }) {
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [gaveAway, setGaveAway] = useState(false);
+  // Set at commit time, or restored from a resumed round, since the "sent"
+  // screen can render without predictPct ever having been touched this session.
+  const [sentPredict, setSentPredict] = useState(0);
 
   const [hasWallet, setHasWallet] = useState<boolean | null>(null);
   useEffect(() => {
@@ -62,6 +66,32 @@ export default function Flow({ example }: { example: WorkedExample }) {
   useEffect(() => {
     let dead = false;
     (async () => {
+      // A round this browser already committed to and never finished sharing
+      // beats minting a new one, see lib/resume.ts. Confirmed against the
+      // server, not just trusted, in case it was answered or expired since.
+      // Only the "handed over" path is ever cached, "kept" ends with no
+      // link, so a resumed round is always the gaveAway one.
+      const cached = loadOpenRound<{ stake: number; multiplier: number; predict: number }>("trust");
+      if (cached) {
+        try {
+          const got = await fetch(`/api/pair?id=${cached.id}`);
+          const info = await got.json();
+          if (got.ok && info.waitingOn === "b") {
+            if (!dead) {
+              setRound({ id: cached.id, stake: info.stake, multiplier: info.multiplier });
+              setSentPredict(cached.predict);
+              setGaveAway(true);
+              setLink(cached.link);
+              setStage("sent");
+            }
+            return;
+          }
+        } catch {
+          // fall through to starting a fresh round
+        }
+        clearOpenRound("trust");
+      }
+
       try {
         const res = await fetch("/api/pair", {
           method: "POST",
@@ -110,8 +140,14 @@ export default function Flow({ example }: { example: WorkedExample }) {
       if (move === 0) {
         setStage("kept");
       } else {
+        const shareLink = `${window.location.origin}/t/${round.id}`;
         setGaveAway(true);
-        setLink(`${window.location.origin}/t/${round.id}`);
+        setSentPredict(predict);
+        setLink(shareLink);
+        saveOpenRound("trust", {
+          id: round.id, link: shareLink, at: Date.now(),
+          stake: round.stake, multiplier: round.multiplier, predict,
+        });
         setStage("sent");
       }
     } catch (e) {
@@ -342,7 +378,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
 
       <div className="card">
         <span className="k">You expect back</span>
-        <div className="amount">{nim(predict)}<small>NIM</small></div>
+        <div className="amount">{nim(sentPredict)}<small>NIM</small></div>
       </div>
 
       <div className="grow" />
