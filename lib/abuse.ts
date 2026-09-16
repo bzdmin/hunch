@@ -25,8 +25,8 @@ import type { Pair } from "./pair";
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 const PAIRS = "pairs";
 
-export const KEY_DAILY_ROUNDS = Number(process.env.NIMLAB_KEY_DAILY_ROUNDS ?? 0) || 6;
-export const DEVICE_DAILY_ROUNDS = Number(process.env.NIMLAB_DEVICE_DAILY_ROUNDS ?? 0) || 6;
+export const KEY_DAILY_ROUNDS = Number(process.env.NIMLAB_KEY_DAILY_ROUNDS ?? 0) || 3;
+export const DEVICE_DAILY_ROUNDS = Number(process.env.NIMLAB_DEVICE_DAILY_ROUNDS ?? 0) || 3;
 
 async function houseSidesSince(since: number): Promise<{ publicKey: string; deviceId: string | null }[]> {
   const rows = await db().all(PAIRS);
@@ -68,4 +68,34 @@ export async function tooManyRounds(
   }
 
   return null;
+}
+
+/**
+ * Collusion between two real, separate devices is invisible to a per-identity
+ * count: both parties are genuine, each is under their own limit, and only the
+ * PAIR looks wrong. Counting harder never catches this, the fix has to look at
+ * the relationship between two identities instead of either one alone, same
+ * principle behind Gitcoin's pairwise/COCM matching for quadratic funding.
+ *
+ * Nimiq addresses, not signing keys: a signing key is free to regenerate, the
+ * payout address is where the money actually has to land, and the whole point
+ * of collusion is landing money somewhere specific. Order-independent, A and B
+ * on a repeat round could be either way around.
+ */
+function pairKey(x: string, y: string): string {
+  return [x, y].sort().join("::");
+}
+
+export async function alreadyPairedForHouseMoney(
+  payToA: string,
+  payToB: string,
+): Promise<boolean> {
+  const rows = await db().all(PAIRS);
+  const key = pairKey(payToA, payToB);
+  for (const r of rows) {
+    const p = r.data as Pair;
+    if (p.mode !== "house" || p.status !== "revealed" || !p.a || !p.b) continue;
+    if (pairKey(p.a.payTo, p.b.payTo) === key) return true;
+  }
+  return false;
 }

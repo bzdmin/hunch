@@ -6,7 +6,7 @@ import {
   getPair, putPair, redact, payoff,
   type Pair, type PairExperiment, type Side,
 } from "@/lib/pair";
-import { tooManyRounds } from "@/lib/abuse";
+import { tooManyRounds, alreadyPairedForHouseMoney } from "@/lib/abuse";
 
 export const dynamic = "force-dynamic";
 
@@ -150,6 +150,22 @@ export async function PUT(req: Request) {
   if (p.mode === "house") {
     const blocked = await tooManyRounds(publicKey, deviceId);
     if (blocked) return NextResponse.json({ error: blocked }, { status: 429 });
+
+    // Only checkable once B's payout address is known, which is now. Two real
+    // devices, each honestly under their own cap, can still be one person, or
+    // two people splitting a repeated house-funded outcome between themselves.
+    if (seat === "b" && p.a) {
+      const paired = await alreadyPairedForHouseMoney(p.a.payTo, payTo);
+      if (paired) {
+        return NextResponse.json(
+          {
+            error: "You two have already played a house-funded round together. " +
+              "Try Split instead, or find someone new.",
+          },
+          { status: 409 },
+        );
+      }
+    }
   }
 
   const pot = p.stake * p.multiplier;
