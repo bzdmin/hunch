@@ -109,8 +109,8 @@ export default function Flow({ stake, multiplier }: { stake: number; multiplier:
             </div>
           </div>
           <p className="faint" style={{ marginTop: "0.6rem" }}>
-            Handing over is all or nothing, that&rsquo;s what makes it a test
-            of trust rather than a hedge.
+            Handing over is all or nothing, which is what makes it a test
+            of trust and not a hedge.
           </p>
         </div>
 
