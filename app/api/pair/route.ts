@@ -117,6 +117,16 @@ export async function PUT(req: Request) {
   if (!id || !message || !publicKey || !signature || !payTo || !ref) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
+  // TODO(security): signature is required to be present and the message it
+  // claims to describe is checked word for word, but the signature itself is
+  // never checked cryptographically against publicKey. @nimiq/core's
+  // PublicKey.verify(signature, data) can do this, but Nimiq Pay's wallet
+  // likely applies its own prefix before hashing the message, same reason
+  // most chains do, guessing that wrong would reject every genuine signed
+  // round in production with no way to notice until a real phone confirms it
+  // first. Until this lands, publicKey is a claimed identity, not a proven
+  // one, which is exactly why lib/abuse.ts requires deviceId outright for
+  // house money rather than trusting publicKey alone.
   // Metadata only, never trusted for identity, so a malformed value is simply
   // dropped rather than rejected. See Side.deviceId in lib/pair.ts.
   const deviceId = typeof body.deviceId === "string" && /^[0-9a-f]{64}$/i.test(body.deviceId)
