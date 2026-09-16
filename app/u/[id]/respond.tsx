@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
-import { ultimatumTier } from "@/lib/copy";
+import { ultimatumTier, guessAccuracyClause } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
@@ -119,14 +119,6 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
     const accepted = reveal.payoff.note === "accepted";
     const aGuessedThreshold = reveal.a?.predict ?? 0;
 
-    const guessGapPts = Math.abs(guessPct - offerPct);
-    const guessLine =
-      guessGapPts <= 3 ? "and you read them almost exactly right."
-      : guessGapPts <= 10 ? "you were pretty close."
-      : guessGapPts <= 25 ? "not far off, but not close either."
-      : guessPct > offerPct ? "but they actually offered a lot less than you thought."
-      : "but they actually offered a lot more than you thought.";
-
     return (
       <>
         <div className="card"><h2>{ultimatumTier(offerPct, accepted)}</h2></div>
@@ -134,7 +126,7 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
         <div className="card">
           <p className="soft" style={{ marginBottom: "0.75rem" }}>
             They had {nim(stake)} NIM and offered you {nim(reveal.a!.move)} NIM,{" "}
-            {offerPct}% of it. Your line was {thresholdPct}%.
+            {offerPct}% of it, and the least you said you&rsquo;d accept was {thresholdPct}%.
           </p>
           <div className="split-readout">
             <div>
@@ -148,20 +140,21 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
           </div>
           <p className="faint" style={{ marginTop: "0.6rem" }}>
             {accepted
-              ? "Their offer cleared your line, so the deal went through."
-              : "Their offer fell short of your line, so neither of you gets anything."}
+              ? "Their offer cleared what you said you'd accept, so the deal went through."
+              : "Their offer fell short of what you said you'd accept, so neither of you gets anything."}
           </p>
         </div>
 
         <p className="note">
           You guessed they&rsquo;d offer <span className="hl">{guessPct}%</span>,
-          they actually offered {offerPct}%, {guessLine} They guessed your line was{" "}
-          {aGuessedThreshold}%, yours was {thresholdPct}%.
+          but they offered {offerPct}%, which was {guessAccuracyClause(guessPct, offerPct)}.
+          They guessed the least you&rsquo;d accept was {aGuessedThreshold}%, yours was{" "}
+          {thresholdPct}%.
           <br />
           <span style={{ opacity: 0.7 }}>
-            The Ultimatum Game, one of the most replicated findings in behavioural
-            economics: people routinely refuse offers they see as unfair, even
-            though refusing costs them money too.
+            The Ultimatum Game is one of the most replicated findings in
+            behavioural economics that shows people routinely refuse offers
+            they see as unfair, even though refusing costs them money too.
           </span>
         </p>
 

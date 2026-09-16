@@ -3,12 +3,19 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
-import { trustOpeningTier } from "@/lib/copy";
+import { trustOpeningTier, trustReturnTier, guessAccuracyClause } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 
-type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable";
+type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable" | "resolved";
 type Round = { id: string; stake: number; multiplier: number };
+type Resolved = {
+  stake: number;
+  pot: number;
+  predict: number;
+  returned: number;
+  payoff: { a: number; b: number; note: string };
+};
 
 /**
  * The first player's turn.
@@ -44,6 +51,11 @@ export default function Flow({ example }: { example: WorkedExample }) {
   // Set at commit time, or restored from a resumed round, since the "sent"
   // screen can render without predictPct ever having been touched this session.
   const [sentPredict, setSentPredict] = useState(0);
+  // A's own view of the outcome once B has answered, found on revisiting this
+  // page with an open round cached, see lib/resume.ts. There was previously
+  // no way for A to ever find this out at all, unlike B, who gets it inline
+  // as the response to their own commit.
+  const [resolved, setResolved] = useState<Resolved | null>(null);
 
   const [hasWallet, setHasWallet] = useState<boolean | null>(null);
   useEffect(() => {
@@ -83,6 +95,22 @@ export default function Flow({ example }: { example: WorkedExample }) {
               setGaveAway(true);
               setLink(cached.link);
               setStage("sent");
+            }
+            return;
+          }
+          // Answered since. Shown once, then forgotten: the cache's job was
+          // getting A back to a round in progress, not keeping history.
+          if (got.ok && info.status === "revealed" && info.a && info.b && info.payoff) {
+            clearOpenRound("trust");
+            if (!dead) {
+              setResolved({
+                stake: info.stake,
+                pot: info.stake * info.multiplier,
+                predict: info.a.predict,
+                returned: info.b.move,
+                payoff: info.payoff,
+              });
+              setStage("resolved");
             }
             return;
           }
@@ -162,6 +190,53 @@ export default function Flow({ example }: { example: WorkedExample }) {
       <main className="screen">
         <p className="eyebrow">{NAME} · Trust</p>
         <h1>Setting up your round&hellip;</h1>
+      </main>
+    );
+  }
+
+  // ---------------------------------------------------------------- resolved
+  // A finding out what happened, whenever they come back to it. Does not need
+  // round, this can render even though the fresh-round effect above never ran.
+  if (stage === "resolved" && resolved) {
+    const sharePct = Math.round((resolved.returned / resolved.pot) * 100);
+    const predictPct = Math.round((resolved.predict / resolved.pot) * 100);
+    return (
+      <main className="screen">
+        <p className="eyebrow">{NAME} · Trust</p>
+        <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
+
+        <div className="card">
+          <p className="soft" style={{ marginBottom: "0.75rem" }}>
+            You handed over {nim(resolved.stake)} NIM, and it became{" "}
+            {nim(resolved.pot)} NIM in their hands.
+          </p>
+          <div className="split-readout">
+            <div>
+              <span className="k">You end with</span>
+              <span className="v">{nim(resolved.payoff.a)} NIM</span>
+            </div>
+            <div className="right">
+              <span className="k">They end with</span>
+              <span className="v">{nim(resolved.payoff.b)} NIM</span>
+            </div>
+          </div>
+          <p className="faint" style={{ marginTop: "0.6rem" }}>
+            {resolved.payoff.a > resolved.stake
+              ? `Trusting them paid off, you came out ${nim(resolved.payoff.a - resolved.stake)} NIM ahead.`
+              : resolved.payoff.a === resolved.stake
+                ? "You broke even."
+                : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
+          </p>
+        </div>
+
+        <p className="note">
+          You expected {nim(resolved.predict)} NIM back, but they sent back{" "}
+          {nim(resolved.returned)} NIM, which was{" "}
+          {guessAccuracyClause(predictPct, sharePct)}.
+        </p>
+
+        <div className="grow" />
+        <a className="btn" href="/trust">Play again</a>
       </main>
     );
   }

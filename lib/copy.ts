@@ -126,3 +126,22 @@ export function ultimatumTier(offerPct: number, accepted: boolean): string {
   const pool = offerPct < 25 ? ACCEPTED_STINGY : offerPct < 45 ? ACCEPTED_FAIR : ACCEPTED_GENEROUS;
   return pick(pool);
 }
+
+// ------------------------------------------------------ guess-accuracy clause
+
+/**
+ * How close a percent guess landed against what actually happened, worded to
+ * finish a sentence like "...but they offered 10%, which was {clause}."
+ * Shared between Trust and Ultimatum's reveal screens, both compare one
+ * player's guess of a percentage against the other player's real one, and
+ * used to be two separate, near-identical tiered ladders that had drifted
+ * into stitching together short, choppy sentence fragments instead of one
+ * sentence a person would actually say.
+ */
+export function guessAccuracyClause(guessPct: number, actualPct: number): string {
+  const gap = Math.abs(guessPct - actualPct);
+  if (gap <= 3) return "almost exactly what you guessed";
+  if (gap <= 10) return "pretty close to your guess";
+  if (gap <= 25) return "not far off, but not exactly what you guessed either";
+  return actualPct < guessPct ? "a lot less than you thought" : "a lot more than you thought";
+}

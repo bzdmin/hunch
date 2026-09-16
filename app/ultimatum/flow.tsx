@@ -3,11 +3,20 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
+import { ultimatumTier, guessAccuracyClause } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 
-type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "sent";
+type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "sent" | "resolved";
 type Round = { id: string; stake: number };
+type Resolved = {
+  offer: number;
+  offerPct: number;
+  stake: number;
+  theirThreshold: number;
+  yourGuess: number;
+  payoff: { a: number; b: number; note: string };
+};
 
 /**
  * The first player's turn: make an offer, then guess the least the other person
@@ -36,6 +45,11 @@ export default function Flow({ example }: { example: WorkedExample }) {
   // Set at commit time, or restored from a resumed round, since the "sent"
   // screen can render without offerPct ever having been touched this session.
   const [sentOffer, setSentOffer] = useState(0);
+  // A's own view of the outcome once B has answered, found on revisiting this
+  // page with an open round cached, see lib/resume.ts. There was previously
+  // no way for A to ever find this out at all, unlike B, who gets it inline
+  // as the response to their own commit.
+  const [resolved, setResolved] = useState<Resolved | null>(null);
 
   const [hasWallet, setHasWallet] = useState<boolean | null>(null);
   useEffect(() => {
@@ -75,6 +89,23 @@ export default function Flow({ example }: { example: WorkedExample }) {
             }
             return;
           }
+          // Answered since. Shown once, then forgotten: the cache's job was
+          // getting A back to a round in progress, not keeping history.
+          if (got.ok && info.status === "revealed" && info.a && info.b && info.payoff) {
+            clearOpenRound("ultimatum");
+            if (!dead) {
+              setResolved({
+                offer: info.a.move,
+                offerPct: Math.round((info.a.move / info.stake) * 100),
+                stake: info.stake,
+                theirThreshold: info.b.move,
+                yourGuess: info.a.predict,
+                payoff: info.payoff,
+              });
+              setStage("resolved");
+            }
+            return;
+          }
         } catch {
           // fall through to starting a fresh round
         }
@@ -102,6 +133,51 @@ export default function Flow({ example }: { example: WorkedExample }) {
       <main className="screen">
         <p className="eyebrow">{NAME} · Ultimatum</p>
         <h1>Setting up your round&hellip;</h1>
+      </main>
+    );
+  }
+
+  // ---------------------------------------------------------------- resolved
+  // A finding out what happened, whenever they come back to it. Does not need
+  // round, this can render even though the fresh-round effect above never ran.
+  if (stage === "resolved" && resolved) {
+    const accepted = resolved.payoff.note === "accepted";
+    return (
+      <main className="screen">
+        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <div className="card"><h2>{ultimatumTier(resolved.offerPct, accepted)}</h2></div>
+
+        <div className="card">
+          <p className="soft" style={{ marginBottom: "0.75rem" }}>
+            You offered {nim(resolved.offer)} NIM of the {nim(resolved.stake)} NIM you
+            had, {resolved.offerPct}% of it, and the least they said they&rsquo;d
+            accept was {resolved.theirThreshold}%.
+          </p>
+          <div className="split-readout">
+            <div>
+              <span className="k">You end with</span>
+              <span className="v">{nim(resolved.payoff.a)} NIM</span>
+            </div>
+            <div className="right">
+              <span className="k">They end with</span>
+              <span className="v">{nim(resolved.payoff.b)} NIM</span>
+            </div>
+          </div>
+          <p className="faint" style={{ marginTop: "0.6rem" }}>
+            {accepted
+              ? "Your offer cleared what they said they'd accept, so the deal went through."
+              : "Your offer fell short of what they said they'd accept, so neither of you got anything."}
+          </p>
+        </div>
+
+        <p className="note">
+          You guessed they&rsquo;d accept anything above {resolved.yourGuess}%, but
+          the least they&rsquo;d take was {resolved.theirThreshold}%, which was{" "}
+          {guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold)}.
+        </p>
+
+        <div className="grow" />
+        <a className="btn" href="/ultimatum">Play again</a>
       </main>
     );
   }

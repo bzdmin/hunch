@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
-import { trustReturnTier } from "@/lib/copy";
+import { trustReturnTier, guessAccuracyClause } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
@@ -123,17 +123,6 @@ export default function Respond({
     // a flat right-or-wrong: how close you were matters, not just whether you nailed
     // the exact number.
     const expectedPct = Math.round((expected / pot) * 100);
-    const guessGapPts = Math.abs(predictPct - expectedPct);
-    const guessLine =
-      guessGapPts <= 3
-        ? "and you read them almost exactly right."
-        : guessGapPts <= 10
-          ? "you were pretty close."
-          : guessGapPts <= 25
-            ? "not far off, but not close either."
-            : predictPct > expectedPct
-              ? "but they actually expected a lot less than you thought."
-              : "but they actually expected a lot more than you thought.";
 
     const gapPct = sharePct - TRUST_RETURNED_SHARE.value;
     const vsStudy =
@@ -177,7 +166,8 @@ export default function Respond({
 
         <p className="note">
           You guessed <span className="hl">{predictPct}%</span> would come back,
-          they actually hoped for {expectedPct}%, {guessLine} You sent back{" "}
+          but they actually hoped for {expectedPct}%, which was{" "}
+          {guessAccuracyClause(predictPct, expectedPct)}. You sent back{" "}
           {sharePct}% of the pot, {vsStudy}, {TRUST_RETURNED_SHARE.value}%.
           <br />
           <span style={{ opacity: 0.7 }}>{TRUST_RETURNED_SHARE.source}</span>
