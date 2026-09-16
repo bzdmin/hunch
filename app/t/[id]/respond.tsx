@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
+import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
 import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
@@ -138,13 +139,28 @@ export default function Respond({
           </p>
         </div>
 
-        <p className="note">
-          In the study this comes from, people handed over about half of what they had
-          and got back slightly less than they sent, and almost everyone handed
-          something over anyway.
-          <br />
-          <span style={{ opacity: 0.7 }}>Berg, Dickhaut &amp; McCabe 1995</span>
-        </p>
+        {/* Computed, not a static quote, and it appears only after they have
+            confirmed their own choice. Same reasoning as Split's scored prediction:
+            printing the benchmark before someone acts turns the question into
+            something to answer correctly rather than something to actually decide. */}
+        {(() => {
+          const actualPct = Math.round((give / pot) * 100);
+          const gapPct = actualPct - TRUST_RETURNED_SHARE.value;
+          const verdict =
+            Math.abs(gapPct) <= 3
+              ? <>You sent back <span className="hl">{actualPct}%</span> of the pot, about the same as the study average.</>
+              : gapPct < 0
+                ? <>You sent back <span className="hl">{actualPct}%</span> of the pot, less generous than the study average.</>
+                : <>You sent back <span className="hl">{actualPct}%</span> of the pot, more generous than the study average.</>;
+          return (
+            <p className="note">
+              {verdict} People in the original study returned about{" "}
+              {TRUST_RETURNED_SHARE.value}% of what they held.
+              <br />
+              <span style={{ opacity: 0.7 }}>{TRUST_RETURNED_SHARE.source}</span>
+            </p>
+          );
+        })()}
 
         <a className="btn" href="/trust">Now try it yourself</a>
       </>

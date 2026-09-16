@@ -56,15 +56,16 @@ export default async function TrustLanding({
         </>
       ) : (
         <>
-          <h1>
-            Someone handed you {nim(pair.stake)} NIM. It&rsquo;s now{" "}
-            <span className="hl">{nim(pot)} NIM</span>.
-          </h1>
+          {/* Deliberately no NIM figures here. Leading with the tripled total turns
+              this into a math problem, how much of a big number do I keep, before the
+              person has even weighed the fact that a stranger trusted them with
+              everything. The pot size only appears later, on the decide card, where
+              it is functionally needed to set an amount. Same anchor fix as Split. */}
+          <h1>A stranger just trusted you with everything they had.</h1>
           <p className="soft">
-            A stranger had {nim(pair.stake)} NIM and could have kept it. They gave it
-            away instead, which tripled it, and now you&rsquo;re holding all of
-            it. How much goes back to them is entirely your call. Keeping the lot
-            costs you nothing.
+            They could have kept it. They handed it to you instead, and it grew
+            because of that. How much comes back to them is entirely your call, and
+            keeping all of it costs you nothing.
           </p>
         </>
       )}
