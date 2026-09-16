@@ -51,6 +51,29 @@ export async function firstAddress(): Promise<string> {
   return list[0];
 }
 
+/**
+ * A pseudonymous, per-origin device identifier from Nimiq Pay, used only to slow
+ * down one device farming the house wallet with a stream of fresh keypairs. A
+ * signing key is free to generate, a device is not, which is the whole point.
+ *
+ * Never blocks play on failure. This is defense in depth on top of the daily cap,
+ * not a requirement, so a rejection, an older Nimiq Pay build without the API, or
+ * running outside Nimiq Pay entirely all fall back to null and the round proceeds.
+ * Cached for the page session so the one-time consent prompt only fires once.
+ */
+let deviceCache: string | null | undefined;
+
+export async function deviceId(reason: string): Promise<string | null> {
+  if (deviceCache !== undefined) return deviceCache;
+  try {
+    const mod = await import("@nimiq/mini-app-sdk");
+    deviceCache = await mod.requestDeviceIdentifier({ reason });
+  } catch {
+    deviceCache = null;
+  }
+  return deviceCache;
+}
+
 export function isRejection(e: unknown): boolean {
   const m = e instanceof Error ? e.message : String(e);
   return /reject|denied|cancel/i.test(m);

@@ -43,6 +43,14 @@ export type Side = {
   /** payout target, safe to take from listAccounts(), unlike identity */
   payTo: string;
   /**
+   * Nimiq Pay's per-origin device identifier, or null when unavailable (denied,
+   * outside Nimiq Pay, older client). Anti-abuse metadata only, never part of the
+   * signed commitment, same treatment as Commit.anchor in lib/store.ts, a lying
+   * or absent value only weakens that device's own cap, it cannot forge someone
+   * else's identity or move money.
+   */
+  deviceId: string | null;
+  /**
    * The player's move. Meaning depends on the experiment:
    *   trust     · A: luna handed over (0 or the stake). B: luna returned of the tripled pot.
    *   ultimatum · A: luna offered to B. B: the minimum they will accept.

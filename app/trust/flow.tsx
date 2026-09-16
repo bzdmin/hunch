@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier } from "@/lib/copy";
-import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
+import { wallet, firstAddress, readable, available, deviceId } from "@/lib/nimiq";
 
 type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable";
 type Round = { id: string; stake: number; multiplier: number };
@@ -91,12 +91,13 @@ export default function Flow({ example }: { example: WorkedExample }) {
         move, predict, ref,
       });
       const { publicKey, signature } = await w.sign(message);
+      const device = await deviceId("Limit how many house-funded rounds one device can play per day");
 
       const res = await fetch("/api/pair", {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          id: round.id, move, predict, ref, message, publicKey, signature, payTo,
+          id: round.id, move, predict, ref, message, publicKey, signature, payTo, deviceId: device,
         }),
       });
       const out = await res.json();

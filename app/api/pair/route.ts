@@ -6,6 +6,7 @@ import {
   getPair, putPair, redact, payoff,
   type Pair, type PairExperiment, type Side,
 } from "@/lib/pair";
+import { tooManyRounds } from "@/lib/abuse";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,7 @@ export async function PUT(req: Request) {
     publicKey?: string;
     signature?: string;
     payTo?: string;
+    deviceId?: string | null;
   };
 
   try {
@@ -115,6 +117,11 @@ export async function PUT(req: Request) {
   if (!id || !message || !publicKey || !signature || !payTo || !ref) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
+  // Metadata only, never trusted for identity, so a malformed value is simply
+  // dropped rather than rejected. See Side.deviceId in lib/pair.ts.
+  const deviceId = typeof body.deviceId === "string" && /^[0-9a-f]{64}$/i.test(body.deviceId)
+    ? body.deviceId
+    : null;
   if (!/^[0-9a-z]{1,32}$/i.test(ref)) {
     return NextResponse.json({ error: "bad ref" }, { status: 400 });
   }
@@ -136,6 +143,13 @@ export async function PUT(req: Request) {
       { error: "You started this round, so someone else has to answer it." },
       { status: 409 },
     );
+  }
+
+  // House money only. Self mode costs the house nothing, so there is nothing to
+  // farm and nothing to gate here.
+  if (p.mode === "house") {
+    const blocked = await tooManyRounds(publicKey, deviceId);
+    if (blocked) return NextResponse.json({ error: blocked }, { status: 429 });
   }
 
   const pot = p.stake * p.multiplier;
@@ -187,7 +201,7 @@ export async function PUT(req: Request) {
     );
   }
 
-  const side: Side = { publicKey, signature, message, payTo, move: m, predict: guess, at: Date.now() };
+  const side: Side = { publicKey, signature, message, payTo, deviceId, move: m, predict: guess, at: Date.now() };
 
   if (seat === "a") {
     p.a = side;

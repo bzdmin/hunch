@@ -5,7 +5,7 @@ import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
 import { trustReturnTier } from "@/lib/copy";
-import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
+import { wallet, firstAddress, readable, available, deviceId } from "@/lib/nimiq";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -67,11 +67,14 @@ export default function Respond({
         seat: "b", pairId: id, stake, multiplier, move: give, predict, ref,
       });
       const { publicKey, signature } = await w.sign(message);
+      const device = await deviceId("Limit how many house-funded rounds one device can play per day");
 
       const res = await fetch("/api/pair", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, move: give, predict, ref, message, publicKey, signature, payTo }),
+        body: JSON.stringify({
+          id, move: give, predict, ref, message, publicKey, signature, payTo, deviceId: device,
+        }),
       });
       const out = await res.json();
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
