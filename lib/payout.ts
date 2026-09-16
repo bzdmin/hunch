@@ -18,7 +18,7 @@
  */
 
 import { db } from "./db";
-import { pay, keyConfigured } from "./broadcast";
+import { pay, keyConfigured, balanceOf } from "./broadcast";
 
 /**
  * Is the house able to fund a windfall right now?
@@ -29,11 +29,31 @@ import { pay, keyConfigured } from "./broadcast";
  * mode on for everyone, with no code change and no redeploy of the flow.
  *
  * Deliberately conservative: if anything here is unset, the answer is no.
+ *
+ * withinCap only bounds how much can be spent today, it says nothing about whether
+ * the money actually exists. Without checking the real balance, this said "open"
+ * with 30 NIM in the wallet and let a full Trust round needing 3,000 NIM be played
+ * to completion, only failing silently at the very last step, autopay. That is the
+ * worst possible moment to discover it, after the player has already committed.
+ * So when autopay is armed, the live balance is checked too. When it is not armed,
+ * payouts settle by hand from /admin regardless of balance, so a low balance there
+ * is not a reason to refuse the round.
  */
 export async function houseFunded(need: number): Promise<boolean> {
   if (process.env.NIMLAB_HOUSE_FUNDED !== "1") return false;
   if (!process.env.NIMLAB_HOUSE_ADDRESS) return false;
-  return withinCap(need);
+  if (!(await withinCap(need))) return false;
+
+  if (autopayEnabled()) {
+    try {
+      const bal = await balanceOf(process.env.NIMLAB_HOUSE_ADDRESS.trim());
+      if (bal < need) return false;
+    } catch {
+      return false; // cannot verify funding right now, refuse rather than guess
+    }
+  }
+
+  return true;
 }
 
 /** Hard bound on what the house can spend in a day, in luna. */
