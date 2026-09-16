@@ -3,6 +3,7 @@ import { build, type Decision } from "@/lib/message";
 import { STAKE, FLOOR } from "@/lib/brand";
 import { put, get, nextUnclaimedGift, claimGift, population } from "@/lib/store";
 import { send, splitHouseMode } from "@/lib/payout";
+import { verifySignedMessage } from "@/lib/verify";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,16 @@ export async function POST(req: Request) {
   if (build(decision) !== message) {
     return NextResponse.json(
       { error: "signed message does not match the decision it claims to describe" },
+      { status: 400 },
+    );
+  }
+
+  // 1b. proves publicKey actually signed message. Without this, the self-claim
+  //     exclusion in nextUnclaimedGift(from, publicKey) trusted a string nobody
+  //     had to actually hold the key for. See lib/verify.ts.
+  if (!(await verifySignedMessage(message, publicKey, signature))) {
+    return NextResponse.json(
+      { error: "signature does not match the key that claims to have signed it" },
       { status: 400 },
     );
   }

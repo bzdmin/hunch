@@ -7,6 +7,7 @@ import {
   type Pair, type PairExperiment, type Side,
 } from "@/lib/pair";
 import { tooManyRounds, alreadyPairedForHouseMoney } from "@/lib/abuse";
+import { verifySignedMessage } from "@/lib/verify";
 
 export const dynamic = "force-dynamic";
 
@@ -117,16 +118,6 @@ export async function PUT(req: Request) {
   if (!id || !message || !publicKey || !signature || !payTo || !ref) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
-  // TODO(security): signature is required to be present and the message it
-  // claims to describe is checked word for word, but the signature itself is
-  // never checked cryptographically against publicKey. @nimiq/core's
-  // PublicKey.verify(signature, data) can do this, but Nimiq Pay's wallet
-  // likely applies its own prefix before hashing the message, same reason
-  // most chains do, guessing that wrong would reject every genuine signed
-  // round in production with no way to notice until a real phone confirms it
-  // first. Until this lands, publicKey is a claimed identity, not a proven
-  // one, which is exactly why lib/abuse.ts requires deviceId outright for
-  // house money rather than trusting publicKey alone.
   // Metadata only, never trusted for identity, so a malformed value is simply
   // dropped rather than rejected. See Side.deviceId in lib/pair.ts.
   const deviceId = typeof body.deviceId === "string" && /^[0-9a-f]{64}$/i.test(body.deviceId)
@@ -223,6 +214,19 @@ export async function PUT(req: Request) {
   if (expectedMessage !== message) {
     return NextResponse.json(
       { error: "signed message does not match the answer it claims to describe" },
+      { status: 400 },
+    );
+  }
+
+  // Proves publicKey actually signed message, not merely that a caller typed both
+  // fields into the same request. Without this, "identity is the signing key"
+  // (see Side in lib/pair.ts) was a claim nothing checked, every cap and block
+  // keyed on publicKey in lib/abuse.ts could be walked through by anyone willing
+  // to invent a fresh 64-hex string per request. Confirmed against Nimiq Pay's
+  // real signing format on a real phone, see lib/verify.ts.
+  if (!(await verifySignedMessage(message, publicKey, signature))) {
+    return NextResponse.json(
+      { error: "signature does not match the key that claims to have signed it" },
       { status: 400 },
     );
   }
