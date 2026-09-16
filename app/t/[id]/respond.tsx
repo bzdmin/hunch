@@ -112,14 +112,22 @@ export default function Respond({
 
     // You were asked to guess what they expected, and the app used to ask that
     // question and never say whether the guess was any good. This is that missing
-    // stat: predict is your own guess, expected is what they actually put down.
-    const guessGap = predict - expected;
+    // stat. Both sides are fundamentally percent-of-pot decisions now, so the
+    // comparison is in percentage points, not luna, and it is graduated rather than
+    // a flat right-or-wrong: how close you were matters, not just whether you nailed
+    // the exact number.
+    const expectedPct = Math.round((expected / pot) * 100);
+    const guessGapPts = Math.abs(predictPct - expectedPct);
     const guessLine =
-      Math.abs(guessGap) < pot * 0.05
+      guessGapPts <= 3
         ? "and you read them almost exactly right."
-        : guessGap > 0
-          ? "but they actually expected less than you thought."
-          : "but they actually expected more than you thought.";
+        : guessGapPts <= 10
+          ? "you were pretty close."
+          : guessGapPts <= 25
+            ? "not far off, but not close either."
+            : predictPct > expectedPct
+              ? "but they actually expected a lot less than you thought."
+              : "but they actually expected a lot more than you thought.";
 
     return (
       <>
@@ -276,7 +284,11 @@ export default function Respond({
           onChange={(e) => setGivePct(Number(e.target.value))}
           aria-label="What share to send back"
         />
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+        <div className="ends">
+          <span>&larr; Keep it all</span>
+          <span>Send it all &rarr;</span>
+        </div>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
           <input
             type="number" inputMode="numeric" min={0} max={100} step={1}
             value={givePct}
@@ -292,10 +304,6 @@ export default function Respond({
             }}
           />
           <span className="faint">%</span>
-        </div>
-        <div className="ends">
-          <span>&larr; Keep it all</span>
-          <span>Send it all &rarr;</span>
         </div>
         {/* Says what the choice does to them without naming an amount. A third of
             the pot is exactly what they handed over, so that is the break-even line. */}

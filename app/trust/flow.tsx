@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
-import { nim, LUNA, ref as makeRef, trustMessage } from "@/lib/message";
+import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier } from "@/lib/copy";
 import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
 
@@ -27,7 +27,13 @@ type Round = { id: string; stake: number; multiplier: number };
 export default function Flow() {
   const [stage, setStage] = useState<Stage>("loading");
   const [round, setRound] = useState<Round | null>(null);
-  const [predict, setPredict] = useState(0);
+
+  // Held as a percentage, same reason as B's side: a percent-of-pot guess is
+  // "roughly how trusting were they" rather than a specific NIM figure to nail,
+  // and it makes the input a clean integer, no decimal reformatting fighting
+  // whoever is typing. The luna figure used for signing and the reveal is derived
+  // from it below.
+  const [predictPct, setPredictPct] = useState(0);
   const [err, setErr] = useState("");
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
@@ -131,6 +137,7 @@ export default function Flow() {
 
   const { stake, multiplier } = round;
   const pot = stake * multiplier;
+  const predict = Math.round((predictPct / 100) * pot);
 
   // ---------------------------------------------------------------- choose
   if (stage === "choose") {
@@ -205,44 +212,48 @@ export default function Flow() {
           <p className="soft" style={{ marginBottom: "0.4rem" }}>
             I expect them to send back&hellip;
           </p>
-          <div className="amount">{nim(predict)}<small>NIM</small></div>
+          <div className="amount">{predictPct}<small>% of it</small></div>
           <input
-            type="range" min={0} max={pot} step={1} value={predict}
-            onChange={(e) => setPredict(Number(e.target.value))}
+            type="range" min={0} max={100} step={1} value={predictPct}
+            onChange={(e) => setPredictPct(Number(e.target.value))}
             disabled={busy}
-            aria-label="How much you expect back"
+            aria-label="What share you expect back"
           />
-          {/* A slider alone cannot land on an exact figure like 1,111, only on
-              whatever the drag granularity happens to hit. Typing bypasses that. */}
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+          {/* The ends labels sit right under the slider, where the CSS spacing
+              between them was actually tuned. An input row used to sit between them
+              and the slider, which pulled the labels up into the input's own edge. */}
+          <div className="ends">
+            <span>&larr; Nothing</span>
+            <span>All of it &rarr;</span>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
             <input
-              type="number" inputMode="decimal" min={0} max={pot / LUNA} step={0.01}
-              value={(predict / LUNA).toFixed(2)}
+              type="number" inputMode="numeric" min={0} max={100} step={1}
+              value={predictPct}
               onChange={(e) => {
                 const n = Number(e.target.value);
-                const luna = Math.round((Number.isFinite(n) ? n : 0) * LUNA);
-                setPredict(Math.min(pot, Math.max(0, luna)));
+                setPredictPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
               }}
               disabled={busy}
-              aria-label="Type an exact amount"
+              aria-label="Type an exact share"
               style={{
                 flex: 1, background: "var(--paper)", color: "var(--ink)",
                 border: "2px solid var(--ink)", borderRadius: "8px",
                 padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
               }}
             />
-            <span className="faint">NIM</span>
+            <span className="faint">%</span>
           </div>
-          <div className="ends">
-            <span>&larr; Nothing</span>
-            <span>All of it &rarr;</span>
-          </div>
+          {/* Break-even for A is a third of the pot, that is exactly the stake A
+              handed over. The old version compared against `stake` directly since
+              predict was a NIM figure; now it is a percent of the pot, so the same
+              boundary is 100/3, not 100. */}
           <p className="faint" style={{ marginTop: "0.5rem" }}>
-            {predict > stake
-              ? `More than you started with, you'd come out ahead.`
-              : predict === stake
-                ? `Exactly what you started with.`
-                : `Less than you started with, you'd lose ${nim(stake - predict)} NIM.`}
+            {predictPct < 33
+              ? `Less than what you started with, you'd be down overall.`
+              : predictPct < 34
+                ? `Roughly what you started with, you'd break even.`
+                : `More than what you started with, you'd come out ahead.`}
           </p>
         </div>
 
