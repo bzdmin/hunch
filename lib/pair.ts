@@ -364,6 +364,36 @@ export async function findWaitingRound(exp: PairExperiment): Promise<Pair | null
 }
 
 /**
+ * How many, not just whether one exists, for Hunch Live's "right now" section.
+ * Same filter as findWaitingRound, this is presence, not a spoiler: it says
+ * how many real people are mid-round, never what anyone decided, so unlike
+ * the research figures below it needs no play-gate.
+ */
+export async function countWaitingRounds(exp: PairExperiment): Promise<number> {
+  const rows = await db().all(COLL);
+  return rows
+    .map((r) => r.data as Pair)
+    .filter((p) => p.exp === exp && p.mode === "house" && p.status === "open" && p.a && !p.b && !isExpired(p))
+    .length;
+}
+
+/**
+ * Every round that actually finished, revealed or closed, regardless of
+ * sample size. A raw count is not a statistic the way a mean or a
+ * distribution is, it makes no claim about what people typically do, so
+ * unlike guessPercentile/trustPopulation/ultimatumPopulation above this
+ * carries no MIN_SAMPLE floor and no play-gate: "3 decisions so far" is
+ * exactly as honest at n=3 as at n=3000.
+ */
+export async function completedRoundCount(exp: PairExperiment): Promise<number> {
+  const rows = await db().all(COLL);
+  return rows
+    .map((r) => r.data as Pair)
+    .filter((p) => p.exp === exp && (p.status === "revealed" || p.status === "closed"))
+    .length;
+}
+
+/**
  * The active half of the hybrid expiry model: reclaims the "open" bucket by
  * writing "expired" onto every row the lazy check in getPair would also
  * catch, so nothing here is load-bearing for correctness, see

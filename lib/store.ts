@@ -94,6 +94,34 @@ export async function claimGift(session: string, by: string): Promise<void> {
 }
 
 /**
+ * How many real gifts are sitting unclaimed right now, for Hunch Live's
+ * "right now" section. Same data nextUnclaimedGift already reads, just
+ * counted instead of picked one, and the same reason it needs no play-gate
+ * as countWaitingRounds in lib/pair.ts: this is presence, not an answer.
+ */
+export async function unclaimedGiftCount(): Promise<number> {
+  return (await readAll()).filter((c) => c.payer !== null && c.give > 0 && c.giftClaimedBy === null).length;
+}
+
+/**
+ * The real shape of what people passed on, not just the mean. Ten buckets by
+ * share given, 0-10%, 10-20%, ... 90-100%, each a real count from settled
+ * decisions in this mode. Same MIN_SAMPLE discipline as everywhere else that
+ * turns raw rounds into a statistic: the caller decides whether n is enough
+ * to show this, this function only ever reports what actually happened.
+ */
+export async function distribution(mode: "house" | "self"): Promise<number[]> {
+  const all = (await settled()).filter((c) => c.mode === mode);
+  const buckets = new Array(10).fill(0);
+  for (const c of all) {
+    const pct = (c.give / c.stake) * 100;
+    const i = Math.min(9, Math.floor(pct / 10));
+    buckets[i] += 1;
+  }
+  return buckets;
+}
+
+/**
  * Live distribution of what players passed on, as a share of stake.
  *
  * ALWAYS scoped to one funding mode. Windfall and own-money decisions produce

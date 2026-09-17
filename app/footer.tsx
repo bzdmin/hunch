@@ -21,6 +21,7 @@ export function Footer() {
       <div className="site-footer-cols">
         <div className="site-footer-col">
           <Link href="/#experiments">Experiments</Link>
+          <Link href="/live">Live</Link>
           <Link href="/how-it-works">How it works</Link>
           <Link href="/research">Research</Link>
           <Link href="/results">Results</Link>
