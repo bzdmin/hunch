@@ -92,7 +92,7 @@ export default function Home() {
         ))}
       </div>
 
-      <p className="section-label" id="experiments">Pick your experiment.</p>
+      <p className="section-label center" id="experiments">Pick your experiment.</p>
 
       <div className="picks">
       <Link
@@ -156,7 +156,7 @@ export default function Home() {
       </Link>
       </div>
 
-      <div className="stats">
+      <div className="stats center">
         <div>
           <span className="n">3</span>
           <span className="l">experiments</span>

@@ -435,6 +435,15 @@ input[type="range"] {
   margin: 0.4rem 0 -0.4rem;
 }
 
+/* Scoped to the homepage's "Pick your experiment." label, not the generic
+   left-aligned divider used elsewhere (Research, Results, how-it-works):
+   this one sits between the loop strip and the three cards, so it reads as
+   the section's own centered title rather than another quiet label. */
+.section-label.center {
+  text-align: center;
+  font-size: 1.6rem;
+}
+
 /* The loop, numbered. Compact on purpose: the whole point is that someone
    understands the product in one glance, not that they read a tutorial. */
 .loop { display: grid; gap: 0.7rem; }
@@ -618,6 +627,15 @@ input[type="range"] {
 
 .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
 .stats div { display: grid; gap: 0.1rem; }
+
+/* The homepage's proof-of-what-Hunch-is row, after the three cards: spread
+   evenly and centered rather than clustered to the left like Results' own
+   .stats block (a tighter, incidental "here's your count" line, not a
+   section in its own right), so this one reads as a deliberate close to
+   the picks section rather than another list item. */
+.stats.center { justify-content: center; gap: 3.5rem; text-align: center; }
+.stats.center div { justify-items: center; }
+
 .stats .n {
   font-family: var(--display);
   font-size: 1.6rem;
