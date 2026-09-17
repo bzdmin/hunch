@@ -5,6 +5,7 @@ import { NAME, STAKE, STAKE_NIM, type Mode } from "@/lib/brand";
 import { build, nim, ref as makeRef, session as makeSession, type Decision } from "@/lib/message";
 import { SPLIT_MEAN_GIVEN, SPLIT_GAVE_SOMETHING } from "@/lib/benchmarks";
 import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
+import { ShareCard } from "@/app/share-card";
 
 const POOL = process.env.NEXT_PUBLIC_POOL_ADDRESS ?? "";
 
@@ -362,97 +363,29 @@ export default function Flow({
       </p>
 
       <div className="grow" />
-      <ShareCard give={givePct} predict={predict} session={session} />
-    </main>
-  );
-}
 
-/**
- * The share card. Exactly three tensions, what you did, what you predicted,
- * what the research says, and one tap into the identical experiment.
- * No fourth line. The thing a reader is invited to beat is a prediction,
- * not a score, because predictions are arguable and scores are not.
- */
-function ShareCard({ give, predict, session }: { give: number; predict: number; session: string }) {
-  const [state, setState] = useState<"idle" | "copied" | "manual">("idle");
-  const url = typeof window === "undefined" ? "" : `${window.location.origin}/e/${session}`;
-
-  // Reads as something a person would actually type, not a printout.
-  const text =
-    `I passed on ${give}% of the money and predicted most people pass on ${predict}%. ` +
-    `Published studies say most people pass ${SPLIT_MEAN_GIVEN.value}%. ` +
-    `Think you'd predict better? ${url}`;
-
-  /**
-   * Three tiers, because the first two do not exist over plain HTTP.
-   *
-   * navigator.share and navigator.clipboard are both secure-context only. Loading a
-   * mini app from http://<ip>:port is not a secure context, so on 5 Sep this button
-   * ran, found neither API, threw, and showed the user nothing at all. Production is
-   * HTTPS and will use the share sheet, but a button that silently does nothing is
-   * the worst possible failure for the one control the whole growth loop depends on.
-   *
-   * So: share sheet -> clipboard -> show the text on screen to copy by hand.
-   * Every branch ends in visible feedback.
-   */
-  async function share() {
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try {
-        await navigator.share({ text });
-        return;
-      } catch {
-        // user dismissed, or unavailable despite existing, fall through
-      }
-    }
-
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(text);
-        setState("copied");
-        return;
-      } catch {
-        // blocked, fall through
-      }
-    }
-
-    setState("manual");
-  }
-
-  return (
-    <>
-      <button onClick={share}>
-        {state === "copied" ? "Copied, paste it anywhere" : "Challenge someone"}
-      </button>
-
-      {state === "manual" && (
-        <div className="card">
-          <p className="faint" style={{ marginBottom: "0.5rem" }}>
-            Copying is blocked here. Select this and send it to someone:
-          </p>
-          <textarea
-            readOnly
-            value={text}
-            rows={6}
-            onFocus={(e) => e.currentTarget.select()}
-            style={{
-              width: "100%",
-              background: "var(--paper)",
-              color: "var(--ink)",
-              border: "1px solid var(--line)",
-              borderRadius: "8px",
-              padding: "0.6rem 0.7rem",
-              font: "inherit",
-              fontSize: "0.88rem",
-              resize: "none",
-            }}
-          />
-        </div>
-      )}
+      {/* Split's deep link is /e/{session}, not /split: it carries the NIM this
+          player passed on, so whoever taps it inherits that exact stake and is
+          deciding over real money someone actually handed them. The generic
+          route would start them a fresh round and break the chain. */}
+      <ShareCard
+        experiment="Split"
+        color="var(--accent)"
+        path={`/e/${session}`}
+        predicted={<>I predicted most people pass on {predict}%.</>}
+        happened={<>Studies say it&rsquo;s {SPLIT_MEAN_GIVEN.value}%.</>}
+        challenge="Think you'd predict better?"
+        shareText={
+          `I passed on ${givePct}% of the money and predicted most people pass on ${predict}%. ` +
+          `Published studies say most people pass ${SPLIT_MEAN_GIVEN.value}%. ` +
+          `Think you'd predict better?`
+        }
+      />
 
       <p className="faint" style={{ textAlign: "center" }}>
         They see what you predicted, not what you kept.
       </p>
-    </>
+    </main>
   );
 }
 

@@ -7,6 +7,7 @@ import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
+import { ShareCard } from "@/app/share-card";
 
 type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "sent" | "resolved";
 type Round = { id: string; stake: number };
@@ -182,8 +183,22 @@ export default function Flow({ example }: { example: WorkedExample }) {
             : "Your offer fell short of what they said they'd accept, so neither of you got anything."}
         </p>
 
+        <ShareCard
+          experiment="Ultimatum"
+          color="var(--warm)"
+          path="/ultimatum"
+          predicted={<>I guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
+          happened={<>The least they&rsquo;d take was {resolved.theirThreshold}%.</>}
+          challenge="Could you have read them?"
+          shareText={
+            `I offered a stranger ${resolved.offerPct}% and guessed they'd accept anything ` +
+            `above ${resolved.yourGuess}%. The least they'd take was ${resolved.theirThreshold}%. ` +
+            `Could you have read them?`
+          }
+        />
+
         <div className="grow" />
-        <a className="btn" href="/ultimatum">Play again</a>
+        <a className="btn ghost" href="/ultimatum">Play again</a>
       </main>
     );
   }

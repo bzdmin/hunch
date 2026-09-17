@@ -5,45 +5,47 @@ import { NAME, STAKE_NIM, TRUST_STAKE_OPTIONS_NIM, ULTIMATUM_STAKE_OPTIONS_NIM }
 export const dynamic = "force-dynamic";
 
 /**
- * The entry screen. Three questions, not three "experiments", the word experiment
- * is internal vocabulary and stays out of the interface.
+ * The front door.
  *
- * Rebuilt as a picker: three peer cards, not one primary CTA with two links buried
- * inside a secondary card. That funnel shape made sense while Split was the only
- * thing reliably open, but all three run on real NIM now, and a home screen
- * that visibly favours one undersells the other two before anyone has read a
- * word about them. Split still needs no partner and no waiting, that stays true
- * in its card's own meta line, it just no longer gets the only button on the page.
+ * Someone who has never heard of this should be able to answer five questions
+ * before tapping anything: what it is, why it is interesting, how a round
+ * works, what the three experiments are, and what to do next. The constraint
+ * that keeps that from becoming a landing page is that it all has to stay
+ * short enough to read on a phone without it feeling like homework, so each
+ * section is as small as it can be and still do its one job.
  *
- * Each card's accent reuses a token that already means something elsewhere in the
- * app rather than inventing new colour: --good is "it paid off" on Trust's reveal,
- * --warm is risk and refusal on Ultimatum's. Someone who plays all three should
- * feel the same colour meaning the same thing twice, not three unrelated brands.
+ * Order is deliberate. Curiosity first (the question), then the loop (so the
+ * cards mean something when they arrive), then the cards, then the facts,
+ * then the explainer for anyone still deciding. Research is not in the hero:
+ * it is the credibility layer, it belongs where results are, not where
+ * curiosity is.
  *
- * "Another human" in the headline undersold Split: Split's guess is against a
- * population, "what most people do", not one other person the way Trust and
- * Ultimatum are. "People" covers both without Split reading as a mismatch with
- * its own card. Research framing moved off this screen entirely, it belongs in
- * the result experience where it earns its place. This screen's only job is to
- * get a decision started, not to sound like a paper abstract first.
+ * Each card's accent reuses a token that already means something elsewhere in
+ * the app rather than inventing new colour: --good is "it paid off" on Trust's
+ * reveal, --warm is risk and refusal on Ultimatum's. Someone who plays all
+ * three should feel the same colour meaning the same thing twice, on the way
+ * in and on the way out, not three unrelated brands.
  *
- * The short line under each heading is notation, not illustration: KEEP <-> GIVE,
- * YOU -> THEM -> YOU, OFFER <-> ACCEPT. Each shape is recognisable before anyone
- * reads the paragraph under it, the three experiments should look different from
- * each other at a glance, not just read different once you commit to reading.
- * Split gets a second, fainter line, YOU -> NEXT -> NEXT: unlike Trust and
- * Ultimatum, Split's stake keeps moving after your round ends, see the About
- * page. That is worth surfacing here, it is the one mechanic none of the other
- * two has.
+ * The notation under each heading is notation, not illustration: KEEP <-> GIVE,
+ * YOU -> THEM -> YOU, OFFER <-> ACCEPT, so the three are distinguishable at a
+ * glance. Split gets a second, fainter line, YOU -> NEXT -> NEXT, because its
+ * stake keeps moving after the round ends and nothing else here does that.
  *
- * The player-count stat is deliberately gone for now, not deleted, just not
- * rendered. A true count under maybe a dozen makes the product look empty
- * rather than alive, and undersells it more than omitting the number does.
- * Bring totalPlayers() back here once that number is worth showing off.
+ * No player count. A true count in the single digits makes a product look
+ * empty rather than alive, and invented numbers are not on the table. Product
+ * facts hold the slot until real usage is worth showing off.
  */
 function range(nums: number[]): string {
   return `${Math.min(...nums)}-${Math.max(...nums)} NIM`;
 }
+
+const LOOP = [
+  { n: "01", t: "Decide", d: "Make a real choice with real NIM." },
+  { n: "02", t: "Predict", d: "Guess what the other person will do." },
+  { n: "03", t: "Reveal", d: "See what actually happened." },
+  { n: "04", t: "Compare", d: "See how your hunch stacks up against other humans." },
+  { n: "05", t: "Share", d: "Send it to someone and find out if they read it better." },
+];
 
 export default function Home() {
   return (
@@ -51,16 +53,30 @@ export default function Home() {
       <p className="eyebrow">{NAME}</p>
       <h1>Can you predict <span className="hl">people</span>?</h1>
       <p className="soft">
-        Three experiments. Real NIM. Make your prediction. See what humans
+        Make a real decision. Make your prediction. Then see what humans
         actually do.
       </p>
+
+      <div className="loop">
+        {LOOP.map((s) => (
+          <div className="step" key={s.n}>
+            <span className="n">{s.n}</span>
+            <div>
+              <p className="t">{s.t}</p>
+              <p className="d">{s.d}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="section-label">Pick your experiment.</p>
 
       <Link
         href="/split"
         className="pick"
         style={{ "--pick-color": "var(--accent)" } as CSSProperties}
       >
-        <p className="eyebrow">Split</p>
+        <p className="eyebrow">01 &middot; Split</p>
         <h2>What would you keep?</h2>
         <p className="metaphor">KEEP &harr; GIVE</p>
         <p className="metaphor chain">YOU &rarr; NEXT &rarr; NEXT</p>
@@ -73,6 +89,7 @@ export default function Home() {
           <span>Instant</span>
           <span>{STAKE_NIM.toLocaleString()} NIM</span>
         </div>
+        <span className="go">Run experiment &rarr;</span>
       </Link>
 
       <Link
@@ -80,7 +97,7 @@ export default function Home() {
         className="pick"
         style={{ "--pick-color": "var(--good)" } as CSSProperties}
       >
-        <p className="eyebrow">Trust</p>
+        <p className="eyebrow">02 &middot; Trust</p>
         <h2>Hand it over, or keep it?</h2>
         <p className="metaphor">YOU &rarr; THEM &rarr; YOU</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
@@ -92,6 +109,7 @@ export default function Home() {
           <span>Up to 3&times;</span>
           <span>{range(TRUST_STAKE_OPTIONS_NIM)}</span>
         </div>
+        <span className="go">Run experiment &rarr;</span>
       </Link>
 
       <Link
@@ -99,7 +117,7 @@ export default function Home() {
         className="pick"
         style={{ "--pick-color": "var(--warm)" } as CSSProperties}
       >
-        <p className="eyebrow">Ultimatum</p>
+        <p className="eyebrow">03 &middot; Ultimatum</p>
         <h2>Offer a share, or lose it all?</h2>
         <p className="metaphor">OFFER &harr; ACCEPT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
@@ -111,21 +129,8 @@ export default function Home() {
           <span>All or nothing</span>
           <span>{range(ULTIMATUM_STAKE_OPTIONS_NIM)}</span>
         </div>
+        <span className="go">Run experiment &rarr;</span>
       </Link>
-
-      {/* The About page already explains this loop well, choose, guess, find out,
-          compare with research. Bringing a compressed version onto the home means
-          someone understands the shape of the product before ever tapping into it,
-          rather than only after tapping "What is Hunch?". */}
-      <div>
-        <p className="eyebrow">How it works</p>
-        <p className="flow-steps">
-          Make a choice <span>&rarr;</span> Predict <span>&rarr;</span> See what
-          happened <span>&rarr;</span> Compare with humans
-        </p>
-      </div>
-
-      <div className="grow" />
 
       <div className="stats">
         <div>
@@ -133,16 +138,33 @@ export default function Home() {
           <span className="l">experiments</span>
         </div>
         <div>
-          <span className="n">2</span>
-          <span className="l">need a friend</span>
-        </div>
-        <div>
           <span className="n">60s</span>
           <span className="l">a round</span>
         </div>
+        <div>
+          <span className="n">Real</span>
+          <span className="l">NIM at stake</span>
+        </div>
       </div>
 
-      <Link href="/about" className="btn ghost">What is {NAME}?</Link>
+      <div className="card">
+        <h2>What is {NAME}?</h2>
+        <p className="soft" style={{ marginTop: "0.5rem" }}>
+          Short experiments with real consequences. You make a decision with
+          real NIM, you call what someone else will do, then you find out. The
+          point isn&rsquo;t to tell you what kind of person you are. It&rsquo;s
+          to find out how well you actually read people.
+        </p>
+        <p className="faint" style={{ marginTop: "0.6rem" }}>
+          Where an experiment has a meaningful benchmark, your result is shown
+          against other {NAME} players and against published findings, after
+          you&rsquo;ve committed to your own answer, never before.
+        </p>
+      </div>
+
+      <div className="grow" />
+
+      <Link href="/about" className="btn ghost">How {NAME} works</Link>
     </main>
   );
 }

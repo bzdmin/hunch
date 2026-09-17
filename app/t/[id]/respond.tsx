@@ -7,6 +7,7 @@ import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
 import { trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { ReportCard } from "@/app/report-card";
+import { ShareCard } from "@/app/share-card";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -172,7 +173,20 @@ export default function Respond({
           <span style={{ opacity: 0.7 }}>{TRUST_RETURNED_SHARE.source}</span>
         </p>
 
-        <a className="btn" href="/trust">Now try it yourself</a>
+        <ShareCard
+          experiment="Trust"
+          color="var(--good)"
+          path="/trust"
+          predicted={<>A stranger trusted me with {nim(pot)} NIM.</>}
+          happened={<>I sent back {sharePct}% of it.</>}
+          challenge="What would you have done?"
+          shareText={
+            `A stranger trusted me with ${nim(pot)} NIM and I decided what came back. ` +
+            `I sent ${sharePct}%. What would you have done?`
+          }
+        />
+
+        <a className="btn ghost" href="/trust">Start your own round</a>
       </>
     );
   }

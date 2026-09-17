@@ -347,6 +347,123 @@ input[type="range"] {
   line-height: 1.15;
 }
 
+/* The share card. Deliberately NOT a copy of the report above it: the report
+   answers "what happened to me", this asks a stranger "could you have read
+   them?". Built to survive being screenshotted and posted with no app around
+   it, so it carries its own name, its own accent, and its own address. */
+.share-card {
+  background: var(--card);
+  border: 2px solid var(--pick-color, var(--accent));
+  border-radius: 14px;
+  padding: 1.3rem;
+  box-shadow: var(--shadow);
+}
+.share-card .brand {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.1rem;
+}
+.share-card .brand .name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+.share-card .brand .exp {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pick-color, var(--accent));
+}
+.share-card .line {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--ink-soft);
+}
+.share-card .line.strong { color: var(--ink); margin-top: 0.5rem; }
+.share-card .challenge {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--pick-color, var(--accent));
+  margin-top: 1.1rem;
+}
+.share-card .addr {
+  margin-top: 1.1rem;
+  padding-top: 0.8rem;
+  border-top: 2px solid var(--line);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  word-break: break-all;
+}
+
+/* ------------------------------------------------------------ home sections */
+
+/* A quiet divider label, so the home reads as a few deliberate sections rather
+   than one undifferentiated stack of cards. */
+.section-label {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  margin: 0.4rem 0 -0.4rem;
+}
+
+/* The loop, numbered. Compact on purpose: the whole point is that someone
+   understands the product in one glance, not that they read a tutorial. */
+.loop { display: grid; gap: 0.7rem; }
+.loop .step {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+.loop .n {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.loop .t {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.loop .d { font-size: 0.85rem; color: var(--ink-soft); }
+
+/* The card's own call to action. The whole card is the tap target, this is
+   just the affordance that says so. */
+.pick .go {
+  display: inline-block;
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--pick-color, var(--accent));
+}
+
+/* Entrance, once, on the things that benefit from arriving rather than being
+   already there. Disabled wholesale by the reduced-motion rule at the end of
+   this file. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pick, .report, .share-card { animation: rise 0.34s ease-out both; }
+.pick:nth-of-type(2) { animation-delay: 0.05s; }
+.pick:nth-of-type(3) { animation-delay: 0.1s; }
+
 .err {
   font-size: 0.9rem;
   color: var(--warm);

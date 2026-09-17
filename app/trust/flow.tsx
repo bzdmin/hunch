@@ -7,6 +7,7 @@ import { trustOpeningTier, trustReturnTier, guessAccuracyClause, verdictValue } 
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
+import { ShareCard } from "@/app/share-card";
 
 type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable" | "resolved";
 type Round = { id: string; stake: number; multiplier: number };
@@ -242,8 +243,22 @@ export default function Flow({ example }: { example: WorkedExample }) {
               : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
         </p>
 
+        <ShareCard
+          experiment="Trust"
+          color="var(--good)"
+          path="/trust"
+          predicted={<>I predicted they&rsquo;d return {nim(resolved.predict)} NIM.</>}
+          happened={<>They returned {nim(resolved.returned)} NIM.</>}
+          challenge="How well would you read them?"
+          shareText={
+            `I trusted a stranger with ${nim(resolved.stake)} NIM and predicted ` +
+            `${nim(resolved.predict)} NIM would come back. ${nim(resolved.returned)} NIM did. ` +
+            `How well would you read them?`
+          }
+        />
+
         <div className="grow" />
-        <a className="btn" href="/trust">Play again</a>
+        <a className="btn ghost" href="/trust">Play again</a>
       </main>
     );
   }

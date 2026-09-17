@@ -6,6 +6,7 @@ import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
 import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { ReportCard } from "@/app/report-card";
+import { ShareCard } from "@/app/share-card";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -172,7 +173,21 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
           </span>
         </p>
 
-        <a className="btn" href="/ultimatum">Now try it yourself</a>
+        <ShareCard
+          experiment="Ultimatum"
+          color="var(--warm)"
+          path="/ultimatum"
+          predicted={<>A stranger offered me {offerPct}% of {nim(stake)} NIM.</>}
+          happened={accepted ? <>I took it.</> : <>I refused, so we both got nothing.</>}
+          challenge="Would you have taken it?"
+          shareText={
+            `A stranger offered me ${offerPct}% of ${nim(stake)} NIM. ` +
+            `${accepted ? "I took it." : "I refused, so we both walked away with nothing."} ` +
+            `Would you have taken it?`
+          }
+        />
+
+        <a className="btn ghost" href="/ultimatum">Start your own round</a>
       </>
     );
   }
