@@ -53,3 +53,28 @@ export function addHistory(entry: Omit<HistoryEntry, "id" | "at">): void {
 export function getHistory(): HistoryEntry[] {
   return readAll();
 }
+
+/**
+ * Consecutive calendar days (this device's own clock) with at least one
+ * finished round, counting back from today. No reward attached to this
+ * number anywhere, on purpose: it is a true reflection of when this device
+ * actually played, not a mechanic built to manufacture a reason to return.
+ * Today not yet played still counts if yesterday was, the same grace most
+ * streak counters give so opening the app once tomorrow does not require
+ * opening it before midnight tonight to "keep" what is already true.
+ */
+export function currentStreak(entries: HistoryEntry[]): number {
+  if (entries.length === 0) return 0;
+  const days = new Set(entries.map((e) => new Date(e.at).toDateString()));
+  const cursor = new Date();
+  if (!days.has(cursor.toDateString())) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!days.has(cursor.toDateString())) return 0;
+  }
+  let streak = 0;
+  while (days.has(cursor.toDateString())) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}

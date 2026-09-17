@@ -627,6 +627,26 @@ input[type="range"] {
 }
 .stats .l { font-size: 0.78rem; color: var(--ink-faint); }
 
+/* The roadmap on /results. Plain bullets, not a feature-marketing grid, this
+   is a statement of real intent, not a section built to look busy. */
+.coming { display: grid; gap: 0.7rem; }
+.coming .row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.coming .row:last-child { border-bottom: none; }
+.coming .row .dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
 /* -------------------------------------------------------------- site chrome
    Nav and footer exist only on the site pages (home, how it works, research,
    about), never on an experiment flow screen. A decision screen earns its

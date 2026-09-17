@@ -185,6 +185,10 @@ export default function Home() {
           against other {NAME} players and against published findings, after
           you&rsquo;ve committed to your own answer, never before.
         </p>
+        <p className="faint" style={{ marginTop: "0.4rem" }}>
+          Every round is a new stranger and a new stake, no two hunches are
+          the same, and comparisons only get sharper as more people play.
+        </p>
       </div>
 
       <div className="grow" />

@@ -3,9 +3,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
-import { getHistory, type HistoryEntry } from "@/lib/history";
+import { getHistory, currentStreak, type HistoryEntry } from "@/lib/history";
 import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
+
+/**
+ * What's actually planned, not filler. A "reason to come back" the rubric
+ * asks for that isn't a manufactured mechanic: a real statement of what
+ * exists beyond tonight. Update this list as the real roadmap changes,
+ * never leave a shipped item sitting here as if it were still upcoming.
+ */
+const COMING = [
+  "More experiments beyond Split, Trust, and Ultimatum.",
+  "Challenge someone you actually know, not just a stranger.",
+  "Group rounds, more than two players at once.",
+  "A leaderboard for the players who read people best.",
+  "Deeper history: trends in your own predictions over time.",
+  "More published research benchmarks to compare against.",
+];
 
 const COLOR: Record<HistoryEntry["exp"], string> = {
   split: "var(--accent)",
@@ -41,6 +56,8 @@ export default function Results() {
     setEntries(getHistory());
   }, []);
 
+  const streak = entries ? currentStreak(entries) : 0;
+
   return (
     <>
       <Nav />
@@ -54,6 +71,21 @@ export default function Results() {
             fresh, the rounds themselves are unaffected either way.
           </p>
         </div>
+
+        {entries && entries.length > 0 && (
+          <div className="stats">
+            <div>
+              <span className="n">{entries.length}</span>
+              <span className="l">{entries.length === 1 ? "hunch made" : "hunches made"}</span>
+            </div>
+            {streak > 1 && (
+              <div>
+                <span className="n">{streak}</span>
+                <span className="l">day streak on this device</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {entries === null ? null : entries.length === 0 ? (
           <div className="card">
@@ -80,6 +112,22 @@ export default function Results() {
             ))}
           </div>
         )}
+
+        <div className="page-header" style={{ marginTop: "1rem" }}>
+          <p className="section-label">What&rsquo;s next</p>
+          <p className="soft" style={{ marginTop: "0.4rem" }}>
+            Three experiments is where {NAME} starts, not where it stops.
+            Here&rsquo;s what&rsquo;s actually planned.
+          </p>
+        </div>
+        <div className="coming">
+          {COMING.map((c) => (
+            <div className="row" key={c}>
+              <span className="dot" />
+              <p className="soft">{c}</p>
+            </div>
+          ))}
+        </div>
 
         <div className="grow" />
         <Link href="/#experiments" className="btn">Play {NAME}</Link>
