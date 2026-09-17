@@ -13,6 +13,10 @@ import { Mark } from "@/app/mark";
  * "Experiments" links to an anchor on the home page rather than its own
  * route: the three game cards already are that content, a second page
  * saying the same thing again would be upkeep with no new value.
+ *
+ * "Results" is this device's own history (lib/history.ts), not an account's,
+ * there is no login on Hunch and a signing key is not one. Said plainly on
+ * that page itself, not just implied by the nav item.
  */
 export function Nav() {
   return (
@@ -24,6 +28,7 @@ export function Nav() {
         <Link href="/#experiments">Experiments</Link>
         <Link href="/how-it-works">How it works</Link>
         <Link href="/research">Research</Link>
+        <Link href="/results">Results</Link>
       </div>
       <Link href="/#experiments" className="btn site-nav-cta">Play {NAME}</Link>
     </nav>

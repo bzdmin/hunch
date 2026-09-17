@@ -6,6 +6,7 @@ import { build, nim, ref as makeRef, session as makeSession, type Decision } fro
 import { SPLIT_MEAN_GIVEN, SPLIT_GAVE_SOMETHING } from "@/lib/benchmarks";
 import { signWithAddress, sendNim, readable, available } from "@/lib/wallet";
 import { ShareCard } from "@/app/share-card";
+import { addHistory } from "@/lib/history";
 
 const POOL = process.env.NEXT_PUBLIC_POOL_ADDRESS ?? "";
 
@@ -124,6 +125,12 @@ export default function Flow({
       if (!r.ok) throw new Error(bodyJson.error ?? "Could not record that.");
 
       setRes(bodyJson);
+      addHistory({
+        exp: "split",
+        call: `You had ${nim(stake)} NIM and kept ${nim(keep)} NIM.`,
+        outcome: `You passed on ${givePct}%.`,
+        href: "/split",
+      });
       setStage("result");
     } catch (e) {
       setErr(readable(e));

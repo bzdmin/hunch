@@ -8,6 +8,7 @@ import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
+import { addHistory } from "@/lib/history";
 
 type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable" | "resolved";
 type Round = { id: string; stake: number; multiplier: number };
@@ -115,6 +116,12 @@ export default function Flow({ example }: { example: WorkedExample }) {
                 returned: info.b.move,
                 payoff: info.payoff,
                 percentile: info.percentile ?? null,
+              });
+              addHistory({
+                exp: "trust",
+                call: `You handed over ${nim(info.stake)} NIM.`,
+                outcome: `They sent back ${nim(info.b.move)} NIM, you end with ${nim(info.payoff.a)} NIM.`,
+                href: "/trust",
               });
               setStage("resolved");
             }

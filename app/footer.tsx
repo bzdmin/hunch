@@ -23,6 +23,7 @@ export function Footer() {
           <Link href="/#experiments">Experiments</Link>
           <Link href="/how-it-works">How it works</Link>
           <Link href="/research">Research</Link>
+          <Link href="/results">Results</Link>
         </div>
         <div className="site-footer-col">
           <a href="https://www.nimiq.com" target="_blank" rel="noopener noreferrer">Nimiq</a>

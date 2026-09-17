@@ -8,6 +8,7 @@ import { trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
+import { addHistory } from "@/lib/history";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -89,10 +90,13 @@ export default function Respond({
       const out = await res.json();
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
 
-      setReveal({
-        a: out.a ?? null, b: out.b ?? null,
-        payoff: out.payoffIfRevealed ?? out.payoff,
-        percentile: out.percentile ?? null,
+      const payoff = out.payoffIfRevealed ?? out.payoff;
+      setReveal({ a: out.a ?? null, b: out.b ?? null, payoff, percentile: out.percentile ?? null });
+      addHistory({
+        exp: "trust",
+        call: `A stranger trusted you with ${nim(pot)} NIM.`,
+        outcome: `You sent back ${Math.round((give / pot) * 100)}%, you end with ${nim(payoff.b)} NIM.`,
+        href: "/trust",
       });
       setStage("done");
     } catch (e) {

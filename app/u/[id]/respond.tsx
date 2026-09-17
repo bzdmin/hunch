@@ -7,6 +7,7 @@ import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
+import { addHistory } from "@/lib/history";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -89,10 +90,15 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
       const out = await res.json();
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
 
-      setReveal({
-        a: out.a ?? null, b: out.b ?? null,
-        payoff: out.payoffIfRevealed ?? out.payoff,
-        percentile: out.percentile ?? null,
+      const payoff = out.payoffIfRevealed ?? out.payoff;
+      setReveal({ a: out.a ?? null, b: out.b ?? null, payoff, percentile: out.percentile ?? null });
+      addHistory({
+        exp: "ultimatum",
+        call: `A stranger offered you ${nim(out.a?.move ?? 0)} NIM of ${nim(info.stake)} NIM.`,
+        outcome: payoff.note === "accepted"
+          ? `You accepted, you end with ${nim(payoff.b)} NIM.`
+          : "You refused, neither of you got anything.",
+        href: "/ultimatum",
       });
       setStage("done");
     } catch (e) {

@@ -8,6 +8,7 @@ import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
+import { addHistory } from "@/lib/history";
 
 type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "sent" | "resolved";
 type Round = { id: string; stake: number };
@@ -107,6 +108,14 @@ export default function Flow({ example }: { example: WorkedExample }) {
                 yourGuess: info.a.predict,
                 payoff: info.payoff,
                 percentile: info.percentile ?? null,
+              });
+              addHistory({
+                exp: "ultimatum",
+                call: `You offered ${nim(info.a.move)} NIM of ${nim(info.stake)} NIM.`,
+                outcome: info.payoff.note === "accepted"
+                  ? `Accepted, you end with ${nim(info.payoff.a)} NIM.`
+                  : "Refused, neither of you got anything.",
+                href: "/ultimatum",
               });
               setStage("resolved");
             }
