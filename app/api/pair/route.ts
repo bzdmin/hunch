@@ -3,7 +3,7 @@ import { randomTrustStake, randomUltimatumStake } from "@/lib/brand";
 import { trustOpen, ultimatumOpen, send, type PayoutReason } from "@/lib/payout";
 import { session as newId, trustMessage, ultimatumMessage } from "@/lib/message";
 import {
-  getPair, putPair, redact, payoff,
+  getPair, putPair, redact, payoff, guessGapPct, guessPercentile,
   type Pair, type PairExperiment, type Side,
 } from "@/lib/pair";
 import { tooManyRounds, alreadyPairedForHouseMoney, isTestKey } from "@/lib/abuse";
@@ -30,7 +30,14 @@ export async function GET(req: Request) {
   const key = new URL(req.url).searchParams.get("key") ?? "";
   const viewer = p.a?.publicKey === key ? "a" : p.b?.publicKey === key ? "b" : "stranger";
 
-  return NextResponse.json(redact(p, viewer));
+  // Only a player's own guess accuracy, never a stranger's, and only once there
+  // is a real outcome to grade it against.
+  let percentile = null;
+  if (p.status === "revealed" && p.a && p.b && (viewer === "a" || viewer === "b")) {
+    percentile = await guessPercentile(p.exp, viewer, guessGapPct(p, viewer));
+  }
+
+  return NextResponse.json({ ...redact(p, viewer), percentile });
 }
 
 /**
@@ -262,11 +269,19 @@ export async function PUT(req: Request) {
     if (settled.b > 0) await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: `${prefix}-b` as PayoutReason });
   }
 
+  // Seat b's own guess accuracy, ready the moment they commit rather than needing
+  // a second round trip. Seat a only ever finds this out later, through GET, once
+  // b has answered, there is nothing to grade yet at the point a commits.
+  const percentile = p.status === "revealed" && p.a && p.b
+    ? await guessPercentile(p.exp, "b", guessGapPct(p, "b"))
+    : null;
+
   return NextResponse.json({
     ...redact(p, seat),
     // A's own answer comes straight back so they get a complete result immediately.
     // Waiting on a partner must never be the whole of anyone's first experience.
     you: { move: side.move, predict: side.predict },
     payoffIfRevealed: settled,
+    percentile,
   });
 }

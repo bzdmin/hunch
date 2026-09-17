@@ -1,7 +1,7 @@
 /**
  * Published findings, checked against source on 2 Sep 2026.
  *
- * These exist because comparing a player to other NIM Lab players fails on day one:
+ * These exist because comparing a player to other Hunch players fails on day one:
  * the twentieth user learns they are more generous than nineteen people, which is
  * worth nothing. Sixty years of research works from the first session.
  *

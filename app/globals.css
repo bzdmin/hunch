@@ -282,6 +282,71 @@ input[type="range"] {
   padding-left: 0.8rem;
 }
 
+/* The reveal's report card. "Report" on purpose, not "result": the aim is an
+   observation, not a scoreboard, CALL and HUNCH and WHAT HAPPENED read like an
+   experiment log because that's the feeling the reveal is supposed to earn.
+   Same --pick-color convention as the home screen's game cards, see there,
+   so a player who plays all three sees the same color mean the same game
+   again on the way out as it did on the way in. */
+.report {
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  padding: 1.3rem 1.3rem 1.15rem;
+  box-shadow: var(--shadow);
+}
+.report .brand {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 0.9rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--line);
+}
+.report .brand .name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+.report .brand .exp {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pick-color, var(--accent));
+}
+.report .section { margin-bottom: 1rem; }
+.report .section:last-of-type { margin-bottom: 0; }
+.report .section .label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.25rem;
+}
+.report .section p {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.28;
+  letter-spacing: -0.015em;
+}
+.report .verdict-line {
+  border-top: 2px dashed var(--line);
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+}
+.report .verdict-line .label { color: var(--pick-color, var(--accent)); }
+.report .verdict-line .big {
+  font-family: var(--display);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
 .err {
   font-size: 0.9rem;
   color: var(--warm);

@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
-import { ultimatumTier, guessAccuracyClause } from "@/lib/copy";
+import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
+import { ReportCard } from "@/app/report-card";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -13,6 +14,7 @@ type Reveal = {
   a: { move: number; predict: number } | null;
   b: { move: number; predict: number } | null;
   payoff: { a: number; b: number; note: string };
+  percentile: { percentile: number; sampleSize: number } | null;
 };
 
 /**
@@ -85,7 +87,11 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
       const out = await res.json();
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
 
-      setReveal({ a: out.a ?? null, b: out.b ?? null, payoff: out.payoffIfRevealed ?? out.payoff });
+      setReveal({
+        a: out.a ?? null, b: out.b ?? null,
+        payoff: out.payoffIfRevealed ?? out.payoff,
+        percentile: out.percentile ?? null,
+      });
       setStage("done");
     } catch (e) {
       setErr(readable(e));
@@ -123,12 +129,21 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
       <>
         <div className="card"><h2>{ultimatumTier(offerPct, accepted)}</h2></div>
 
-        <div className="card">
-          <p className="soft" style={{ marginBottom: "0.75rem" }}>
-            They had {nim(stake)} NIM and offered you {nim(reveal.a!.move)} NIM,{" "}
-            {offerPct}% of it, and the least you said you&rsquo;d accept was {thresholdPct}%.
-          </p>
-          <div className="split-readout">
+        <p className="soft">
+          They had {nim(stake)} NIM and offered you {nim(reveal.a!.move)} NIM,{" "}
+          {offerPct}% of it.
+        </p>
+
+        <ReportCard
+          experiment="Ultimatum"
+          color="var(--warm)"
+          call={<>You said you&rsquo;d accept nothing less than {thresholdPct}%.</>}
+          hunch={<>You guessed they&rsquo;d offer {guessPct}%.</>}
+          outcome={<>They actually offered {offerPct}%.</>}
+          verdictLabel="How well did you read them?"
+          verdictValue={verdictValue(reveal.percentile, guessAccuracyClause(guessPct, offerPct))}
+        >
+          <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>
               <span className="k">They end with</span>
               <span className="v">{nim(reveal.payoff.a)} NIM</span>
@@ -138,18 +153,17 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
               <span className="v">{nim(reveal.payoff.b)} NIM</span>
             </div>
           </div>
-          <p className="faint" style={{ marginTop: "0.6rem" }}>
-            {accepted
-              ? "Their offer cleared what you said you'd accept, so the deal went through."
-              : "Their offer fell short of what you said you'd accept, so neither of you gets anything."}
-          </p>
-        </div>
+        </ReportCard>
+
+        <p className="faint">
+          {accepted
+            ? "Their offer cleared what you said you'd accept, so the deal went through."
+            : "Their offer fell short of what you said you'd accept, so neither of you gets anything."}
+        </p>
 
         <p className="note">
-          You guessed they&rsquo;d offer <span className="hl">{guessPct}%</span>,
-          but they offered {offerPct}%, which was {guessAccuracyClause(guessPct, offerPct)}.
-          They guessed the least you&rsquo;d accept was {aGuessedThreshold}%, yours was{" "}
-          {thresholdPct}%.
+          They guessed the least you&rsquo;d accept was {aGuessedThreshold}%, yours
+          was {thresholdPct}%.
           <br />
           <span style={{ opacity: 0.7 }}>
             The Ultimatum Game is one of the most replicated findings in

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
-import { trustOpeningTier, trustReturnTier, guessAccuracyClause } from "@/lib/copy";
+import { trustOpeningTier, trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
+import { ReportCard } from "@/app/report-card";
 
 type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable" | "resolved";
 type Round = { id: string; stake: number; multiplier: number };
@@ -15,6 +16,7 @@ type Resolved = {
   predict: number;
   returned: number;
   payoff: { a: number; b: number; note: string };
+  percentile: { percentile: number; sampleSize: number } | null;
 };
 
 /**
@@ -109,6 +111,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
                 predict: info.a.predict,
                 returned: info.b.move,
                 payoff: info.payoff,
+                percentile: info.percentile ?? null,
               });
               setStage("resolved");
             }
@@ -205,12 +208,21 @@ export default function Flow({ example }: { example: WorkedExample }) {
         <p className="eyebrow">{NAME} · Trust</p>
         <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
 
-        <div className="card">
-          <p className="soft" style={{ marginBottom: "0.75rem" }}>
-            You handed over {nim(resolved.stake)} NIM, and it became{" "}
-            {nim(resolved.pot)} NIM in their hands.
-          </p>
-          <div className="split-readout">
+        <p className="soft">
+          You handed over {nim(resolved.stake)} NIM, and it became{" "}
+          {nim(resolved.pot)} NIM in their hands.
+        </p>
+
+        <ReportCard
+          experiment="Trust"
+          color="var(--good)"
+          call={<>You handed over {nim(resolved.stake)} NIM.</>}
+          hunch={<>You expected {nim(resolved.predict)} NIM back.</>}
+          outcome={<>They sent back {nim(resolved.returned)} NIM.</>}
+          verdictLabel="How well did you read them?"
+          verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(predictPct, sharePct))}
+        >
+          <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>
               <span className="k">You end with</span>
               <span className="v">{nim(resolved.payoff.a)} NIM</span>
@@ -220,19 +232,14 @@ export default function Flow({ example }: { example: WorkedExample }) {
               <span className="v">{nim(resolved.payoff.b)} NIM</span>
             </div>
           </div>
-          <p className="faint" style={{ marginTop: "0.6rem" }}>
-            {resolved.payoff.a > resolved.stake
-              ? `Trusting them paid off, you came out ${nim(resolved.payoff.a - resolved.stake)} NIM ahead.`
-              : resolved.payoff.a === resolved.stake
-                ? "You broke even."
-                : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
-          </p>
-        </div>
+        </ReportCard>
 
-        <p className="note">
-          You expected {nim(resolved.predict)} NIM back, but they sent back{" "}
-          {nim(resolved.returned)} NIM, which was{" "}
-          {guessAccuracyClause(predictPct, sharePct)}.
+        <p className="faint">
+          {resolved.payoff.a > resolved.stake
+            ? `Trusting them paid off, you came out ${nim(resolved.payoff.a - resolved.stake)} NIM ahead.`
+            : resolved.payoff.a === resolved.stake
+              ? "You broke even."
+              : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
         </p>
 
         <div className="grow" />

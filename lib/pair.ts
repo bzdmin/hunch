@@ -112,6 +112,71 @@ export function payoff(p: Pair): Payoff {
     : { a: 0, b: 0, note: "rejected" };
 }
 
+/**
+ * How far off a guess was, in percentage points, always 0-100 regardless of
+ * which experiment or seat. The stored fields are not uniform, Trust keeps
+ * predict in luna and needs the pot to convert, Ultimatum already stores it
+ * as a percent (see the Side.predict comment and the unit-mismatch note in
+ * payoff() above), so this is the one place that agrees with itself, used by
+ * both the population lookup below and every reveal screen.
+ *
+ * What "guess" is compared against differs by seat, and matches exactly what
+ * each reveal screen already asked before this existed:
+ *   trust a       · guessed what b would return, compared to what b actually did
+ *   trust b       · guessed what a expected, compared to what a actually said
+ *   ultimatum a   · guessed b's threshold, compared to b's actual threshold
+ *   ultimatum b   · guessed a's offer, compared to a's actual offer
+ */
+export function guessGapPct(p: Pair, seat: "a" | "b"): number {
+  if (!p.a || !p.b) throw new Error("guessGapPct requires both sides");
+
+  if (p.exp === "trust") {
+    const pot = p.stake * p.multiplier;
+    if (pot <= 0) return 0;
+    const guess = seat === "a" ? p.a.predict : p.b.predict;
+    const actual = seat === "a" ? p.b.move : p.a.predict;
+    return Math.abs(Math.round((guess / pot) * 100) - Math.round((actual / pot) * 100));
+  }
+
+  // ultimatum: both predict fields are already a percent, no pot to convert through.
+  if (seat === "a") return Math.abs(p.a.predict - p.b.move);
+  const offerPct = Math.round((p.a.move / p.stake) * 100);
+  return Math.abs(p.b.predict - offerPct);
+}
+
+const MIN_PERCENTILE_SAMPLE = 20;
+
+export type Percentile = { percentile: number; sampleSize: number };
+
+/**
+ * Where this guess ranks against every other guess made from the same seat in
+ * the same experiment. Smaller gap is better, so the percentile is the share
+ * of that population this round beat.
+ *
+ * Null below MIN_PERCENTILE_SAMPLE, on purpose: a percentile computed from a
+ * handful of rounds is not a statistic, it is noise wearing a costume, the
+ * exact reason lib/benchmarks.ts refuses to compare players against each
+ * other before there is a real population to compare against. Callers fall
+ * back to the qualitative tier from guessAccuracyClause() in lib/copy.ts
+ * instead of forcing a percentile that would only be honest about four people.
+ */
+export async function guessPercentile(
+  exp: PairExperiment,
+  seat: "a" | "b",
+  gapPct: number,
+): Promise<Percentile | null> {
+  const rows = await db().all(COLL);
+  const gaps: number[] = [];
+  for (const r of rows) {
+    const p = r.data as Pair;
+    if (p.exp !== exp || p.status !== "revealed" || !p.a || !p.b) continue;
+    gaps.push(guessGapPct(p, seat));
+  }
+  if (gaps.length < MIN_PERCENTILE_SAMPLE) return null;
+  const beaten = gaps.filter((g) => g > gapPct).length;
+  return { percentile: Math.round((beaten / gaps.length) * 100), sampleSize: gaps.length };
+}
+
 // ------------------------------------------------------------------ storage
 // Goes through lib/db.ts, so it is files locally and Postgres in production.
 

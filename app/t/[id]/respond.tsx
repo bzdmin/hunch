@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { TRUST_RETURNED_SHARE } from "@/lib/benchmarks";
-import { trustReturnTier, guessAccuracyClause } from "@/lib/copy";
+import { trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
+import { ReportCard } from "@/app/report-card";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -14,6 +15,7 @@ type Reveal = {
   a: { move: number; predict: number } | null;
   b: { move: number; predict: number } | null;
   payoff: { a: number; b: number; note: string };
+  percentile: { percentile: number; sampleSize: number } | null;
 };
 
 /**
@@ -83,7 +85,11 @@ export default function Respond({
       const out = await res.json();
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
 
-      setReveal({ a: out.a ?? null, b: out.b ?? null, payoff: out.payoffIfRevealed ?? out.payoff });
+      setReveal({
+        a: out.a ?? null, b: out.b ?? null,
+        payoff: out.payoffIfRevealed ?? out.payoff,
+        percentile: out.percentile ?? null,
+      });
       setStage("done");
     } catch (e) {
       setErr(readable(e));
@@ -130,22 +136,25 @@ export default function Respond({
       : gapPct < 0 ? "less generous than the study average"
       : "more generous than the study average";
 
-    // Rebuilt after the first version stacked five separate blocks that mostly
-    // repeated the same handful of numbers, the tally and the "you kept / sent"
-    // sentence both said the same two figures in different words. Down to three:
-    // the headline feeling, one card that tells the whole money story once, and one
-    // compact line for the two secondary stats, prediction accuracy and the
-    // research comparison, that used to each get a full emphasized block of their own.
     return (
       <>
         <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
 
-        <div className="card">
-          <p className="soft" style={{ marginBottom: "0.75rem" }}>
-            They had {nim(stake)} NIM and could have kept it. Trusting you
-            tripled it to {nim(pot)} NIM.
-          </p>
-          <div className="split-readout">
+        <p className="soft">
+          They had {nim(stake)} NIM and could have kept it. Trusting you
+          tripled it to {nim(pot)} NIM.
+        </p>
+
+        <ReportCard
+          experiment="Trust"
+          color="var(--good)"
+          call={<>You sent back {nim(give)} NIM, {sharePct}% of the pot.</>}
+          hunch={<>You guessed they expected {predictPct}% back.</>}
+          outcome={<>They actually expected {expectedPct}% back.</>}
+          verdictLabel="How well did you read them?"
+          verdictValue={verdictValue(reveal.percentile, guessAccuracyClause(predictPct, expectedPct))}
+        >
+          <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>
               <span className="k">They end with</span>
               <span className="v">{nim(reveal.payoff.a)} NIM</span>
@@ -155,20 +164,10 @@ export default function Respond({
               <span className="v">{nim(reveal.payoff.b)} NIM</span>
             </div>
           </div>
-          <p className="faint" style={{ marginTop: "0.6rem" }}>
-            {reveal.payoff.a > stake
-              ? `Trusting you paid off, they came out ${nim(reveal.payoff.a - stake)} NIM ahead.`
-              : reveal.payoff.a === stake
-                ? "They broke even."
-                : `They lost ${nim(stake - reveal.payoff.a)} NIM by trusting you.`}
-          </p>
-        </div>
+        </ReportCard>
 
         <p className="note">
-          You guessed <span className="hl">{predictPct}%</span> would come back,
-          but they actually hoped for {expectedPct}%, which was{" "}
-          {guessAccuracyClause(predictPct, expectedPct)}. You sent back{" "}
-          {sharePct}% of the pot, {vsStudy}, {TRUST_RETURNED_SHARE.value}%.
+          You sent back {sharePct}% of the pot, {vsStudy}, {TRUST_RETURNED_SHARE.value}%.
           <br />
           <span style={{ opacity: 0.7 }}>{TRUST_RETURNED_SHARE.source}</span>
         </p>

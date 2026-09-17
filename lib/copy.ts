@@ -145,3 +145,23 @@ export function guessAccuracyClause(guessPct: number, actualPct: number): string
   if (gap <= 25) return "not far off, but not exactly what you guessed either";
   return actualPct < guessPct ? "a lot less than you thought" : "a lot more than you thought";
 }
+
+// -------------------------------------------------------------- verdict line
+
+/**
+ * The reveal report card's closing line, see app/report-card.tsx. A real
+ * percentile once lib/pair.ts's guessPercentile() has a real population to
+ * rank against, the qualitative tier otherwise.
+ *
+ * "Better than N% of guesses" rather than "Nth percentile": percentile
+ * framing is genuinely ambiguous here even to a numerate reader, whether a
+ * high number means a small gap (good) or is itself the gap somehow, "better
+ * than N%" cannot be misread either way.
+ */
+export function verdictValue(
+  pct: { percentile: number; sampleSize: number } | null,
+  fallbackClause: string,
+): string {
+  if (!pct) return fallbackClause;
+  return `Better than ${pct.percentile}% of guesses`;
+}

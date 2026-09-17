@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
-import { ultimatumTier, guessAccuracyClause } from "@/lib/copy";
+import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
+import { ReportCard } from "@/app/report-card";
 
 type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "sent" | "resolved";
 type Round = { id: string; stake: number };
@@ -16,6 +17,7 @@ type Resolved = {
   theirThreshold: number;
   yourGuess: number;
   payoff: { a: number; b: number; note: string };
+  percentile: { percentile: number; sampleSize: number } | null;
 };
 
 /**
@@ -101,6 +103,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
                 theirThreshold: info.b.move,
                 yourGuess: info.a.predict,
                 payoff: info.payoff,
+                percentile: info.percentile ?? null,
               });
               setStage("resolved");
             }
@@ -147,13 +150,21 @@ export default function Flow({ example }: { example: WorkedExample }) {
         <p className="eyebrow">{NAME} · Ultimatum</p>
         <div className="card"><h2>{ultimatumTier(resolved.offerPct, accepted)}</h2></div>
 
-        <div className="card">
-          <p className="soft" style={{ marginBottom: "0.75rem" }}>
-            You offered {nim(resolved.offer)} NIM of the {nim(resolved.stake)} NIM you
-            had, {resolved.offerPct}% of it, and the least they said they&rsquo;d
-            accept was {resolved.theirThreshold}%.
-          </p>
-          <div className="split-readout">
+        <p className="soft">
+          You offered {nim(resolved.offer)} NIM of the {nim(resolved.stake)} NIM
+          you had, {resolved.offerPct}% of it.
+        </p>
+
+        <ReportCard
+          experiment="Ultimatum"
+          color="var(--warm)"
+          call={<>You offered {nim(resolved.offer)} NIM, {resolved.offerPct}% of your stake.</>}
+          hunch={<>You guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
+          outcome={<>The least they&rsquo;d actually take was {resolved.theirThreshold}%.</>}
+          verdictLabel="How well did you read them?"
+          verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold))}
+        >
+          <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>
               <span className="k">You end with</span>
               <span className="v">{nim(resolved.payoff.a)} NIM</span>
@@ -163,17 +174,12 @@ export default function Flow({ example }: { example: WorkedExample }) {
               <span className="v">{nim(resolved.payoff.b)} NIM</span>
             </div>
           </div>
-          <p className="faint" style={{ marginTop: "0.6rem" }}>
-            {accepted
-              ? "Your offer cleared what they said they'd accept, so the deal went through."
-              : "Your offer fell short of what they said they'd accept, so neither of you got anything."}
-          </p>
-        </div>
+        </ReportCard>
 
-        <p className="note">
-          You guessed they&rsquo;d accept anything above {resolved.yourGuess}%, but
-          the least they&rsquo;d take was {resolved.theirThreshold}%, which was{" "}
-          {guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold)}.
+        <p className="faint">
+          {accepted
+            ? "Your offer cleared what they said they'd accept, so the deal went through."
+            : "Your offer fell short of what they said they'd accept, so neither of you got anything."}
         </p>
 
         <div className="grow" />
