@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
 import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
-import { wallet, firstAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/nimiq";
+import { signWithAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/wallet";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
@@ -224,13 +224,12 @@ export default function Flow({ example }: { example: WorkedExample }) {
     setErr("");
     setStage("working");
     try {
-      const w = await wallet();
-      const payTo = await firstAddress();
       const ref = makeRef();
       const message = ultimatumMessage({
         seat: "a", pairId: round.id, stake, move: offer, predictPct, ref,
       });
-      const { publicKey, signature } = await w.sign(message);
+      // One prompt, whichever wallet is answering, see lib/wallet/types.ts.
+      const { publicKey, signature, address: payTo } = await signWithAddress(message);
       const device = await deviceId(DEVICE_ID_REASON);
 
       const res = await fetch("/api/pair", {

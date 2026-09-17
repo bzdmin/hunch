@@ -11,16 +11,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&display=swap");
 
 :root {
-  --paper:      #fbf4e6;
-  --card:       #fffdf8;
-  --ink:        #1a1512;
-  --ink-soft:   #5c5248;
-  --ink-faint:  #8a7f72;
-  --line:       #e6dbc6;
+  --paper:      #f5f1e8;
+  --card:       #fffdf7;
+  --ink:        #171614;
+  --ink-soft:   #57524a;
+  --ink-faint:  #867f73;
+  --line:       #e3dccb;
   --accent:     #a25c10;
   --accent-soft:#f6e9cd;
   --highlight:  #ffd84d;
-  --hl-ink:     #1a1512;
+  --hl-ink:     #171614;
   --good:       #2f6b4f;
   --warm:       #ad4127;
   --shadow:     3px 3px 0 var(--ink);
@@ -30,50 +30,18 @@
   --body:    "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Warm dark, not blue dark, light and dark should feel like the same product at
-   different times of day. The highlighter becomes a deeper wash so light text stays
-   readable on it. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper:      #16120e;
-    --card:       #211b15;
-    --ink:        #f3ece1;
-    --ink-soft:   #b2a698;
-    --ink-faint:  #877c6e;
-    --line:       #362b20;
-    --accent:     #eaa441;
-    --accent-soft:#2a2015;
-    --highlight:  #c8892a;
-    --hl-ink:     #fff6e2;
-    --good:       #74c39a;
-    --warm:       #e08d74;
-    --shadow:     3px 3px 0 #000;
-    --shadow-sm:  2px 2px 0 #000;
-  }
-}
-
-:root[data-theme="dark"] {
-  --paper:      #16120e;
-  --card:       #211b15;
-  --ink:        #f3ece1;
-  --ink-soft:   #b2a698;
-  --ink-faint:  #877c6e;
-  --line:       #362b20;
-  --accent:     #eaa441;
-  --accent-soft:#2a2015;
-  --highlight:  #c8892a;
-  --hl-ink:     #fff6e2;
-  --good:       #74c39a;
-  --warm:       #e08d74;
-  --shadow:     3px 3px 0 #000;
-  --shadow-sm:  2px 2px 0 #000;
-}
+/* Light on purpose, in every environment.
+   This used to follow prefers-color-scheme, which meant most phones rendered a
+   dark Hunch and desktop rendered something heavier than the product wants to
+   be. Ivory and warm ink IS the product now, so it is the same on a judge's
+   laptop, in Nimiq Pay at midnight, and in every screenshot, rather than a
+   coin flip decided by someone's system setting. */
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html {
   background: var(--paper);
-  color-scheme: light dark;
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -96,6 +64,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+/* The home screen only.
+   Every other screen stays a single narrow column on purpose: an experiment is
+   one decision at a time, and a decision does not get better for being 1400px
+   wide. The front door is the one screen with several things to compare, so it
+   is the one screen that earns the extra width. */
+.screen.wide { max-width: 64rem; }
+
+@media (min-width: 52rem) {
+  .screen.wide { padding: 4rem 2rem calc(3rem + env(safe-area-inset-bottom)); gap: 1.75rem; }
+  .screen.wide h1 { font-size: 3.4rem; max-width: 18ch; }
+  .screen.wide > .soft { font-size: 1.15rem; max-width: 46ch; }
 }
 
 .eyebrow {
@@ -421,6 +402,19 @@ input[type="range"] {
 /* The loop, numbered. Compact on purpose: the whole point is that someone
    understands the product in one glance, not that they read a tutorial. */
 .loop { display: grid; gap: 0.7rem; }
+
+/* At width the loop reads better as a process strip than a list, five beats
+   left to right, which is the shape of the thing it describes. */
+@media (min-width: 52rem) {
+  .loop {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-top: 2px solid var(--line);
+    border-bottom: 2px solid var(--line);
+  }
+  .loop .step { grid-template-columns: 1fr; gap: 0.3rem; }
+}
 .loop .step {
   display: grid;
   grid-template-columns: 1.6rem 1fr;
@@ -446,7 +440,11 @@ input[type="range"] {
    just the affordance that says so. */
 .pick .go {
   display: inline-block;
-  margin-top: 0.85rem;
+  /* auto, not a fixed gap: in the three-across composition the cards are equal
+     height and the actions should line up along the bottom regardless of how
+     much copy sits above them. */
+  margin-top: auto;
+  padding-top: 0.85rem;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -510,8 +508,19 @@ input[type="range"] {
    already means "trust paid off" on the reveal screens, --warm already means
    risk/refusal. Reusing them here means a player who plays all three later
    recognises the same color meaning the same thing again. */
+/* Three across once there is room, stacked when there is not. Not the same
+   layout scaled: on a phone each card is a full-width object you tap, on a
+   desktop the three are a set you compare before choosing, which is a
+   different job and wants them side by side at equal height. */
+.picks { display: grid; gap: 1.25rem; }
+
+@media (min-width: 52rem) {
+  .picks { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+}
+
 .pick {
-  display: block;
+  display: flex;
+  flex-direction: column;
   background: var(--card);
   border: 2px solid var(--ink);
   border-left: 6px solid var(--pick-color, var(--accent));

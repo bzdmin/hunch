@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { NAME, STAKE, STAKE_NIM, type Mode } from "@/lib/brand";
 import { build, nim, ref as makeRef, session as makeSession, type Decision } from "@/lib/message";
 import { SPLIT_MEAN_GIVEN, SPLIT_GAVE_SOMETHING } from "@/lib/benchmarks";
-import { wallet, firstAddress, readable, available } from "@/lib/nimiq";
+import { signWithAddress, sendNim, readable, available } from "@/lib/wallet";
 import { ShareCard } from "@/app/share-card";
 
 const POOL = process.env.NEXT_PUBLIC_POOL_ADDRESS ?? "";
@@ -85,12 +85,10 @@ export default function Flow({
     const message = build(decision);
 
     try {
-      const w = await wallet();
-      // Paying TO a listAccounts() address is the one thing Gate 1 proved safe.
-      // It is a payout target, never identity, identity is the signing key.
-      const payTo = await firstAddress();
-
-      const { publicKey, signature } = await w.sign(message);
+      // One prompt returns both, see lib/wallet/types.ts. The address is a
+      // payout target, never identity, identity is the signing key, proven
+      // server-side in lib/verify.ts.
+      const { publicKey, signature, address: payTo } = await signWithAddress(message);
 
       // Ask the server to validate BEFORE any money moves. In self mode the payment
       // used to go first, so any rejection, a stale gift, someone else claiming it
@@ -112,11 +110,7 @@ export default function Flow({
       // nothing at all, we pay them.
       if (!house && give > 0) {
         if (!POOL) throw new Error("No pool address configured yet.");
-        await w.sendBasicTransactionWithData({
-          recipient: POOL,
-          value: give,
-          data: `nimlab:${session}`,
-        });
+        await sendNim({ recipient: POOL, value: give, data: `nimlab:${session}` });
       }
 
       const r = await fetch("/api/commit", {

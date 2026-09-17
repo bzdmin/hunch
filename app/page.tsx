@@ -49,12 +49,12 @@ const LOOP = [
 
 export default function Home() {
   return (
-    <main className="screen">
+    <main className="screen wide">
       <p className="eyebrow">{NAME}</p>
       <h1>Can you predict <span className="hl">people</span>?</h1>
       <p className="soft">
-        Make a real decision. Make your prediction. Then see what humans
-        actually do.
+        Make a real decision with NIM. Make your prediction. Then see what
+        humans actually do.
       </p>
 
       <div className="loop">
@@ -71,6 +71,7 @@ export default function Home() {
 
       <p className="section-label">Pick your experiment.</p>
 
+      <div className="picks">
       <Link
         href="/split"
         className="pick"
@@ -131,6 +132,7 @@ export default function Home() {
         </div>
         <span className="go">Run experiment &rarr;</span>
       </Link>
+      </div>
 
       <div className="stats">
         <div>

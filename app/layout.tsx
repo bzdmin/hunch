@@ -9,19 +9,20 @@ export const metadata: Metadata = {
 };
 
 /**
- * viewportFit "cover" so the layout reaches under the notch, and a themeColor per
- * scheme so the WebView chrome matches the page instead of flashing white.
+ * viewportFit "cover" so the layout reaches under the notch, and one themeColor
+ * so the WebView chrome matches the page instead of flashing white.
  * userScalable stays on, disabling pinch-zoom on a page about reading a decision
  * carefully is the wrong trade.
+ *
+ * One colour, not a pair: Hunch is light in every environment now, so a
+ * dark-scheme entry here would tint the chrome around a page that never goes
+ * dark. See the palette note at the top of globals.css.
  */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbf4e6" },
-    { media: "(prefers-color-scheme: dark)", color: "#16120e" },
-  ],
+  themeColor: "#f5f1e8",
 };
 
 /**
