@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { NAME, STAKE_NIM, TRUST_STAKE_OPTIONS_NIM, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
@@ -59,18 +60,23 @@ export default function Home() {
           <p className="eyebrow">{NAME}</p>
           <h1>Can you predict <span className="hl">people</span>?</h1>
           <p className="soft">
-            Make a real decision with NIM. Make your prediction. Then see what
-            humans actually do.
+            Make a real decision with NIM. Lock your hunch. See what another
+            human actually does.
           </p>
-        </div>
-        <div className="hero-visual" aria-hidden="true">
-          <span className="you">You</span>
-          <div className="q">?</div>
-          <div className="branch">
-            <span>KEEP</span>
-            <span>GIVE</span>
+          <div className="hero-cta">
+            <Link href="/#experiments" className="btn">Play a Hunch &rarr;</Link>
+            <Link href="/how-it-works" className="btn ghost">How it works &rarr;</Link>
           </div>
-          <p className="caption">A decision. A hunch about someone else. Then you find out.</p>
+        </div>
+        <div className="hero-visual">
+          <Image
+            src="/hero-trust.png"
+            alt={`A retro car dashboard reads "Trust? trust who?" beside the words people are complicated, real decisions, real humans, real NIM.`}
+            width={1767}
+            height={890}
+            priority
+            sizes="(min-width: 52rem) 48vw, 100vw"
+          />
         </div>
       </div>
 

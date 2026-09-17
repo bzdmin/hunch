@@ -115,10 +115,13 @@ p { margin: 0; }
 /* The signature move. Behind the number that matters, nowhere else. Slightly uneven
    edges so it reads as drawn rather than as a filled box. */
 .hl {
-  /* A marker stroke, not a filled box. Covering the full line height rendered as a
-     heavy slab behind the words and forced a text-colour change to stay readable;
-     sweeping only the lower half leaves the text its own colour, keeps contrast in
-     both themes, and actually looks like something drawn over the words. */
+  /* A marker stroke, not a filled box. Sweeping only the lower half leaves the
+     text its own colour, keeps contrast in both themes, and looks like
+     something drawn over the words rather than a filled highlighter box.
+     Fine at body-text size, where this class is used most, a percentage
+     gradient measured against the inline element's own line box works out
+     close enough to "under the glyphs" that nobody notices the difference
+     between that and the actual visual bottom of the letters. */
   background: linear-gradient(
     to top,
     var(--highlight) 0%,
@@ -129,6 +132,22 @@ p { margin: 0; }
   padding: 0 0.1em 0.04em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+
+/* Large headings need their own tuning, not just a bigger version of the rule
+   above. A line box's height is not purely proportional to font-size, it also
+   depends on the element's line-height multiplier (h1 is a tight 1.04, body
+   text is a loose 1.55), so the same percentage gradient that looks right at
+   paragraph size measures its 46% mark against a proportionally taller box at
+   3.4rem and visibly bled down past the word into the text below it on the
+   home hero. Sized and positioned in em instead, tied directly to this
+   element's own font-size rather than to an ambiguous inherited line box. */
+h1 .hl, h2 .hl {
+  background-image: linear-gradient(var(--highlight), var(--highlight));
+  background-repeat: no-repeat;
+  background-size: 100% 0.4em;
+  background-position: 0 82%;
+  padding: 0 0.1em;
 }
 
 button, .btn {
@@ -684,10 +703,11 @@ input[type="range"] {
 }
 
 /* The home hero, in two columns once there is room: headline and loop on the
-   left, a static "decision -> uncertainty -> reveal" object on the right,
-   filling the space that otherwise reads as an unfinished page at desktop
-   width. Hidden below that width rather than shrunk, it is a composition
-   move for the wide layout, not a mobile element scaled down. */
+   left, the hero photograph on the right, filling the space that otherwise
+   reads as an unfinished page at desktop width. Stacks on mobile, copy first,
+   photo second, rather than hiding the image below a breakpoint: the photo
+   is the curiosity hook now, not a composition filler, it has to survive at
+   every width, "Trust? trust who?" has to stay legible even on a phone. */
 .hero-grid { display: block; }
 
 @media (min-width: 52rem) {
@@ -699,57 +719,35 @@ input[type="range"] {
   }
 }
 
+/* Two buttons, side by side once there's room to invite rather than demand:
+   "Play a Hunch" is the commitment, "How it works" is the exit for someone
+   who wants the explanation first. Neither should look like the only path. */
+.hero-cta {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.3rem;
+}
+
+@media (min-width: 30rem) {
+  .hero-cta { grid-template-columns: 1fr 1fr; }
+}
+
 .hero-visual {
-  display: none;
+  margin-top: 1.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  line-height: 0;
+}
+.hero-visual img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 @media (min-width: 52rem) {
-  .hero-visual {
-    display: grid;
-    gap: 0.9rem;
-    background: var(--card);
-    border: 2px solid var(--ink);
-    border-radius: 16px;
-    padding: 1.75rem;
-    box-shadow: var(--shadow);
-    justify-items: center;
-    text-align: center;
-  }
-  .hero-visual .you {
-    font-family: var(--display);
-    font-weight: 800;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-  .hero-visual .q {
-    width: 4.5rem;
-    height: 4.5rem;
-    display: grid;
-    place-items: center;
-    border: 2px dashed var(--line);
-    border-radius: 50%;
-    font-family: var(--display);
-    font-weight: 800;
-    font-size: 1.8rem;
-    color: var(--accent);
-  }
-  .hero-visual .branch {
-    display: flex;
-    gap: 1.5rem;
-    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-  }
-  .hero-visual .branch span:first-child { color: var(--good); }
-  .hero-visual .branch span:last-child { color: var(--warm); }
-  .hero-visual .caption {
-    font-size: 0.78rem;
-    color: var(--ink-faint);
-    max-width: 20ch;
-  }
+  .hero-visual { margin-top: 0; }
 }
 
 /* Shared header for the site pages, how it works / research / about, so the
