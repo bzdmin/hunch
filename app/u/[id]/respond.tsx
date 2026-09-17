@@ -216,6 +216,7 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
         </p>
 
         <div className="card guess">
+          <p className="eyebrow" style={{ marginBottom: "0.4rem" }}>Your hunch</p>
           <p className="soft" style={{ marginBottom: "0.4rem" }}>
             I think they offered&hellip;
           </p>
