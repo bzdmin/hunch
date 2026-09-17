@@ -7,7 +7,14 @@
  * NimHunt all placed), the collision is with the company name.
  */
 export const NAME = "Hunch";
-export const TAGLINE = "Can you predict another human?";
+/**
+ * "People", not "another human". Split's guess is against a population, what
+ * most people do, not one other person the way Trust and Ultimatum are, so the
+ * narrower wording quietly undersold a third of the product. This is also the
+ * link preview whenever anyone shares Hunch, so it has to match the home screen
+ * word for word.
+ */
+export const TAGLINE = "Can you predict people?";
 
 /**
  * Stake, in luna. 100,000 luna = 1 NIM.
