@@ -591,6 +591,160 @@ input[type="range"] {
 }
 .stats .l { font-size: 0.78rem; color: var(--ink-faint); }
 
+/* -------------------------------------------------------------- site chrome
+   Nav and footer exist only on the site pages (home, how it works, research,
+   about), never on an experiment flow screen. A decision screen earns its
+   minimalism, the pages that explain the product around it are exactly where
+   "this is a real place, not just three cards" needs to be established. */
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.site-nav-mark {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-nav-links {
+  display: none;
+  gap: 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.site-nav-links a { color: var(--ink-soft); text-decoration: none; }
+.site-nav-links a:hover { color: var(--ink); }
+.site-nav-cta {
+  width: auto;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 52rem) {
+  .site-nav { padding: 1.1rem 2rem; }
+  .site-nav-links { display: flex; }
+}
+
+.site-footer {
+  display: grid;
+  gap: 1.5rem;
+  padding: 2.5rem 1.25rem calc(2rem + env(safe-area-inset-bottom));
+  margin-top: 1rem;
+  border-top: 2px solid var(--line);
+  max-width: 64rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.site-footer-mark {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+.site-footer-cols { display: flex; gap: 2.5rem; flex-wrap: wrap; }
+.site-footer-col { display: grid; gap: 0.5rem; }
+.site-footer-col a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+.site-footer-col a:hover { color: var(--ink); }
+
+@media (min-width: 52rem) {
+  .site-footer { grid-template-columns: 1fr auto; align-items: start; padding: 3rem 2rem; }
+}
+
+/* The home hero, in two columns once there is room: headline and loop on the
+   left, a static "decision -> uncertainty -> reveal" object on the right,
+   filling the space that otherwise reads as an unfinished page at desktop
+   width. Hidden below that width rather than shrunk, it is a composition
+   move for the wide layout, not a mobile element scaled down. */
+.hero-grid { display: block; }
+
+@media (min-width: 52rem) {
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 3rem;
+    align-items: center;
+  }
+}
+
+.hero-visual {
+  display: none;
+}
+
+@media (min-width: 52rem) {
+  .hero-visual {
+    display: grid;
+    gap: 0.9rem;
+    background: var(--card);
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow);
+    justify-items: center;
+    text-align: center;
+  }
+  .hero-visual .you {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .hero-visual .q {
+    width: 4.5rem;
+    height: 4.5rem;
+    display: grid;
+    place-items: center;
+    border: 2px dashed var(--line);
+    border-radius: 50%;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--accent);
+  }
+  .hero-visual .branch {
+    display: flex;
+    gap: 1.5rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .hero-visual .branch span:first-child { color: var(--good); }
+  .hero-visual .branch span:last-child { color: var(--warm); }
+  .hero-visual .caption {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    max-width: 20ch;
+  }
+}
+
+/* Shared header for the site pages, how it works / research / about, so the
+   three read as one family rather than three differently-shaped documents. */
+.page-header { margin-bottom: 0.5rem; }
+.page-header h1 { margin-bottom: 0.5rem; }
+
+/* The mark, wherever it appears: nav, footer, report card, share card. One
+   rule rather than four, so its size and gap from the wordmark stay
+   consistent everywhere it shows up. */
+.brand-mark { margin-right: 0.3em; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

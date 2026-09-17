@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { NAME, TAGLINE } from "@/lib/brand";
+import { Nav } from "@/app/nav";
+import { Footer } from "@/app/footer";
 
 export const metadata = { title: `What is ${NAME}?` };
 
@@ -15,6 +17,8 @@ export const metadata = { title: `What is ${NAME}?` };
  */
 export default function About() {
   return (
+    <>
+    <Nav />
     <main className="screen">
       <p className="eyebrow">{NAME}</p>
       <h1>{TAGLINE}</h1>
@@ -80,8 +84,11 @@ export default function About() {
 
       <Link href="/" className="btn">Try a round</Link>
       <p className="faint" style={{ textAlign: "center" }}>
-        You&rsquo;ll need Nimiq Pay to take a turn. Reading is free.
+        You&rsquo;ll need a Nimiq wallet to take a turn, Nimiq Pay on your
+        phone or the Nimiq Hub in a browser. Reading is free.
       </p>
     </main>
+    <Footer />
+    </>
   );
 }

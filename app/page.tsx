@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { NAME, STAKE_NIM, TRUST_STAKE_OPTIONS_NIM, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
+import { Nav } from "@/app/nav";
+import { Footer } from "@/app/footer";
 
 export const dynamic = "force-dynamic";
 
@@ -49,13 +51,28 @@ const LOOP = [
 
 export default function Home() {
   return (
-    <main className="screen wide">
-      <p className="eyebrow">{NAME}</p>
-      <h1>Can you predict <span className="hl">people</span>?</h1>
-      <p className="soft">
-        Make a real decision with NIM. Make your prediction. Then see what
-        humans actually do.
-      </p>
+    <>
+      <Nav />
+      <main className="screen wide">
+      <div className="hero-grid">
+        <div>
+          <p className="eyebrow">{NAME}</p>
+          <h1>Can you predict <span className="hl">people</span>?</h1>
+          <p className="soft">
+            Make a real decision with NIM. Make your prediction. Then see what
+            humans actually do.
+          </p>
+        </div>
+        <div className="hero-visual" aria-hidden="true">
+          <span className="you">You</span>
+          <div className="q">?</div>
+          <div className="branch">
+            <span>KEEP</span>
+            <span>GIVE</span>
+          </div>
+          <p className="caption">A decision. A hunch about someone else. Then you find out.</p>
+        </div>
+      </div>
 
       <div className="loop">
         {LOOP.map((s) => (
@@ -69,7 +86,7 @@ export default function Home() {
         ))}
       </div>
 
-      <p className="section-label">Pick your experiment.</p>
+      <p className="section-label" id="experiments">Pick your experiment.</p>
 
       <div className="picks">
       <Link
@@ -166,7 +183,9 @@ export default function Home() {
 
       <div className="grow" />
 
-      <Link href="/about" className="btn ghost">How {NAME} works</Link>
-    </main>
+      <Link href="/how-it-works" className="btn ghost">How {NAME} works</Link>
+      </main>
+      <Footer />
+    </>
   );
 }

@@ -177,6 +177,60 @@ export async function guessPercentile(
   return { percentile: Math.round((beaten / gaps.length) * 100), sampleSize: gaps.length };
 }
 
+/**
+ * What Hunch's own players actually did, for the Research page: a real number
+ * alongside the published citations in lib/benchmarks.ts, not a replacement
+ * for them. Same sample-size discipline as guessPercentile above, and the
+ * same reason: below MIN_POPULATION_SAMPLE this is null, not a number, a mean
+ * of four rounds is not a finding.
+ */
+const MIN_POPULATION_SAMPLE = 10;
+
+export type TrustPopulation = { n: number; meanReturnedPct: number };
+
+export async function trustPopulation(): Promise<TrustPopulation | null> {
+  const rows = await db().all(COLL);
+  const shares: number[] = [];
+  for (const r of rows) {
+    const p = r.data as Pair;
+    if (p.exp !== "trust" || p.status !== "revealed" || !p.a || !p.b) continue;
+    const pot = p.stake * p.multiplier;
+    if (pot <= 0) continue;
+    shares.push((p.b.move / pot) * 100);
+  }
+  if (shares.length < MIN_POPULATION_SAMPLE) return null;
+  return {
+    n: shares.length,
+    meanReturnedPct: shares.reduce((a, b) => a + b, 0) / shares.length,
+  };
+}
+
+/**
+ * Ultimatum has no published benchmark in lib/benchmarks.ts, deliberately,
+ * those numbers have not been verified yet. This is the only comparison the
+ * Research page can honestly offer for it until that changes, real players,
+ * not a citation.
+ */
+export type UltimatumPopulation = { n: number; meanOfferPct: number; acceptedPct: number };
+
+export async function ultimatumPopulation(): Promise<UltimatumPopulation | null> {
+  const rows = await db().all(COLL);
+  const offers: number[] = [];
+  let accepted = 0;
+  for (const r of rows) {
+    const p = r.data as Pair;
+    if (p.exp !== "ultimatum" || p.status !== "revealed" || !p.a || !p.b) continue;
+    offers.push(Math.round((p.a.move / p.stake) * 100));
+    if (payoff(p).note === "accepted") accepted += 1;
+  }
+  if (offers.length < MIN_POPULATION_SAMPLE) return null;
+  return {
+    n: offers.length,
+    meanOfferPct: offers.reduce((a, b) => a + b, 0) / offers.length,
+    acceptedPct: (accepted / offers.length) * 100,
+  };
+}
+
 // ------------------------------------------------------------------ storage
 // Goes through lib/db.ts, so it is files locally and Postgres in production.
 

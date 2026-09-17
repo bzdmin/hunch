@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { NAME } from "@/lib/brand";
+import { Mark } from "@/app/mark";
 
 /**
  * The share card, and the button that sends it.
@@ -84,7 +85,7 @@ export function ShareCard({
     <>
       <div className="share-card" style={{ "--pick-color": color } as CSSProperties}>
         <div className="brand">
-          <span className="name">{NAME.toUpperCase()}</span>
+          <span className="name"><Mark /> {NAME.toUpperCase()}</span>
           <span className="exp">{experiment}</span>
         </div>
 

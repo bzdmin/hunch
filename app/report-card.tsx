@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { NAME } from "@/lib/brand";
+import { Mark } from "@/app/mark";
 
 /**
  * The reveal's report card, shared by Trust and Ultimatum's four reveal
@@ -42,7 +43,7 @@ export function ReportCard({
   return (
     <div className="report" style={{ "--pick-color": color } as CSSProperties}>
       <div className="brand">
-        <span className="name">{NAME.toUpperCase()}</span>
+        <span className="name"><Mark /> {NAME.toUpperCase()}</span>
         <span className="exp">{experiment}</span>
       </div>
 
