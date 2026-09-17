@@ -3,9 +3,11 @@ import { NAME, TAGLINE } from "@/lib/brand";
 import Boot from "./boot";
 import "./globals.css";
 
+const DEFINITION = "short behavioural experiments played with real NIM";
+
 export const metadata: Metadata = {
-  title: NAME,
-  description: TAGLINE,
+  title: `${NAME}: ${DEFINITION}`,
+  description: `${TAGLINE} ${NAME} is a collection of ${DEFINITION}. Make a decision, predict what another person will do, then find out.`,
 };
 
 /**
