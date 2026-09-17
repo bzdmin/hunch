@@ -107,9 +107,16 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
             }
             return;
           }
+          // Nobody ever answered, see OPEN_ROUND_TTL_MS in lib/pair.ts. A
+          // still deserves to know their earlier hunch is gone rather than
+          // silently landing on a fresh round with no explanation.
+          if (got.ok && info.status === "expired") {
+            clearOpenRound("trust");
+            if (!dead) setErr("Nobody answered your last round in time, so it expired. Here's a new one.");
+          }
           // Answered since. Shown once, then forgotten: the cache's job was
           // getting A back to a round in progress, not keeping history.
-          if (got.ok && info.status === "revealed" && info.a && info.b && info.payoff) {
+          else if (got.ok && info.status === "revealed" && info.a && info.b && info.payoff) {
             clearOpenRound("trust");
             if (!dead) {
               setResolved({

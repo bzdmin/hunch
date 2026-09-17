@@ -40,12 +40,21 @@ export default async function UltimatumLanding({
   }
 
   const done = pair.status === "revealed";
+  const expired = pair.status === "expired";
 
   return (
     <main className="screen">
       <p className="eyebrow">{NAME} · Ultimatum</p>
 
-      {done ? (
+      {expired ? (
+        <>
+          <h1>This invite expired.</h1>
+          <p className="soft">
+            Nobody answered it in time. Nothing is lost, you can start your
+            own round right now.
+          </p>
+        </>
+      ) : done ? (
         <>
           <h1>This round is already finished.</h1>
           <p className="soft">
@@ -66,7 +75,7 @@ export default async function UltimatumLanding({
 
       <div className="grow" />
 
-      <Respond id={pair.id} finished={done} />
+      <Respond id={pair.id} finished={done || expired} />
 
       <Link href="/about" className="faint" style={{ textAlign: "center" }}>
         What is {NAME}?

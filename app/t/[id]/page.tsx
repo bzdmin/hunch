@@ -41,12 +41,21 @@ export default async function TrustLanding({
 
   const pot = pair.stake * pair.multiplier;
   const done = pair.status === "revealed";
+  const expired = pair.status === "expired";
 
   return (
     <main className="screen">
       <p className="eyebrow">{NAME} · Trust</p>
 
-      {done ? (
+      {expired ? (
+        <>
+          <h1>This invite expired.</h1>
+          <p className="soft">
+            Nobody answered it in time. Nothing is lost, you can start your
+            own round right now.
+          </p>
+        </>
+      ) : done ? (
         <>
           <h1>This round is already finished.</h1>
           <p className="soft">
@@ -78,7 +87,7 @@ export default async function TrustLanding({
         id={pair.id}
         stake={pair.stake}
         multiplier={pair.multiplier}
-        finished={done}
+        finished={done || expired}
       />
 
       <Link href="/about" className="faint" style={{ textAlign: "center" }}>

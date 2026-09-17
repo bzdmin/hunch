@@ -31,8 +31,12 @@ export type PairExperiment = "trust" | "ultimatum";
 /**
  * "closed" is a Trust round where the first player kept the money. There is no
  * second player, so it must stop accepting one rather than sit open forever.
+ *
+ * "expired" is the other way an "open" round stops being open: A committed,
+ * nobody ever answered, see OPEN_ROUND_TTL_MS and isExpired() below for why
+ * this exists and how it is enforced.
  */
-export type PairStatus = "open" | "joined" | "sealed" | "revealed" | "closed";
+export type PairStatus = "open" | "joined" | "sealed" | "revealed" | "closed" | "expired";
 
 export type Side = {
   /** identity is the signing key, never a self-reported address */
@@ -236,8 +240,62 @@ export async function ultimatumPopulation(): Promise<UltimatumPopulation | null>
 
 const COLL = "pairs";
 
+/**
+ * How long an "open" round (A committed, B never showed) stays answerable.
+ *
+ * No money is at risk while a round sits open: unlike a typical escrow-timeout
+ * design, nothing is sent anywhere until B answers, see send() in
+ * lib/payout.ts, so this is a data-lifecycle problem, not a funds-safety one.
+ * The gap is real anyway, an unbounded "open" row is a stale link that still
+ * looks live forever, a candidate findWaitingRound() could hand a stranger a
+ * round its own creator has long forgotten, and a table that only ever grows.
+ *
+ * 48 hours, not minutes: Hunch's own share flow is fundamentally async, "send
+ * this to someone" (see the button text in trust/flow.tsx and
+ * ultimatum/flow.tsx) means the recipient may not open it same-day. A window
+ * long enough to survive someone reading a message the next morning, short
+ * enough that "waiting for an answer" still means something.
+ *
+ * Two ideas that were rejected on purpose:
+ *   hard delete on expiry    - every other completed round in this app is a
+ *                              permanent record (see randomWorkedExample's
+ *                              comment, and every Payout in lib/payout.ts).
+ *                              An abandoned round is itself a real signal,
+ *                              worth keeping to see how often invites go
+ *                              unanswered, so expiry is a status transition,
+ *                              not a deletion.
+ *   a background sweep alone - a cron job is necessary for reclaiming the
+ *                              "open" bucket's size over time (sweepExpired
+ *                              below), but nothing that matters for
+ *                              correctness may depend on it having run
+ *                              recently. Every read path that decides whether
+ *                              a round is still answerable checks the
+ *                              deadline itself (isExpired, used in getPair
+ *                              and findWaitingRound), the same lazy-check
+ *                              principle Redis expiry relies on: a key is
+ *                              treated as gone at the moment it is touched,
+ *                              whether or not the background pass has reached
+ *                              it yet.
+ */
+export const OPEN_ROUND_TTL_MS = 48 * 60 * 60 * 1000;
+
+export function isExpired(p: Pair, now: number = Date.now()): boolean {
+  return p.status === "open" && p.a !== null && p.b === null && now - p.a.at > OPEN_ROUND_TTL_MS;
+}
+
+/**
+ * A read that self-heals: if what comes back is a genuinely stale open round,
+ * it is written back as "expired" before it is handed to the caller, so
+ * every caller of getPair sees the true state even if the daily sweep
+ * (sweepExpiredPairs below) has not reached this row yet.
+ */
 export async function getPair(id: string): Promise<Pair | null> {
-  return (await db().get(COLL, id)) as Pair | null;
+  const p = (await db().get(COLL, id)) as Pair | null;
+  if (p && isExpired(p)) {
+    p.status = "expired";
+    await putPair(p);
+  }
+  return p;
 }
 
 export async function putPair(p: Pair): Promise<void> {
@@ -294,9 +352,35 @@ export async function findWaitingRound(exp: PairExperiment): Promise<Pair | null
   const rows = await db().all(COLL);
   const waiting = rows
     .map((r) => r.data as Pair)
-    .filter((p) => p.exp === exp && p.mode === "house" && p.status === "open" && p.a && !p.b)
+    // This reads storage directly, not through getPair, so its own self-heal
+    // never runs here: !isExpired() has to be checked explicitly rather than
+    // trusting status === "open" to mean "actually still live". Otherwise a
+    // round nobody answered in days could be handed to a stranger as "someone
+    // is waiting right now", which is exactly the stale-but-still-looks-live
+    // failure OPEN_ROUND_TTL_MS exists to prevent.
+    .filter((p) => p.exp === exp && p.mode === "house" && p.status === "open" && p.a && !p.b && !isExpired(p))
     .sort((a, b) => (a.a?.at ?? 0) - (b.a?.at ?? 0));
   return waiting[0] ?? null;
+}
+
+/**
+ * The active half of the hybrid expiry model: reclaims the "open" bucket by
+ * writing "expired" onto every row the lazy check in getPair would also
+ * catch, so nothing here is load-bearing for correctness, see
+ * OPEN_ROUND_TTL_MS above. Meant to be called on a schedule, not from a
+ * request path, see app/api/cron/sweep-expired/route.ts.
+ */
+export async function sweepExpiredPairs(): Promise<number> {
+  const rows = await db().all(COLL);
+  let swept = 0;
+  for (const r of rows) {
+    const p = r.data as Pair;
+    if (!isExpired(p)) continue;
+    p.status = "expired";
+    await putPair(p);
+    swept += 1;
+  }
+  return swept;
 }
 
 /**
@@ -312,7 +396,8 @@ export function redact(p: Pair, viewer: "a" | "b" | "stranger") {
     stake: p.stake,
     multiplier: p.multiplier,
     status: p.status,
-    waitingOn: p.status === "closed" ? null : p.a && !p.b ? "b" : !p.a ? "a" : null,
+    waitingOn:
+      p.status === "closed" || p.status === "expired" ? null : p.a && !p.b ? "b" : !p.a ? "a" : null,
   };
 
   // Keeping ends a round with no second player, so there is nothing left to hide.
@@ -323,6 +408,13 @@ export function redact(p: Pair, viewer: "a" | "b" | "stranger") {
       payoff: { a: p.stake, b: 0, note: "kept it" },
       youAre: viewer,
     };
+  }
+
+  // Expired the same way: A's own move is not a secret from A, but unlike
+  // "closed" nothing was ever paid out, nobody answered, so there is no
+  // payoff to report, real or otherwise.
+  if (p.status === "expired" && p.a) {
+    return { ...base, a: { move: p.a.move, predict: p.a.predict }, payoff: null, youAre: viewer };
   }
 
   if (p.status !== "revealed") return base;

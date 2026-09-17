@@ -14,6 +14,53 @@ export const dynamic = "force-dynamic";
 const TRUST_MULTIPLIER = 3;
 
 /**
+ * Everything a committed side is owed to know about their own round: their
+ * own answer, what it settled to (if anything has), and a settlement
+ * reference once a payout has actually sent. Shared by two callers: a fresh
+ * commit that just stored `p.a`/`p.b`, and an idempotent replay (see PUT)
+ * that stored nothing this time and is just re-reading what is already
+ * there. Both need the exact same shape, and send() in lib/payout.ts is
+ * itself idempotent by (session, reason), so calling it again here for a
+ * replay is safe, it returns the existing record rather than paying twice.
+ */
+async function settleAndRespond(p: Pair, seat: "a" | "b") {
+  const side = (seat === "a" ? p.a : p.b)!;
+
+  let settled: { a: number; b: number; note: string } | null = null;
+  const settlement: { a: string | null; b: string | null } = { a: null, b: null };
+  const prefix = p.exp === "trust" ? "trust" : "ultimatum";
+  if (p.status === "closed" && p.a) {
+    settled = { a: p.stake, b: 0, note: "kept it" };
+    const rec = await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: `${prefix}-a` as PayoutReason });
+    settlement.a = rec.status === "sent" ? rec.txHash : null;
+  } else if (p.status === "revealed" && p.a && p.b) {
+    settled = payoff(p);
+    if (settled.a > 0) {
+      const rec = await send({ session: p.id, to: p.a.payTo, value: settled.a, reason: `${prefix}-a` as PayoutReason });
+      settlement.a = rec.status === "sent" ? rec.txHash : null;
+    }
+    if (settled.b > 0) {
+      const rec = await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: `${prefix}-b` as PayoutReason });
+      settlement.b = rec.status === "sent" ? rec.txHash : null;
+    }
+  }
+
+  const percentile = p.status === "revealed" && p.a && p.b
+    ? await guessPercentile(p.exp, "b", guessGapPct(p, "b"))
+    : null;
+
+  return {
+    ...redact(p, seat),
+    // A's own answer comes straight back so they get a complete result immediately.
+    // Waiting on a partner must never be the whole of anyone's first experience.
+    you: { move: side.move, predict: side.predict },
+    payoffIfRevealed: settled,
+    percentile,
+    settlement,
+  };
+}
+
+/**
  * Read a round.
  *
  * Reads go through redact() without exception. Returning a raw Pair would let one
@@ -163,19 +210,41 @@ export async function PUT(req: Request) {
 
   const p = await getPair(id);
   if (!p) return NextResponse.json({ error: "not found" }, { status: 404 });
+
+  // Idempotent replay. This key already holds a seat in this round, so the
+  // request is either a retried commit whose first response never arrived
+  // (a dropped connection, a backgrounded app mid-signing) or a deliberate
+  // attempt to resubmit as the other seat. Both get the same safe answer:
+  // the ORIGINAL stored outcome for the seat this key actually holds,
+  // nothing about the new request body is ever consulted. That closes the
+  // retry case without an error on an honest resend, and closes the
+  // self-play case more simply than an explicit block, there is nothing
+  // left for a matching key to change. Checked before every other branch,
+  // including the finished/expired checks below, since settleAndRespond
+  // reads p.status itself and already returns the right shape for any of
+  // open, closed, revealed, or expired.
+  if (p.a?.publicKey === publicKey) {
+    return NextResponse.json(await settleAndRespond(p, "a"));
+  }
+  if (p.b?.publicKey === publicKey) {
+    return NextResponse.json(await settleAndRespond(p, "b"));
+  }
+
+  if (p.status === "expired") {
+    return NextResponse.json(
+      { error: "Nobody answered this round in time, so it expired. Start a new one." },
+      { status: 409 },
+    );
+  }
   if (p.status === "revealed" || p.status === "closed") {
     return NextResponse.json({ error: "this one is already finished" }, { status: 409 });
   }
 
   // The seat follows the order of arrival, and the second seat must be someone else.
   // Otherwise the first player could hand the money to themselves and keep it all.
+  // (Same key as p.a is already handled above, this only guards the remaining
+  // shape: two open seats, one of them not yet claimed.)
   const seat: "a" | "b" = p.a === null ? "a" : "b";
-  if (p.a?.publicKey === publicKey) {
-    return NextResponse.json(
-      { error: "You started this round, so someone else has to answer it." },
-      { status: 409 },
-    );
-  }
 
   // House money only. Self mode costs the house nothing, so there is nothing to
   // farm and nothing to gate here.
@@ -280,41 +349,8 @@ export async function PUT(req: Request) {
 
   await putPair(p);
 
-  // Record what is owed now that the round is settled. Payouts are ids of
-  // (round, reason), so replaying this request cannot create a second debt.
-  let settled: { a: number; b: number; note: string } | null = null;
-  const settlement: { a: string | null; b: string | null } = { a: null, b: null };
-  const prefix = p.exp === "trust" ? "trust" : "ultimatum";
-  if (p.status === "closed" && p.a) {
-    settled = { a: p.stake, b: 0, note: "kept it" };
-    const rec = await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: `${prefix}-a` as PayoutReason });
-    settlement.a = rec.status === "sent" ? rec.txHash : null;
-  } else if (p.status === "revealed" && p.a && p.b) {
-    settled = payoff(p);
-    if (settled.a > 0) {
-      const rec = await send({ session: p.id, to: p.a.payTo, value: settled.a, reason: `${prefix}-a` as PayoutReason });
-      settlement.a = rec.status === "sent" ? rec.txHash : null;
-    }
-    if (settled.b > 0) {
-      const rec = await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: `${prefix}-b` as PayoutReason });
-      settlement.b = rec.status === "sent" ? rec.txHash : null;
-    }
-  }
-
-  // Seat b's own guess accuracy, ready the moment they commit rather than needing
-  // a second round trip. Seat a only ever finds this out later, through GET, once
-  // b has answered, there is nothing to grade yet at the point a commits.
-  const percentile = p.status === "revealed" && p.a && p.b
-    ? await guessPercentile(p.exp, "b", guessGapPct(p, "b"))
-    : null;
-
-  return NextResponse.json({
-    ...redact(p, seat),
-    // A's own answer comes straight back so they get a complete result immediately.
-    // Waiting on a partner must never be the whole of anyone's first experience.
-    you: { move: side.move, predict: side.predict },
-    payoffIfRevealed: settled,
-    percentile,
-    settlement,
-  });
+  // Payouts are ids of (round, reason), see send() in lib/payout.ts, so a
+  // retried request from here on cannot create a second debt either, this
+  // is belt-and-suspenders under the replay branch above.
+  return NextResponse.json(await settleAndRespond(p, seat));
 }
