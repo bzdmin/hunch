@@ -19,6 +19,7 @@ type Resolved = {
   returned: number;
   payoff: { a: number; b: number; note: string };
   percentile: { percentile: number; sampleSize: number } | null;
+  settlementHash: string | null;
 };
 
 /**
@@ -116,6 +117,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
                 returned: info.b.move,
                 payoff: info.payoff,
                 percentile: info.percentile ?? null,
+                settlementHash: info.settlement?.a ?? null,
               });
               addHistory({
                 exp: "trust",
@@ -232,6 +234,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
           outcome={<>They sent back {nim(resolved.returned)} NIM.</>}
           verdictLabel="How well did you read them?"
           verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(predictPct, sharePct))}
+          settlementHash={resolved.settlementHash}
         >
           <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>

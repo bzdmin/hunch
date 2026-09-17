@@ -26,6 +26,7 @@ export function ReportCard({
   outcome,
   verdictLabel,
   verdictValue,
+  settlementHash,
   children,
 }: {
   experiment: string;
@@ -36,6 +37,13 @@ export function ReportCard({
   outcome: ReactNode;
   verdictLabel: string;
   verdictValue: ReactNode;
+  /**
+   * A real transaction hash, and only once the payout has actually sent,
+   * never a queued or failed record. No link out to an explorer: guessing a
+   * URL format wrong would be worse than showing none, the hash itself is
+   * the proof, anyone can paste it into any Nimiq explorer themselves.
+   */
+  settlementHash?: string | null;
   /** extra content after the three sections, before the verdict line, e.g. a
    * split-readout of final balances */
   children?: ReactNode;
@@ -66,6 +74,12 @@ export function ReportCard({
         <p className="label">{verdictLabel}</p>
         <p className="big">{verdictValue}</p>
       </div>
+
+      {settlementHash && (
+        <p className="settlement">
+          Settled on Nimiq &middot; <span>{settlementHash}</span>
+        </p>
+      )}
     </div>
   );
 }

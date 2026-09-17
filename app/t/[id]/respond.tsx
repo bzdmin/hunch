@@ -18,6 +18,7 @@ type Reveal = {
   b: { move: number; predict: number } | null;
   payoff: { a: number; b: number; note: string };
   percentile: { percentile: number; sampleSize: number } | null;
+  settlementHash: string | null;
 };
 
 /**
@@ -91,7 +92,11 @@ export default function Respond({
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
 
       const payoff = out.payoffIfRevealed ?? out.payoff;
-      setReveal({ a: out.a ?? null, b: out.b ?? null, payoff, percentile: out.percentile ?? null });
+      setReveal({
+        a: out.a ?? null, b: out.b ?? null, payoff,
+        percentile: out.percentile ?? null,
+        settlementHash: out.settlement?.b ?? null,
+      });
       addHistory({
         exp: "trust",
         call: `A stranger trusted you with ${nim(pot)} NIM.`,
@@ -161,6 +166,7 @@ export default function Respond({
           outcome={<>They actually expected {expectedPct}% back.</>}
           verdictLabel="How well did you read them?"
           verdictValue={verdictValue(reveal.percentile, guessAccuracyClause(predictPct, expectedPct))}
+          settlementHash={reveal.settlementHash}
         >
           <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>

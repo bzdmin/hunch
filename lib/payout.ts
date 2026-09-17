@@ -171,6 +171,15 @@ export async function send(args: {
   return rec;
 }
 
+/**
+ * One payout by (session, reason), for the reveal screen's settlement
+ * reference. Only ever shown once status is "sent", a queued or failed
+ * record is not a settlement, and the UI must not imply one exists yet.
+ */
+export async function getPayout(session: string, reason: PayoutReason): Promise<Payout | null> {
+  return (await db().get(COLL, `${session}-${reason}`)) as Payout | null;
+}
+
 export async function pending(): Promise<Payout[]> {
   return (await read()).filter((p) => p.status === "queued");
 }

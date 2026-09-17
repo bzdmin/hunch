@@ -328,6 +328,23 @@ input[type="range"] {
   line-height: 1.15;
 }
 
+/* The real settlement reference, only ever rendered once a payout has
+   actually sent, see ReportCard's settlementHash prop. No link out, the raw
+   hash is the proof, selectable and pasteable into any Nimiq explorer. */
+.report .settlement {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 2px solid var(--line);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.report .settlement span {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color: var(--ink-soft);
+  word-break: break-all;
+  user-select: all;
+}
+
 /* The share card. Deliberately NOT a copy of the report above it: the report
    answers "what happened to me", this asks a stranger "could you have read
    them?". Built to survive being screenshotted and posted with no app around

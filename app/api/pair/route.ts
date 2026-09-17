@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomTrustStake, randomUltimatumStake } from "@/lib/brand";
-import { trustOpen, ultimatumOpen, send, type PayoutReason } from "@/lib/payout";
+import { trustOpen, ultimatumOpen, send, getPayout, type PayoutReason } from "@/lib/payout";
 import { session as newId, trustMessage, ultimatumMessage } from "@/lib/message";
 import {
   getPair, putPair, redact, payoff, guessGapPct, guessPercentile,
@@ -37,7 +37,24 @@ export async function GET(req: Request) {
     percentile = await guessPercentile(p.exp, viewer, guessGapPct(p, viewer));
   }
 
-  return NextResponse.json({ ...redact(p, viewer), percentile });
+  // A real settlement reference, never shown until the payout has actually
+  // sent. A "queued" or "failed" record is not a settlement, and showing a
+  // hash for one would be exactly the fake transaction state the wallet
+  // architecture work ruled out.
+  let settlement: { a: string | null; b: string | null } | null = null;
+  if (p.status === "revealed" && p.a && p.b) {
+    const prefix = p.exp === "trust" ? "trust" : "ultimatum";
+    const [pa, pb] = await Promise.all([
+      getPayout(p.id, `${prefix}-a` as PayoutReason),
+      getPayout(p.id, `${prefix}-b` as PayoutReason),
+    ]);
+    settlement = {
+      a: pa?.status === "sent" ? pa.txHash : null,
+      b: pb?.status === "sent" ? pb.txHash : null,
+    };
+  }
+
+  return NextResponse.json({ ...redact(p, viewer), percentile, settlement });
 }
 
 /**
@@ -266,14 +283,22 @@ export async function PUT(req: Request) {
   // Record what is owed now that the round is settled. Payouts are ids of
   // (round, reason), so replaying this request cannot create a second debt.
   let settled: { a: number; b: number; note: string } | null = null;
+  const settlement: { a: string | null; b: string | null } = { a: null, b: null };
   const prefix = p.exp === "trust" ? "trust" : "ultimatum";
   if (p.status === "closed" && p.a) {
     settled = { a: p.stake, b: 0, note: "kept it" };
-    await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: `${prefix}-a` as PayoutReason });
+    const rec = await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: `${prefix}-a` as PayoutReason });
+    settlement.a = rec.status === "sent" ? rec.txHash : null;
   } else if (p.status === "revealed" && p.a && p.b) {
     settled = payoff(p);
-    if (settled.a > 0) await send({ session: p.id, to: p.a.payTo, value: settled.a, reason: `${prefix}-a` as PayoutReason });
-    if (settled.b > 0) await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: `${prefix}-b` as PayoutReason });
+    if (settled.a > 0) {
+      const rec = await send({ session: p.id, to: p.a.payTo, value: settled.a, reason: `${prefix}-a` as PayoutReason });
+      settlement.a = rec.status === "sent" ? rec.txHash : null;
+    }
+    if (settled.b > 0) {
+      const rec = await send({ session: p.id, to: p.b.payTo, value: settled.b, reason: `${prefix}-b` as PayoutReason });
+      settlement.b = rec.status === "sent" ? rec.txHash : null;
+    }
   }
 
   // Seat b's own guess accuracy, ready the moment they commit rather than needing
@@ -290,5 +315,6 @@ export async function PUT(req: Request) {
     you: { move: side.move, predict: side.predict },
     payoffIfRevealed: settled,
     percentile,
+    settlement,
   });
 }

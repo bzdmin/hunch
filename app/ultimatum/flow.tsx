@@ -20,6 +20,7 @@ type Resolved = {
   yourGuess: number;
   payoff: { a: number; b: number; note: string };
   percentile: { percentile: number; sampleSize: number } | null;
+  settlementHash: string | null;
 };
 
 /**
@@ -108,6 +109,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
                 yourGuess: info.a.predict,
                 payoff: info.payoff,
                 percentile: info.percentile ?? null,
+                settlementHash: info.settlement?.a ?? null,
               });
               addHistory({
                 exp: "ultimatum",
@@ -175,6 +177,7 @@ export default function Flow({ example }: { example: WorkedExample }) {
           outcome={<>The least they&rsquo;d actually take was {resolved.theirThreshold}%.</>}
           verdictLabel="How well did you read them?"
           verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold))}
+          settlementHash={resolved.settlementHash}
         >
           <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>

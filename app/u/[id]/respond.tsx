@@ -17,6 +17,7 @@ type Reveal = {
   b: { move: number; predict: number } | null;
   payoff: { a: number; b: number; note: string };
   percentile: { percentile: number; sampleSize: number } | null;
+  settlementHash: string | null;
 };
 
 /**
@@ -91,7 +92,11 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
       if (!res.ok) throw new Error(out.error ?? "Could not record that.");
 
       const payoff = out.payoffIfRevealed ?? out.payoff;
-      setReveal({ a: out.a ?? null, b: out.b ?? null, payoff, percentile: out.percentile ?? null });
+      setReveal({
+        a: out.a ?? null, b: out.b ?? null, payoff,
+        percentile: out.percentile ?? null,
+        settlementHash: out.settlement?.b ?? null,
+      });
       addHistory({
         exp: "ultimatum",
         call: `A stranger offered you ${nim(out.a?.move ?? 0)} NIM of ${nim(info.stake)} NIM.`,
@@ -150,6 +155,7 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
           outcome={<>They actually offered {offerPct}%.</>}
           verdictLabel="How well did you read them?"
           verdictValue={verdictValue(reveal.percentile, guessAccuracyClause(guessPct, offerPct))}
+          settlementHash={reveal.settlementHash}
         >
           <div className="split-readout" style={{ marginBottom: "1rem" }}>
             <div>

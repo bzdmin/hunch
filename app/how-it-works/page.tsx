@@ -52,7 +52,13 @@ export default function HowItWorks() {
             <span className="n">03</span>
             <div>
               <p className="t">Reveal</p>
-              <p className="d">See what actually happened. Locked in the moment both sides commit, neither can react to the other.</p>
+              <p className="d">
+                See what actually happened. Enforced server-side, not just in
+                the interface: the app cannot send you their answer before
+                yours is locked in, even if someone tried to force it, both
+                sides commit blind and the reveal only happens once neither
+                can react to the other.
+              </p>
             </div>
           </div>
           <div className="step">

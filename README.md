@@ -1,12 +1,18 @@
 # Hunch
 
-**Can you predict another human?**
+**Can you predict people?**
 
-A behavioural experiment you play with real money, inside [Nimiq Pay](https://nimiq.com).
-You make one real choice about money, guess what everyone else does, and then find
-out, how you compare to other players, and to sixty years of published research.
+A behavioural experiment you play with real NIM, inside [Nimiq Pay](https://nimiq.com)
+on a phone or through [Nimiq Hub](https://hub.nimiq.com) in a normal browser. You make
+one real decision, predict what someone else will do, then find out, how you compare
+to other Hunch players, and where there's a real benchmark for it, to published
+research.
 
 Built for the Nimiq Mini Apps Competition, Cycle II.
+
+Site map: `/` (pick an experiment) → `/how-it-works` (the loop, explained) →
+`/research` (the citations) → `/results` (this device's own history) →
+`/split`, `/trust`, `/ultimatum` (the three experiments).
 
 ## The idea
 
@@ -48,7 +54,15 @@ ways:
   from an address it does not disclose, so the paying address is read back off-chain
   and identity is the signing key.
 - **Nothing is revealed until both sides have committed.** In two-player experiments
-  the server refuses to send one player's move to the other before sealing.
+  the server refuses to send one player's move to the other before sealing, enforced
+  in the API response itself, not just in the interface.
+- **The signature is actually verified**, not just present (`lib/verify.ts`), against
+  the exact byte format Nimiq Pay and Nimiq Hub both use, confirmed against real
+  signatures from both before shipping.
+- **One wallet, two real environments** (`lib/wallet/`): the Mini App SDK inside
+  Nimiq Pay, Nimiq Hub in a normal browser, picked automatically, the rest of the
+  app never knows which one answered. Neither is a fallback for the other, and
+  there is no third, simulated mode.
 - **Published figures live in one file** (`lib/benchmarks.ts`) with citations, and
   nothing goes on screen that isn't in it with a source.
 
