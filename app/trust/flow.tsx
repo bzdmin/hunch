@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier, trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
-import { signWithAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/wallet";
+import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
@@ -157,12 +157,14 @@ export default function Flow({ example }: { example: WorkedExample }) {
       // One prompt, whichever wallet is answering, see lib/wallet/types.ts.
       const { publicKey, signature, address: payTo } = await signWithAddress(message);
       const device = await deviceId(DEVICE_ID_REASON);
+      const env = await environment();
 
       const res = await fetch("/api/pair", {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          id: round.id, move, predict, ref, message, publicKey, signature, payTo, deviceId: device,
+          id: round.id, move, predict, ref, message, publicKey, signature, payTo,
+          deviceId: device, environment: env,
         }),
       });
       const out = await res.json();

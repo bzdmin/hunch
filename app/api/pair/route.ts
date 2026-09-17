@@ -113,6 +113,7 @@ export async function PUT(req: Request) {
     signature?: string;
     payTo?: string;
     deviceId?: string | null;
+    environment?: string;
   };
 
   try {
@@ -130,6 +131,12 @@ export async function PUT(req: Request) {
   const deviceId = typeof body.deviceId === "string" && /^[0-9a-f]{64}$/i.test(body.deviceId)
     ? body.deviceId
     : null;
+  // Same trust level as deviceId, self-reported anti-abuse metadata, never
+  // identity. Used only to tell "Hub, which has no device id" apart from
+  // "Nimiq Pay client that withheld one", see the comment on tooManyRounds().
+  const environment = body.environment === "nimiq-pay" || body.environment === "hub"
+    ? body.environment
+    : "none";
   if (!/^[0-9a-z]{1,32}$/i.test(ref)) {
     return NextResponse.json({ error: "bad ref" }, { status: 400 });
   }
@@ -156,7 +163,7 @@ export async function PUT(req: Request) {
   // House money only. Self mode costs the house nothing, so there is nothing to
   // farm and nothing to gate here.
   if (p.mode === "house") {
-    const blocked = await tooManyRounds(publicKey, deviceId);
+    const blocked = await tooManyRounds(publicKey, deviceId, environment);
     if (blocked) return NextResponse.json({ error: blocked }, { status: 429 });
 
     // Only checkable once B's payout address is known, which is now. Two real

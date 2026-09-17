@@ -89,14 +89,25 @@ function latest(sides: HouseSide[]): number {
  * to pay. Order matters: cooldown first, since it is the cheapest check and the
  * one that actually stops a tight scripted loop, then lifetime, then daily, so
  * whichever limit is closest is the one reported.
+ *
+ * environment distinguishes "a real device chose not to check in" from "there
+ * is no device to check in with": Nimiq Pay always has a deviceId unless the
+ * player denied the one-time prompt or is on an old build, both real signals
+ * worth refusing on. The Hub, Hunch's desktop environment (see lib/wallet),
+ * has no equivalent at all and never will, refusing every Hub player over a
+ * signal that environment cannot produce would not be caution, it would be
+ * quietly turning off a whole first-class environment. Hub traffic still hits
+ * every key-based check below exactly as Nimiq Pay always has, this only
+ * withholds the one extra signal Hub genuinely cannot supply.
  */
 export async function tooManyRounds(
   publicKey: string,
   deviceId: string | null,
+  environment: "nimiq-pay" | "hub" | "none" | null,
 ): Promise<string | null> {
   if (isTestKey(publicKey)) return null;
 
-  if (!deviceId) {
+  if (!deviceId && environment !== "hub") {
     return "This round needs your device to check in first. Update Nimiq Pay, allow the " +
       "prompt when it asks, or play Split instead.";
   }
@@ -116,15 +127,17 @@ export async function tooManyRounds(
     return "That signing key has played enough house-funded rounds for one day. Try again tomorrow, or play Split.";
   }
 
-  const byDevice = all.filter((s) => s.deviceId === deviceId);
-  if (now - latest(byDevice) < COOLDOWN_MS) {
-    return "Give it a few seconds between rounds.";
-  }
-  if (byDevice.length >= DEVICE_LIFETIME_ROUNDS) {
-    return "This device has reached its lifetime limit for house-funded rounds. Play Split instead.";
-  }
-  if (byDevice.filter((s) => s.at >= sinceDay).length >= DEVICE_DAILY_ROUNDS) {
-    return "This device has played enough house-funded rounds for one day. Try again tomorrow, or play Split.";
+  if (deviceId) {
+    const byDevice = all.filter((s) => s.deviceId === deviceId);
+    if (now - latest(byDevice) < COOLDOWN_MS) {
+      return "Give it a few seconds between rounds.";
+    }
+    if (byDevice.length >= DEVICE_LIFETIME_ROUNDS) {
+      return "This device has reached its lifetime limit for house-funded rounds. Play Split instead.";
+    }
+    if (byDevice.filter((s) => s.at >= sinceDay).length >= DEVICE_DAILY_ROUNDS) {
+      return "This device has played enough house-funded rounds for one day. Try again tomorrow, or play Split.";
+    }
   }
 
   return null;

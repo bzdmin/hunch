@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
 import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
-import { signWithAddress, readable, available, deviceId, DEVICE_ID_REASON } from "@/lib/wallet";
+import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
 
@@ -74,13 +74,14 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
       // One prompt, whichever wallet is answering, see lib/wallet/types.ts.
       const { publicKey, signature, address: payTo } = await signWithAddress(message);
       const device = await deviceId(DEVICE_ID_REASON);
+      const env = await environment();
 
       const res = await fetch("/api/pair", {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           id, move: thresholdPct, predict: guessPct, ref, message, publicKey, signature, payTo,
-          deviceId: device,
+          deviceId: device, environment: env,
         }),
       });
       const out = await res.json();
