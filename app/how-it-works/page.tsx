@@ -35,39 +35,40 @@ export default function HowItWorks() {
             <span className="n">01</span>
             <div>
               <p className="t">Decide</p>
-              <p className="d">Make a real choice with real NIM. Keeping is always an option.</p>
+              <p className="d">Make a real decision using NIM. Keeping is always an option.</p>
             </div>
           </div>
           <div className="step">
             <span className="n">02</span>
             <div>
-              <p className="t">Predict</p>
+              <p className="t">Lock</p>
               <p className="d">
-                Before you find out anything, guess what another person will
-                do. This is the part that&rsquo;s hard to get right.
+                Commit to your prediction before the other person decides.
+                This is the part that&rsquo;s hard to get right.
               </p>
             </div>
           </div>
           <div className="step">
             <span className="n">03</span>
             <div>
-              <p className="t">Reveal</p>
+              <p className="t">Wait</p>
               <p className="d">
-                See what actually happened. Enforced server-side, not just in
-                the interface: the app cannot send you their answer before
-                yours is locked in, even if someone tried to force it, both
-                sides commit blind and the reveal only happens once neither
-                can react to the other.
+                The other participant makes their choice. Enforced
+                server-side, not just in the interface: the app cannot send
+                you their answer before yours is locked in, even if someone
+                tried to force it, both sides commit blind and the reveal
+                only happens once neither can react to the other.
               </p>
             </div>
           </div>
           <div className="step">
             <span className="n">04</span>
             <div>
-              <p className="t">Compare</p>
+              <p className="t">Reveal</p>
               <p className="d">
-                See how your hunch stacks up against other {NAME} players and,
-                where there&rsquo;s a real benchmark for it, published
+                See what happened, and compare your prediction with the
+                outcome, against other {NAME} players and, where
+                there&rsquo;s a real benchmark for it, published
                 behavioural research.
               </p>
             </div>
@@ -76,7 +77,7 @@ export default function HowItWorks() {
             <span className="n">05</span>
             <div>
               <p className="t">Share</p>
-              <p className="d">Send your result to someone and find out if they&rsquo;d have read it better.</p>
+              <p className="d">Send the experiment to someone else and see what they predict.</p>
             </div>
           </div>
         </div>

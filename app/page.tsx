@@ -31,8 +31,7 @@ export const dynamic = "force-dynamic";
  *
  * The notation under each heading is notation, not illustration: KEEP <-> GIVE,
  * YOU -> THEM -> YOU, OFFER <-> ACCEPT, so the three are distinguishable at a
- * glance. Split gets a second, fainter line, YOU -> NEXT -> NEXT, because its
- * stake keeps moving after the round ends and nothing else here does that.
+ * glance.
  *
  * No player count. A true count in the single digits makes a product look
  * empty rather than alive, and invented numbers are not on the table. Product
@@ -43,11 +42,11 @@ function range(nums: number[]): string {
 }
 
 const LOOP = [
-  { n: "01", t: "Decide", d: "Make a real choice with real NIM." },
-  { n: "02", t: "Predict", d: "Guess what the other person will do." },
-  { n: "03", t: "Reveal", d: "See what actually happened." },
-  { n: "04", t: "Compare", d: "See how your hunch stacks up against other humans." },
-  { n: "05", t: "Share", d: "Send it to someone and find out if they read it better." },
+  { n: "01", t: "Decide", d: "Make your choice with real NIM." },
+  { n: "02", t: "Predict", d: "Predict what another person will do." },
+  { n: "03", t: "Reveal", d: "See what they actually chose." },
+  { n: "04", t: "Compare", d: "See how your prediction compares." },
+  { n: "05", t: "Share", d: "Challenge someone to make their own." },
 ];
 
 export default function Home() {
@@ -60,8 +59,9 @@ export default function Home() {
           <p className="eyebrow">{NAME}</p>
           <h1>Can you predict <span className="hl">people</span>?</h1>
           <p className="soft">
-            Make a real decision with NIM. Lock your hunch. See what another
-            human actually does.
+            Make a real decision with NIM.<br />
+            Lock your prediction.<br />
+            See what another human actually does.
           </p>
           <div className="hero-cta">
             <Link href="/#experiments" className="btn">Play a Hunch &rarr;</Link>
@@ -103,10 +103,9 @@ export default function Home() {
         <p className="eyebrow">01 &middot; Split</p>
         <h2>What would you keep?</h2>
         <p className="metaphor">KEEP &harr; GIVE</p>
-        <p className="metaphor chain">YOU &rarr; NEXT &rarr; NEXT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          You have {STAKE_NIM.toLocaleString()} NIM. How much will you pass to
-          the next person? Then see what people actually do.
+          You have {STAKE_NIM.toLocaleString()} NIM. Decide how much to pass
+          to the next person. Then see what other people choose.
         </p>
         <div className="meta">
           <span>Solo</span>
@@ -125,8 +124,8 @@ export default function Home() {
         <h2>Hand it over, or keep it?</h2>
         <p className="metaphor">YOU &rarr; THEM &rarr; YOU</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          Trust a stranger with your stake and it triples in their hands. They
-          decide what comes back. Could be everything. Could be nothing.
+          Put your NIM in another person&rsquo;s hands. Their decision
+          determines what comes back.
         </p>
         <div className="meta">
           <span>Two players</span>
@@ -145,8 +144,8 @@ export default function Home() {
         <h2>Offer a share, or lose it all?</h2>
         <p className="metaphor">OFFER &harr; ACCEPT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          Offer a stranger a cut of what you have. Too low, and you both walk
-          away with nothing, not even the part you meant to keep.
+          Offer another person a share of your NIM. They can accept it or
+          reject the deal for both of you.
         </p>
         <div className="meta">
           <span>Two players</span>
@@ -164,36 +163,41 @@ export default function Home() {
         </div>
         <div>
           <span className="n">60s</span>
-          <span className="l">a round</span>
+          <span className="l">per round</span>
         </div>
         <div>
-          <span className="n">Real</span>
-          <span className="l">NIM at stake</span>
+          <span className="n">Real NIM</span>
+          <span className="l">every decision</span>
         </div>
       </div>
 
       <div className="card">
         <h2>What is {NAME}?</h2>
         <p className="soft" style={{ marginTop: "0.5rem" }}>
-          Short experiments with real consequences. You make a decision with
-          real NIM, you call what someone else will do, then you find out. The
-          point isn&rsquo;t to tell you what kind of person you are. It&rsquo;s
-          to find out how well you actually read people.
+          {NAME} is a collection of short behavioural experiments played with
+          real NIM.
+        </p>
+        <p className="soft" style={{ marginTop: "0.5rem" }}>
+          Make a decision. Predict what another person will do. Then find out.
+        </p>
+        <p className="soft" style={{ marginTop: "0.5rem" }}>
+          Your result isn&rsquo;t a personality test. It&rsquo;s a chance to
+          see how well your prediction matched another human&rsquo;s choice.
         </p>
         <p className="faint" style={{ marginTop: "0.6rem" }}>
-          Where an experiment has a meaningful benchmark, your result is shown
-          against other {NAME} players and against published findings, after
-          you&rsquo;ve committed to your own answer, never before.
+          When an experiment has a meaningful benchmark, we compare your
+          result with other {NAME} players and published behavioural
+          research.
         </p>
         <p className="faint" style={{ marginTop: "0.4rem" }}>
-          Every round is a new stranger and a new stake, no two hunches are
-          the same, and comparisons only get sharper as more people play.
+          Every round gives you another decision to make, another person to
+          predict, and another result to compare.
         </p>
       </div>
 
       <div className="grow" />
 
-      <Link href="/how-it-works" className="btn ghost">How {NAME} works</Link>
+      <Link href="/how-it-works" className="btn ghost">See how {NAME} works &rarr;</Link>
       </main>
       <Footer />
     </>

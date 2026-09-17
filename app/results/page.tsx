@@ -7,21 +7,6 @@ import { getHistory, currentStreak, type HistoryEntry } from "@/lib/history";
 import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
 
-/**
- * What's actually planned, not filler. A "reason to come back" the rubric
- * asks for that isn't a manufactured mechanic: a real statement of what
- * exists beyond tonight. Update this list as the real roadmap changes,
- * never leave a shipped item sitting here as if it were still upcoming.
- */
-const COMING = [
-  "More experiments beyond Split, Trust, and Ultimatum.",
-  "Challenge someone you actually know, not just a stranger.",
-  "Group rounds, more than two players at once.",
-  "A leaderboard for the players who read people best.",
-  "Deeper history: trends in your own predictions over time.",
-  "More published research benchmarks to compare against.",
-];
-
 const COLOR: Record<HistoryEntry["exp"], string> = {
   split: "var(--accent)",
   trust: "var(--good)",
@@ -37,10 +22,11 @@ const LABEL: Record<HistoryEntry["exp"], string> = {
 function when(at: number): string {
   const mins = Math.round((Date.now() - at) / 60000);
   if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"} ago`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
 /**
@@ -64,11 +50,11 @@ export default function Results() {
       <main className="screen wide">
         <div className="page-header">
           <p className="eyebrow">Results</p>
-          <h1>Your past hunches</h1>
+          <h1>Your Hunches</h1>
           <p className="soft" style={{ marginTop: "0.5rem", maxWidth: "60ch" }}>
-            What this device has played, remembered here in your browser, not
-            on an account. A different device or a cleared browser starts
-            fresh, the rounds themselves are unaffected either way.
+            Your results from this device. Nothing here requires an account.
+            Clear your browser or switch devices and your local history
+            starts fresh.
           </p>
         </div>
 
@@ -114,19 +100,11 @@ export default function Results() {
         )}
 
         <div className="page-header" style={{ marginTop: "1rem" }}>
-          <p className="section-label">What&rsquo;s next</p>
+          <p className="section-label">Keep exploring</p>
           <p className="soft" style={{ marginTop: "0.4rem" }}>
-            Three experiments is where {NAME} starts, not where it stops.
-            Here&rsquo;s what&rsquo;s actually planned.
+            Every experiment gives you another decision to make and another
+            prediction to test.
           </p>
-        </div>
-        <div className="coming">
-          {COMING.map((c) => (
-            <div className="row" key={c}>
-              <span className="dot" />
-              <p className="soft">{c}</p>
-            </div>
-          ))}
         </div>
 
         <div className="grow" />
