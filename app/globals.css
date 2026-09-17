@@ -580,8 +580,23 @@ input[type="range"] {
   transform: translate(3px, 3px);
   box-shadow: 0 0 0 var(--ink);
 }
-.pick .eyebrow { color: var(--pick-color, var(--accent)); margin: 0 0 0.3rem; }
-.pick h2 { margin-bottom: 0.35rem; }
+.pick .eyebrow { color: var(--pick-color, var(--accent)); margin: 0 0 0.15rem; }
+/* The experiment's own identity, meant to dominate the card before the
+   black question does: SPLIT / TRUST / ULTIMATUM large and in the card's
+   own accent, so the three are distinguishable by colour and name at a
+   glance, and the question underneath explains what that experiment means
+   rather than competing with it for attention. */
+.pick .name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 2.1rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--pick-color, var(--accent));
+  margin: 0 0 0.4rem;
+}
+.pick h2 { font-size: 1.4rem; margin-bottom: 0.35rem; }
 /* Notation, not illustration. KEEP <-> GIVE, YOU -> THEM -> YOU, OFFER <-> ACCEPT,
    a recognisable shape for each game before anyone reads the paragraph under it. */
 .pick .metaphor {

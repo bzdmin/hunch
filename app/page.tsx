@@ -100,7 +100,8 @@ export default function Home() {
         className="pick"
         style={{ "--pick-color": "var(--accent)" } as CSSProperties}
       >
-        <p className="eyebrow">01 &middot; Split</p>
+        <p className="eyebrow">01 &middot;</p>
+        <p className="name">Split</p>
         <h2>What would you keep?</h2>
         <p className="metaphor">KEEP &harr; GIVE</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
@@ -120,7 +121,8 @@ export default function Home() {
         className="pick"
         style={{ "--pick-color": "var(--good)" } as CSSProperties}
       >
-        <p className="eyebrow">02 &middot; Trust</p>
+        <p className="eyebrow">02 &middot;</p>
+        <p className="name">Trust</p>
         <h2>Hand it over, or keep it?</h2>
         <p className="metaphor">YOU &rarr; THEM &rarr; YOU</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
@@ -140,7 +142,8 @@ export default function Home() {
         className="pick"
         style={{ "--pick-color": "var(--warm)" } as CSSProperties}
       >
-        <p className="eyebrow">03 &middot; Ultimatum</p>
+        <p className="eyebrow">03 &middot;</p>
+        <p className="name">Ultimatum</p>
         <h2>Offer a share, or lose it all?</h2>
         <p className="metaphor">OFFER &harr; ACCEPT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
