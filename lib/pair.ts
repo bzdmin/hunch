@@ -274,6 +274,32 @@ export async function randomWorkedExample(exp: PairExperiment): Promise<Pair | n
 }
 
 /**
+ * A real round already committed by someone else, still waiting on a second
+ * answer, so a visitor can respond to it instead of needing to go and find
+ * someone to send a link to first.
+ *
+ * Deliberately NOT auto-matching: A and B are not the same role here, A sees
+ * real NIM and can keep everything, B never sees a NIM figure and only ever
+ * sets a percentage. Silently dropping a visitor into whichever seat happens
+ * to be open would mean the client might build and sign the wrong shape of
+ * message for the seat the server actually assigns, and the server would
+ * correctly refuse it, expectedMessage in app/api/pair/route.ts is built
+ * from the real seat, not from what the client assumed. So this only ever
+ * offers the existing, already-correct B screen (/t/[id], /u/[id]) as a
+ * choice, the visitor still explicitly picks it.
+ *
+ * Oldest first, the same fairness rule nextUnclaimedGift() uses for Split.
+ */
+export async function findWaitingRound(exp: PairExperiment): Promise<Pair | null> {
+  const rows = await db().all(COLL);
+  const waiting = rows
+    .map((r) => r.data as Pair)
+    .filter((p) => p.exp === exp && p.mode === "house" && p.status === "open" && p.a && !p.b)
+    .sort((a, b) => (a.a?.at ?? 0) - (b.a?.at ?? 0));
+  return waiting[0] ?? null;
+}
+
+/**
  * What a viewer is allowed to see. Never return a Pair straight to a client, the
  * whole point is that one side cannot read the other's move before both have
  * committed, and forgetting that once undoes the entire experiment.

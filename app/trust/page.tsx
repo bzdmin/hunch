@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { NAME, TRUST_MAX_STAKE, TRUST_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { trustOpen } from "@/lib/payout";
-import { randomWorkedExample, payoff } from "@/lib/pair";
+import { randomWorkedExample, findWaitingRound, payoff } from "@/lib/pair";
 import Flow from "./flow";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,26 @@ export const dynamic = "force-dynamic";
  * Flow discovers the actual stake for its own round by creating it on mount.
  */
 export default async function TrustPage() {
-  const funded = await trustOpen(TRUST_MAX_STAKE * 3);
+  const [funded, waiting] = await Promise.all([
+    trustOpen(TRUST_MAX_STAKE * 3),
+    findWaitingRound("trust"),
+  ]);
+
+  // A real round already sitting open costs nothing new to answer, the house
+  // already promised it the moment the first player committed, so it is
+  // offered here even when new rounds are paused below.
+  const waitingCard = waiting && (
+    <div className="card">
+      <h2>Someone&rsquo;s waiting for an answer</h2>
+      <p className="soft" style={{ marginTop: "0.5rem" }}>
+        A real round is already open, they&rsquo;ve made their call and are
+        waiting to find out what you do. No invite needed.
+      </p>
+      <Link href={`/t/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
+        Answer their round &rarr;
+      </Link>
+    </div>
+  );
 
   if (!funded) {
     return (
@@ -38,6 +57,8 @@ export default async function TrustPage() {
           Until the pot behind it is funded, opening this would mean promising money
           that can&rsquo;t be paid.
         </p>
+
+        {waitingCard}
 
         <div className="card">
           <h2>Meanwhile</h2>
@@ -61,5 +82,5 @@ export default async function TrustPage() {
     ? { stake: example.stake, returned: example.b!.move, final: payoff(example).a }
     : null;
 
-  return <Flow example={worked} />;
+  return <Flow example={worked} waiting={waiting ? { id: waiting.id } : null} />;
 }

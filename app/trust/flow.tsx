@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier, trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
@@ -38,8 +39,9 @@ type Resolved = {
  * anyone else still gets a complete experience rather than a dead end.
  */
 type WorkedExample = { stake: number; returned: number; final: number } | null;
+type Waiting = { id: string } | null;
 
-export default function Flow({ example }: { example: WorkedExample }) {
+export default function Flow({ example, waiting }: { example: WorkedExample; waiting?: Waiting }) {
   const [stage, setStage] = useState<Stage>("loading");
   const [round, setRound] = useState<Round | null>(null);
 
@@ -304,6 +306,23 @@ export default function Flow({ example }: { example: WorkedExample }) {
           hands. Then <em>they</em> decide how much comes back to you. It could be
           more than you started with. It could be nothing.
         </p>
+
+        {/* Real, not matched: this only links to a round someone else already
+            committed to, the existing correct B screen at /t/[id]. See
+            findWaitingRound() in lib/pair.ts for why this never silently
+            assigns a seat instead of letting the visitor choose one. */}
+        {waiting && (
+          <div className="card">
+            <h2>Someone&rsquo;s waiting for an answer</h2>
+            <p className="soft" style={{ marginTop: "0.5rem" }}>
+              A real round is already open, they&rsquo;ve made their call and
+              are waiting to find out what you do. No invite needed.
+            </p>
+            <Link href={`/t/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
+              Answer their round &rarr;
+            </Link>
+          </div>
+        )}
 
         {/* The trust game is the worst-understood of all five standard economic
             games, misunderstood by 62-70% of participants in the 2025 comprehension

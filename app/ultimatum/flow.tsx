@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
 import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
@@ -38,8 +39,9 @@ type Resolved = {
  * big number would only anchor a decision that should be made on feel.
  */
 type WorkedExample = { stake: number; offerPct: number; thresholdPct: number; accepted: boolean } | null;
+type Waiting = { id: string } | null;
 
-export default function Flow({ example }: { example: WorkedExample }) {
+export default function Flow({ example, waiting }: { example: WorkedExample; waiting?: Waiting }) {
   const [stage, setStage] = useState<Stage>("loading");
   const [round, setRound] = useState<Round | null>(null);
   const [offerPct, setOfferPct] = useState(0);
@@ -281,6 +283,23 @@ export default function Flow({ example }: { example: WorkedExample }) {
           <span className="hl">you both walk away with nothing</span>, including
           the part you meant to keep.
         </p>
+
+        {/* Real, not matched: this only links to an offer someone else already
+            committed to, the existing correct B screen at /u/[id]. See
+            findWaitingRound() in lib/pair.ts for why this never silently
+            assigns a seat instead of letting the visitor choose one. */}
+        {waiting && (
+          <div className="card">
+            <h2>Someone&rsquo;s waiting for an answer</h2>
+            <p className="soft" style={{ marginTop: "0.5rem" }}>
+              A real offer is already on the table, waiting to find out
+              whether you&rsquo;d accept it. No invite needed.
+            </p>
+            <Link href={`/u/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
+              Answer their offer &rarr;
+            </Link>
+          </div>
+        )}
 
         {example && (
           <div className="card guess">

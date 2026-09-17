@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { NAME, ULTIMATUM_MAX_STAKE, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { ultimatumOpen } from "@/lib/payout";
-import { randomWorkedExample, payoff } from "@/lib/pair";
+import { randomWorkedExample, findWaitingRound, payoff } from "@/lib/pair";
 import Flow from "./flow";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,26 @@ export const dynamic = "force-dynamic";
  * nobody to accept or refuse it settles nothing.
  */
 export default async function UltimatumPage() {
-  const funded = await ultimatumOpen(ULTIMATUM_MAX_STAKE);
+  const [funded, waiting] = await Promise.all([
+    ultimatumOpen(ULTIMATUM_MAX_STAKE),
+    findWaitingRound("ultimatum"),
+  ]);
+
+  // A real round already sitting open costs nothing new to answer, the house
+  // already promised it the moment the first player committed, so it is
+  // offered here even when new rounds are paused below.
+  const waitingCard = waiting && (
+    <div className="card">
+      <h2>Someone&rsquo;s waiting for an answer</h2>
+      <p className="soft" style={{ marginTop: "0.5rem" }}>
+        A real offer is already on the table, waiting to find out whether
+        you&rsquo;d accept it. No invite needed.
+      </p>
+      <Link href={`/u/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
+        Answer their offer &rarr;
+      </Link>
+    </div>
+  );
 
   if (!funded) {
     return (
@@ -36,6 +55,8 @@ export default async function UltimatumPage() {
           That money has to be sitting somewhere before the round can promise it.
           Until it is, opening this would mean promising money that can&rsquo;t be paid.
         </p>
+
+        {waitingCard}
 
         <div className="card">
           <h2>Meanwhile</h2>
@@ -67,5 +88,5 @@ export default async function UltimatumPage() {
       }
     : null;
 
-  return <Flow example={worked} />;
+  return <Flow example={worked} waiting={waiting ? { id: waiting.id } : null} />;
 }
