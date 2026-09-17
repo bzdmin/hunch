@@ -30,10 +30,20 @@ type Provider = {
 
 let cached: Provider | null = null;
 
+/**
+ * The SDK's own init() defaults to a 10s timeout before it gives up waiting
+ * for window.nimiq to appear. That is fine as the only environment, but with
+ * Hub as a real second path, 10 seconds spent failing here is 10 seconds a
+ * desktop visitor spends staring at nothing before Hub even gets tried. Real
+ * Nimiq Pay injection is near-instant (Gate 1), so this is generous for a
+ * genuine device, not a race against one.
+ */
+const READY_TIMEOUT_MS = 2500;
+
 async function provider(): Promise<Provider> {
   if (cached) return cached;
   const mod = await import("@nimiq/mini-app-sdk");
-  cached = (await mod.init()) as unknown as Provider;
+  cached = (await mod.init({ timeout: READY_TIMEOUT_MS })) as unknown as Provider;
   return cached;
 }
 

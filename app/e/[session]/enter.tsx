@@ -4,22 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
 import { nim } from "@/lib/message";
+import { available } from "@/lib/wallet";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
 
 /**
- * Is this visitor already inside Nimiq Pay?
+ * Is a wallet reachable from wherever this visitor is?
  *
- * Gate 1 established there is no window global to sniff, the SDK talks over a
- * message bridge and exposes nothing. So the only honest check is to call init()
- * and see whether anything answers.
+ * Used to run its own detection straight against the Mini App SDK, bypassing
+ * lib/wallet entirely, from before Hub existed as a path, which meant every
+ * desktop visitor to a shared link was told to install Nimiq Pay on a phone
+ * regardless of whether Hub could have served them right there. Now shares
+ * the same detection everything else uses.
  *
  * Three ways someone arrives here, and each needs a different screen:
- *   inside Nimiq Pay        -> send them straight in. Never suggest installing.
- *   a normal mobile browser -> show the install route.
- *   an in-app browser (WhatsApp, Telegram, Instagram) -> also the install route,
- *                              since those cannot reach the wallet either.
+ *   inside Nimiq Pay  -> send them straight in.
+ *   a desktop browser -> send them straight in too, through Nimiq Hub, see
+ *                        lib/wallet. Never assumed a phone.
+ *   nowhere a wallet reaches, an in-app browser (WhatsApp, Telegram,
+ *   Instagram) blocks both -> the install route, the one place neither helps.
  *
  * The install route is what the server renders, so it is what shows with no JS, on
  * a slow connection, or if detection hangs. Detection can only ever *upgrade* the
@@ -30,28 +34,10 @@ export default function Enter({ waiting, session }: { waiting: number; session: 
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
-      try {
-        const probe = (async () => {
-          const mod = await import("@nimiq/mini-app-sdk");
-          await mod.init();
-          return true;
-        })();
-
-        // Outside Nimiq Pay init() rejects rather than hangs, but a timeout costs
-        // nothing and stops a hung bridge leaving the page in limbo forever.
-        const found = await Promise.race([
-          probe,
-          new Promise<boolean>((r) => setTimeout(() => r(false), 2500)),
-        ]);
-
-        if (!cancelled && found) setInWallet(true);
-      } catch {
-        // not in Nimiq Pay, the install route stays, which is already on screen
-      }
+      const found = await available();
+      if (!cancelled && found) setInWallet(true);
     })();
-
     return () => { cancelled = true; };
   }, []);
 

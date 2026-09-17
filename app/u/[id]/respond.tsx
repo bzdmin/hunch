@@ -42,10 +42,12 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
   useEffect(() => {
     let dead = false;
     (async () => {
-      const found = await Promise.race([
-        available(),
-        new Promise<boolean>((r) => setTimeout(() => r(false), 2500)),
-      ]);
+      // Bounded inside lib/wallet itself now, not raced against an external
+      // guess here: Nimiq Pay's own detection times out at 2.5s (see
+      // lib/wallet/nimiq-pay.ts), then Hub is tried, near-instant since it is
+      // just a module import. An outer race here used to beat that timeout,
+      // reporting "no wallet" on desktop before Hub ever got a chance.
+      const found = await available();
       if (!dead) setInWallet(found);
       // Fired here, not at commit time, so the one-time consent prompt (if any)
       // happens while the player is still reading the opening screen, not as a
