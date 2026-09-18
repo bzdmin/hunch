@@ -2,6 +2,8 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { NAME, STAKE_NIM, TRUST_STAKE_OPTIONS_NIM, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
+import { totalPlayers } from "@/lib/store";
+import { completedRoundCount } from "@/lib/pair";
 import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
 
@@ -33,10 +35,14 @@ export const dynamic = "force-dynamic";
  * YOU -> THEM -> YOU, OFFER <-> ACCEPT, so the three are distinguishable at a
  * glance.
  *
- * No player count. A true count in the single digits makes a product look
- * empty rather than alive, and invented numbers are not on the table. Product
- * facts hold the slot until real usage is worth showing off.
+ * The third stat used to be a fixed "Real NIM / every decision": a true
+ * count in the single digits makes a product look empty rather than alive,
+ * and invented numbers were never on the table. Now that real usage exists,
+ * it shows the real total once there's enough of it to be worth showing
+ * off rather than looking sparse, REAL_COUNT_THRESHOLD below, same n as
+ * /live's own per-experiment counts, just summed rather than invented fresh.
  */
+const REAL_COUNT_THRESHOLD = 25;
 function range(nums: number[]): string {
   return `${Math.min(...nums)}-${Math.max(...nums)} NIM`;
 }
@@ -49,7 +55,15 @@ const LOOP = [
   { n: "05", t: "Share", d: "Challenge someone to make their own." },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const [splitN, trustN, ultimatumN] = await Promise.all([
+    totalPlayers(),
+    completedRoundCount("trust"),
+    completedRoundCount("ultimatum"),
+  ]);
+  const totalDecisions = splitN + trustN + ultimatumN;
+  const realCount = totalDecisions >= REAL_COUNT_THRESHOLD;
+
   return (
     <>
       <Nav />
@@ -169,8 +183,8 @@ export default function Home() {
           <span className="l">per round</span>
         </div>
         <div>
-          <span className="n">Real NIM</span>
-          <span className="l">every decision</span>
+          <span className="n">{realCount ? totalDecisions.toLocaleString() : "Real NIM"}</span>
+          <span className="l">{realCount ? "decisions made" : "every decision"}</span>
         </div>
       </div>
 
