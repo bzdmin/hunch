@@ -520,16 +520,23 @@ input[type="range"] {
 
 /* The loop, numbered. Compact on purpose: the whole point is that someone
    understands the product in one glance, not that they read a tutorial. */
-.loop { display: grid; gap: 0.7rem; }
+.loop { display: grid; gap: 0.7rem; margin-top: -0.4rem; }
 
 /* At width the loop reads better as a process strip than a list, five beats
-   left to right, which is the shape of the thing it describes. */
+   left to right, which is the shape of the thing it describes.
+   No top border, deliberately: a hard rule right under the hero's CTAs read
+   as "hero, finished, now a footer", not as one composition. This strip is
+   the hero answering "okay, what actually happens", so it stays close to
+   the hero (negative margin-top above, pulling it in past .screen's own
+   section gap) and open on top, typography sitting on the same background,
+   not boxed off from what it's explaining. The bottom border stays: that
+   one really is a section break, into "Pick your experiment" below. */
 @media (min-width: 52rem) {
   .loop {
     grid-template-columns: repeat(5, 1fr);
     gap: 1.5rem;
-    padding: 1.5rem 0;
-    border-top: 2px solid var(--line);
+    padding: 0 0 1.75rem;
+    margin-top: -0.75rem;
     border-bottom: 2px solid var(--line);
   }
   .loop .step { grid-template-columns: 1fr; gap: 0.3rem; }
