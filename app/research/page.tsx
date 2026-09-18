@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { NAME } from "@/lib/brand";
+import { NAME, TRUST_KEEP_PCT } from "@/lib/brand";
 import { getHistory } from "@/lib/history";
 import type { Benchmark } from "@/lib/benchmarks";
 import { Nav } from "@/app/nav";
@@ -75,6 +75,12 @@ export default function Research() {
             Play first. Then come here to see how your choice compares with
             published research and, when we have enough rounds, with other{" "}
             {NAME} players.
+          </p>
+          <p className="faint" style={{ marginTop: "0.5rem", maxWidth: "60ch" }}>
+            {NAME} experiments are inspired by established behavioural
+            experiments, but {NAME} adds its own rules. Where one changes the
+            outcome, that&rsquo;s stated on this page, not left for you to
+            find out the hard way.
           </p>
         </div>
 
@@ -171,6 +177,15 @@ export default function Research() {
                           </p>
                           <p className="faint" style={{ marginTop: "0.6rem" }}>{d.research.source}</p>
                           <p className="faint" style={{ marginTop: "0.6rem" }}>{d.research.caveat}</p>
+                          <p className="faint" style={{ marginTop: "0.6rem" }}>
+                            One more difference: {NAME} changes the incentive
+                            to make the decision harder. Keeping pays{" "}
+                            {Math.round(TRUST_KEEP_PCT * 100)}% of the stake
+                            here, not the full amount the original game paid,
+                            a disclosed {NAME} rule, stated on the decision
+                            card before anyone commits, not a hidden change
+                            to the standard game.
+                          </p>
                         </>
                       ) : <p className="faint" style={{ marginTop: "0.5rem" }}>Loading&hellip;</p>}
                     </div>

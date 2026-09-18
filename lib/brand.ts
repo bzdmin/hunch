@@ -28,6 +28,16 @@ export const STAKE_NIM = 1_000;
 export const STAKE = STAKE_NIM * 100_000; // luna
 
 /**
+ * Keeping in Trust does not pay the full stake, a disclosed Hunch rule, not
+ * the standard Trust Game's payoff, see TRUST_KEEP_PCT's fuller comment
+ * where it's actually used in lib/pair.ts. Defined here, not there,
+ * because this file has no server-only imports and the decision card in
+ * app/trust/flow.tsx (a client component) needs the exact same number the
+ * server settles with to disclose it honestly before anyone commits.
+ */
+export const TRUST_KEEP_PCT = 0.25;
+
+/**
  * Both funding modes exist at once. Which one a player gets depends on whether the
  * house wallet is funded right now, see houseFunded() in payout.ts.
  *

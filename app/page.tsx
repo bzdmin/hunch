@@ -52,7 +52,7 @@ const LOOP = [
   { n: "02", t: "Predict", d: "Predict what another person will do." },
   { n: "03", t: "Reveal", d: "See what they actually chose." },
   { n: "04", t: "Compare", d: "See how your prediction compares." },
-  { n: "05", t: "Share", d: "Challenge someone to make their own." },
+  { n: "05", t: "Share", d: "Split's result is yours to share. Trust and Ultimatum match you with someone new." },
 ];
 
 export default async function Home() {

@@ -24,7 +24,7 @@
  * "waiting for Alex" screen, A is lost.
  */
 
-import type { Mode } from "./brand";
+import { TRUST_KEEP_PCT, type Mode } from "./brand";
 import { db } from "./db";
 
 export type PairExperiment = "trust" | "ultimatum";
@@ -92,7 +92,7 @@ export function payoff(p: Pair): Payoff {
   if (p.exp === "trust") {
     const handed = p.a.move;
     if (handed === 0) {
-      return { a: p.stake, b: 0, note: "kept it" };
+      return { a: Math.round(p.stake * TRUST_KEEP_PCT), b: 0, note: "kept it" };
     }
     const pot = handed * p.multiplier;
     const returned = Math.min(p.b.move, pot);
@@ -435,7 +435,7 @@ export function redact(p: Pair, viewer: "a" | "b" | "stranger") {
     return {
       ...base,
       a: { move: p.a.move, predict: p.a.predict },
-      payoff: { a: p.stake, b: 0, note: "kept it" },
+      payoff: { a: Math.round(p.stake * TRUST_KEEP_PCT), b: 0, note: "kept it" },
       youAre: viewer,
     };
   }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { NAME } from "@/lib/brand";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { NAME, TRUST_KEEP_PCT } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier, trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
@@ -12,7 +12,7 @@ import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
 import { addHistory } from "@/lib/history";
 
-type Stage = "loading" | "choose" | "predict" | "working" | "sent" | "kept" | "unavailable" | "resolved";
+type Stage = "loading" | "choose" | "predict" | "working" | "waiting" | "kept" | "unavailable" | "resolved";
 type Round = { id: string; stake: number; multiplier: number };
 type Resolved = {
   stake: number;
@@ -32,9 +32,18 @@ type Resolved = {
  * real number, that happens once on mount, before the "choose" screen renders,
  * rather than at commit time the way a fixed-stake version could get away with.
  *
- * Two paths after that, and only one needs a second person:
- *   keep      -> the round is over immediately. No link, no waiting.
- *   hand over -> predict what comes back, sign, then share a link.
+ * Stranger-to-stranger, not link-sharing: this used to hand A a URL to send
+ * someone. Now the server itself finds a real waiting round (findWaitingRound
+ * in lib/pair.ts) before A ever creates a new one, so playing Trust is "join
+ * the live pool", never "find a friend to text". If a match exists, this
+ * redirects straight into answering it (/t/[id], unchanged, that screen was
+ * always the correct "second player" experience). If not, A commits and
+ * waits, polling for a real stranger to arrive rather than sharing a link.
+ *
+ * Two paths after committing, and only one needs a second person:
+ *   keep      -> the round is over immediately, at Hunch's own rate, see
+ *                TRUST_KEEP_PCT. No waiting.
+ *   trust     -> predict what comes back, sign, then wait for a match.
  *
  * Keeping ending the round instantly matters: someone who does not want to involve
  * anyone else still gets a complete experience rather than a dead end.
@@ -43,6 +52,7 @@ type WorkedExample = { stake: number; returned: number; final: number } | null;
 type Waiting = { id: string } | null;
 
 export default function Flow({ example, waiting }: { example: WorkedExample; waiting?: Waiting }) {
+  const router = useRouter();
   const [stage, setStage] = useState<Stage>("loading");
   const [round, setRound] = useState<Round | null>(null);
 
@@ -53,18 +63,14 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   // from it below.
   const [predictPct, setPredictPct] = useState(0);
   const [err, setErr] = useState("");
-  const [link, setLink] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [manualCopy, setManualCopy] = useState(false);
   const [gaveAway, setGaveAway] = useState(false);
-  // Set at commit time, or restored from a resumed round, since the "sent"
+  // Set at commit time, or restored from a resumed round, since the "waiting"
   // screen can render without predictPct ever having been touched this session.
   const [sentPredict, setSentPredict] = useState(0);
-  // A's own view of the outcome once B has answered, found on revisiting this
-  // page with an open round cached, see lib/resume.ts. There was previously
-  // no way for A to ever find this out at all, unlike B, who gets it inline
-  // as the response to their own commit.
+  // A's own view of the outcome once B has answered, found either by polling
+  // while waiting or on revisiting this page with an open round cached, see
+  // lib/resume.ts. There was previously no way for A to ever find this out
+  // at all, unlike B, who gets it inline as the response to their own commit.
   const [resolved, setResolved] = useState<Resolved | null>(null);
 
   const [hasWallet, setHasWallet] = useState<boolean | null>(null);
@@ -87,58 +93,73 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   }, []);
   const noWallet = hasWallet === false;
 
+  // Turns one GET into either "still waiting", "matched, here's the reveal",
+  // or "expired", shared by the initial resume check and the poll below so
+  // there is exactly one place that interprets a round's status.
+  async function checkRound(id: string): Promise<"waiting" | "revealed" | "expired" | "unknown"> {
+    const got = await fetch(`/api/pair?id=${id}`);
+    const info = await got.json();
+    if (!got.ok) return "unknown";
+    if (info.status === "expired") return "expired";
+    if (info.status === "revealed" && info.a && info.b && info.payoff) {
+      setResolved({
+        stake: info.stake,
+        pot: info.stake * info.multiplier,
+        predict: info.a.predict,
+        returned: info.b.move,
+        payoff: info.payoff,
+        percentile: info.percentile ?? null,
+        settlementHash: info.settlement?.a ?? null,
+      });
+      addHistory({
+        exp: "trust",
+        call: `You handed over ${nim(info.stake)} NIM.`,
+        outcome: `They sent back ${nim(info.b.move)} NIM, you end with ${nim(info.payoff.a)} NIM.`,
+        href: "/trust",
+      });
+      return "revealed";
+    }
+    if (info.waitingOn === "b") return "waiting";
+    return "unknown";
+  }
+
   useEffect(() => {
     let dead = false;
     (async () => {
-      // A round this browser already committed to and never finished sharing
-      // beats minting a new one, see lib/resume.ts. Confirmed against the
+      // A real match, found by the server (findWaitingRound in lib/pair.ts),
+      // beats minting a new round: joining an already-open one is exactly
+      // what "stranger-to-stranger, not a link" means. /t/[id] is the
+      // existing, correct second-player screen, this just sends someone
+      // there automatically instead of making them wait for a link.
+      if (waiting) {
+        router.push(`/t/${waiting.id}`);
+        return;
+      }
+
+      // A round this browser already committed to and never finished waiting
+      // on beats minting a new one, see lib/resume.ts. Confirmed against the
       // server, not just trusted, in case it was answered or expired since.
-      // Only the "handed over" path is ever cached, "kept" ends with no
-      // link, so a resumed round is always the gaveAway one.
+      // Only the "trusted them" path is ever cached, "kept" ends with
+      // nothing left to wait on.
       const cached = loadOpenRound<{ stake: number; multiplier: number; predict: number }>("trust");
       if (cached) {
         try {
-          const got = await fetch(`/api/pair?id=${cached.id}`);
-          const info = await got.json();
-          if (got.ok && info.waitingOn === "b") {
+          const status = await checkRound(cached.id);
+          if (status === "waiting") {
             if (!dead) {
-              setRound({ id: cached.id, stake: info.stake, multiplier: info.multiplier });
+              setRound({ id: cached.id, stake: cached.stake, multiplier: cached.multiplier });
               setSentPredict(cached.predict);
               setGaveAway(true);
-              setLink(cached.link);
-              setStage("sent");
+              setStage("waiting");
             }
             return;
           }
-          // Nobody ever answered, see OPEN_ROUND_TTL_MS in lib/pair.ts. A
-          // still deserves to know their earlier hunch is gone rather than
-          // silently landing on a fresh round with no explanation.
-          if (got.ok && info.status === "expired") {
+          if (status === "expired") {
             clearOpenRound("trust");
             if (!dead) setErr("Nobody answered your last round in time, so it expired. Here's a new one.");
-          }
-          // Answered since. Shown once, then forgotten: the cache's job was
-          // getting A back to a round in progress, not keeping history.
-          else if (got.ok && info.status === "revealed" && info.a && info.b && info.payoff) {
+          } else if (status === "revealed") {
             clearOpenRound("trust");
-            if (!dead) {
-              setResolved({
-                stake: info.stake,
-                pot: info.stake * info.multiplier,
-                predict: info.a.predict,
-                returned: info.b.move,
-                payoff: info.payoff,
-                percentile: info.percentile ?? null,
-                settlementHash: info.settlement?.a ?? null,
-              });
-              addHistory({
-                exp: "trust",
-                call: `You handed over ${nim(info.stake)} NIM.`,
-                outcome: `They sent back ${nim(info.b.move)} NIM, you end with ${nim(info.payoff.a)} NIM.`,
-                href: "/trust",
-              });
-              setStage("resolved");
-            }
+            if (!dead) setStage("resolved");
             return;
           }
         } catch {
@@ -164,7 +185,55 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
       }
     })();
     return () => { dead = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Polls while genuinely waiting for a stranger, the live-pool equivalent
+  // of what used to be "wait for someone to open your link". Stops itself
+  // the moment the round leaves "waiting", revealed or expired either way.
+  const roundRef = useRef(round);
+  roundRef.current = round;
+  useEffect(() => {
+    if (stage !== "waiting") return;
+    const id = roundRef.current?.id;
+    if (!id) return;
+    let dead = false;
+    const iv = setInterval(async () => {
+      if (dead) return;
+      try {
+        const status = await checkRound(id);
+        if (dead) return;
+        if (status === "revealed") {
+          clearOpenRound("trust");
+          setStage("resolved");
+        } else if (status === "expired") {
+          clearOpenRound("trust");
+          setErr("Nobody answered in time, so it expired. Here's a new one.");
+          setStage("loading");
+          // Re-run the mount sequence's fresh-round path directly rather
+          // than reloading the page, a poll finding "expired" should not
+          // cost a real navigation.
+          try {
+            const res = await fetch("/api/pair", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ exp: "trust" }),
+            });
+            const out = await res.json();
+            if (res.ok && !dead) {
+              setRound({ id: out.id, stake: out.stake, multiplier: out.multiplier });
+              setGaveAway(false);
+              setStage("choose");
+            }
+          } catch { /* stays on loading, next visit will retry */ }
+        }
+      } catch {
+        // a dropped poll just tries again next tick
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, 4000);
+    return () => { dead = true; clearInterval(iv); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
 
   async function commit(move: number) {
     if (!round) return;
@@ -196,15 +265,13 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
       if (move === 0) {
         setStage("kept");
       } else {
-        const shareLink = `${window.location.origin}/t/${round.id}`;
         setGaveAway(true);
         setSentPredict(predict);
-        setLink(shareLink);
         saveOpenRound("trust", {
-          id: round.id, link: shareLink, at: Date.now(),
+          id: round.id, link: `${window.location.origin}/t/${round.id}`, at: Date.now(),
           stake: round.stake, multiplier: round.multiplier, predict,
         });
-        setStage("sent");
+        setStage("waiting");
       }
     } catch (e) {
       setErr(readable(e));
@@ -217,7 +284,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     return (
       <main className="screen">
         <ExperimentHeader experiment="Trust" index={2} />
-        <h1>Setting up your round&hellip;</h1>
+        <h1>Finding your round&hellip;</h1>
       </main>
     );
   }
@@ -236,7 +303,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
             <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
 
             <p className="soft">
-              You handed over {nim(resolved.stake)} NIM, and it became{" "}
+              You trusted them with {nim(resolved.stake)} NIM, and it became{" "}
               {nim(resolved.pot)} NIM in their hands.
             </p>
 
@@ -245,7 +312,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
                 ? `Trusting them paid off, you came out ${nim(resolved.payoff.a - resolved.stake)} NIM ahead.`
                 : resolved.payoff.a === resolved.stake
                   ? "You broke even."
-                  : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
+                  : `You ended with ${nim(resolved.payoff.a)} NIM, less than the ${nim(resolved.stake)} NIM you started with.`}
             </p>
           </div>
 
@@ -253,7 +320,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
             <ReportCard
               experiment="Trust"
               color="var(--good)"
-              call={<>You handed over {nim(resolved.stake)} NIM.</>}
+              call={<>You trusted them with {nim(resolved.stake)} NIM.</>}
               hunch={<>You expected {nim(resolved.predict)} NIM back.</>}
               outcome={<>They sent back {nim(resolved.returned)} NIM.</>}
               verdictLabel="How well did you read them?"
@@ -309,6 +376,8 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   const { stake, multiplier } = round;
   const pot = stake * multiplier;
   const predict = Math.round((predictPct / 100) * pot);
+  const kept = Math.round(stake * TRUST_KEEP_PCT);
+  const keepPctLabel = Math.round(TRUST_KEEP_PCT * 100);
 
   // ---------------------------------------------------------------- choose
   if (stage === "choose") {
@@ -317,31 +386,12 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
         <ExperimentHeader experiment="Trust" index={2} />
         <div className="game-shell">
           <div className="game-context">
-            <h1>You have {nim(stake)} NIM. Keep it, or risk it.</h1>
+            <h1>How much would you trust a stranger?</h1>
             <p className="soft">
-              If you hand it over, it becomes{" "}
-              <span className="hl">{nim(pot)} NIM</span> in the other
-              person&rsquo;s hands. Then <em>they</em> decide how much comes
-              back to you. It could be more than you started with. It could
-              be nothing.
+              Put {nim(stake)} NIM in another player&rsquo;s hands. They&rsquo;ll
+              decide how much comes back to you. It could be more than you
+              started with. It could be nothing.
             </p>
-
-            {/* Real, not matched: this only links to a round someone else already
-                committed to, the existing correct B screen at /t/[id]. See
-                findWaitingRound() in lib/pair.ts for why this never silently
-                assigns a seat instead of letting the visitor choose one. */}
-            {waiting && (
-              <div className="card">
-                <h2>Someone&rsquo;s waiting for an answer</h2>
-                <p className="soft" style={{ marginTop: "0.5rem" }}>
-                  A real round is already open, they&rsquo;ve made their call
-                  and are waiting to find out what you do. No invite needed.
-                </p>
-                <Link href={`/t/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
-                  Answer their round &rarr;
-                </Link>
-              </div>
-            )}
 
             {/* The trust game is the worst-understood of all five standard economic
                 games, misunderstood by 62-70% of participants in the 2025 comprehension
@@ -355,9 +405,10 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
                   A round that already happened
                 </p>
                 <p className="soft">
-                  Someone had {nim(example.stake)} NIM and handed it over. The
-                  other person sent back {nim(example.returned)} NIM, leaving
-                  the first player with <strong>{nim(example.final)} NIM</strong>
+                  Someone had {nim(example.stake)} NIM and trusted a stranger
+                  with it. The other person sent back {nim(example.returned)} NIM,
+                  leaving the first player with{" "}
+                  <strong>{nim(example.final)} NIM</strong>
                   {example.final < example.stake
                     ? `, ${nim(example.stake - example.final)} NIM less than if they'd just kept it.`
                     : example.final === example.stake
@@ -372,17 +423,22 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
             <div className="card">
               <div className="split-readout">
                 <div>
-                  <span className="k">Keep it</span>
-                  <span className="v">{nim(stake)} NIM</span>
+                  <span className="k">Keep it all</span>
+                  <span className="v">{nim(kept)} NIM</span>
                 </div>
                 <div className="right">
-                  <span className="k">Hand it over</span>
+                  <span className="k">Trust them</span>
                   <span className="v">{nim(pot)} NIM</span>
                 </div>
               </div>
+              {/* The disclosed rule, on the card itself, before anyone commits.
+                  Not the standard Trust Game's payoff, a Hunch rule stated
+                  up front rather than a hidden deduction, see TRUST_KEEP_PCT
+                  in lib/brand.ts. */}
               <p className="faint" style={{ marginTop: "0.6rem" }}>
-                Handing over is all or nothing, which is what makes it a test
-                of trust and not a hedge.
+                Playing it safe pays {keepPctLabel}% here, that&rsquo;s a Hunch
+                rule, not a hidden one. Trusting them is all or nothing, and
+                what comes back is entirely their call.
               </p>
             </div>
 
@@ -398,10 +454,10 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
 
             <div className="grow" />
             <button onClick={() => setStage("predict")} disabled={noWallet}>
-              Hand it over
+              Trust them
             </button>
             <button className="ghost" onClick={() => commit(0)} disabled={noWallet}>
-              Keep the {nim(stake)} NIM
+              Keep it all, keep {keepPctLabel}%
             </button>
           </div>
         </div>
@@ -419,7 +475,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
           <div className="game-context">
             <div className="locked">
               <span className="k">Your answer, locked</span>
-              <span className="v">You hand over {nim(stake)} NIM</span>
+              <span className="v">You trust them with {nim(stake)} NIM</span>
             </div>
 
             <h1>How much do you think comes back?</h1>
@@ -429,23 +485,22 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
               actually expect?
             </p>
 
-            {/* This is the specific fact the trust game loses people on: not the
-                multiplier, the COMPARISON against what they'd have had by keeping it.
-                It was a faint one-line footnote here before, easy to skip. Now it is
-                its own block, live, using the same styling the reveal screens use for
-                the one sentence on the page that actually matters. Break-even is a
-                third of the pot, that is exactly the stake handed over. */}
+            {/* The comparison that actually matters now isn't the full stake,
+                it's what playing it safe would have paid, TRUST_KEEP_PCT of
+                it. Trusting beats "safe" the moment the return clears that
+                bar, which is a lower bar than the old 100%-stake baseline
+                on purpose, that's the whole point of the disclosed rule. */}
             <div className="verdict">
               <p className="soft" style={{ marginBottom: "0.35rem" }}>
                 If that&rsquo;s what comes back, here&rsquo;s where you end up.
               </p>
               <p>
                 <span className="hl">{nim(predict)} NIM</span>.{" "}
-                {predictPct < 33
-                  ? `That's ${nim(stake - predict)} NIM less than the ${nim(stake)} NIM you'd have had by just keeping it.`
-                  : predictPct < 34
-                    ? `That's almost exactly the ${nim(stake)} NIM you'd have had by keeping it.`
-                    : `That's ${nim(predict - stake)} NIM more than the ${nim(stake)} NIM you'd have had by keeping it.`}
+                {predict < kept
+                  ? `That's ${nim(kept - predict)} NIM less than the ${nim(kept)} NIM you'd have kept by playing it safe.`
+                  : predict === kept
+                    ? `That's almost exactly the ${nim(kept)} NIM you'd have kept by playing it safe.`
+                    : `That's ${nim(predict - kept)} NIM more than the ${nim(kept)} NIM you'd have kept by playing it safe.`}
               </p>
             </div>
           </div>
@@ -494,7 +549,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
 
             <div className="grow" />
             <button onClick={() => commit(stake)} disabled={busy}>
-              {busy ? "Confirming…" : "Hand it over"}
+              {busy ? "Confirming…" : "Trust them"}
             </button>
             <button className="ghost" onClick={() => setStage("choose")} disabled={busy}>
               Back
@@ -511,11 +566,11 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
       <main className="screen">
         <ExperimentHeader experiment="Trust" index={2} />
         <div className="card"><h2>{trustOpeningTier(false)}</h2></div>
-        <h1>You kept the {nim(stake)} NIM.</h1>
+        <h1>You kept {nim(kept)} NIM.</h1>
         <p className="soft">
-          No one else was involved, and nothing was risked. That&rsquo;s a real answer,
-          in the original studies most people did hand it over, and on average
-          they got back slightly less than they gave.
+          Playing it safe pays {keepPctLabel}% here, a Hunch rule stated on
+          the card before you chose, not the full {nim(stake)} NIM you
+          started with. No one else was involved, and nothing else was risked.
         </p>
         <div className="grow" />
         <a className="btn" href="/trust">Play again</a>
@@ -524,38 +579,21 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     );
   }
 
-  // ------------------------------------------------------------------ sent
+  // --------------------------------------------------------------- waiting
   const sentPredictPct = Math.round((sentPredict / pot) * 100);
-  // No figures here on purpose. B's whole screen is built around never
-  // seeing the exact pot before deciding, this message reaches B before the
-  // app even opens, so a NIM amount here would spoil it before it starts.
-  const shareText = `I just trusted a complete stranger with real NIM. It tripled in their hands, and now it's entirely up to them what comes back to me. ${link}`;
-
-  async function send() {
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try { await navigator.share({ text: shareText }); return; } catch { /* fall through */ }
-    }
-    try { await navigator.clipboard.writeText(shareText); setCopied(true); } catch { setManualCopy(true); }
-  }
-
-  async function copyLink() {
-    try { await navigator.clipboard.writeText(link); setLinkCopied(true); } catch { setManualCopy(true); }
-  }
-
   return (
     <main className="screen">
       <ExperimentHeader experiment="Trust" index={2} />
       {gaveAway && (
         <div className="card">
-          <span className="k">You&rsquo;ve handed it over</span>
+          <span className="k">You&rsquo;ve trusted them</span>
           <p className="soft" style={{ marginTop: "0.4rem" }}>{nim(pot)} NIM is now in their hands.</p>
         </div>
       )}
-      <h1>It&rsquo;s out of your hands.</h1>
+      <h1>Looking for someone to trust you back.</h1>
       <p className="soft">
-        Send this round to another person. They&rsquo;ll decide how much of
-        the {nim(pot)} NIM comes back to you. You won&rsquo;t know until they
-        answer.
+        You&rsquo;ll both make your decisions without seeing the other&rsquo;s
+        choice. We&rsquo;ll let you know the moment they answer.
       </p>
 
       <div className="card">
@@ -566,36 +604,13 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
         </p>
       </div>
 
-      {/* No raw link as visible page text: it invites the wrong kind of
-          share (screenshotting or retyping it) and reads like a debug
-          artifact. Copy link puts it on the clipboard directly instead,
-          the manual textarea only appears if the clipboard write itself
-          fails, the actual last resort, not the default presentation. */}
-      {manualCopy && (
-        <div className="card">
-          <p className="faint" style={{ marginBottom: "0.5rem" }}>
-            Copying is blocked here. Select this and send it to someone:
-          </p>
-          <textarea
-            readOnly
-            value={link}
-            rows={3}
-            style={{
-              width: "100%", background: "var(--paper)", color: "var(--ink)",
-              border: "2px solid var(--ink)", borderRadius: "8px",
-              padding: "0.6rem 0.7rem", font: "inherit", fontSize: "0.9rem",
-            }}
-          />
-        </div>
-      )}
+      {err && <p className="err">{err}</p>}
 
       <div className="grow" />
-      <button onClick={send}>
-        {copied ? "Copied, paste it anywhere" : "Send it to someone"}
-      </button>
-      <button className="ghost" onClick={copyLink}>
-        {linkCopied ? "Link copied" : "Copy link"}
-      </button>
+      <p className="faint" style={{ textAlign: "center" }}>
+        {NAME} is watching for a match. Keep this open, or come back later,
+        nothing is lost either way.
+      </p>
     </main>
   );
 }

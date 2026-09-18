@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomTrustStake, randomUltimatumStake } from "@/lib/brand";
+import { randomTrustStake, randomUltimatumStake, TRUST_KEEP_PCT } from "@/lib/brand";
 import { trustOpen, ultimatumOpen, send, getPayout, type PayoutReason } from "@/lib/payout";
 import { session as newId, trustMessage, ultimatumMessage } from "@/lib/message";
 import {
@@ -30,8 +30,12 @@ async function settleAndRespond(p: Pair, seat: "a" | "b") {
   const settlement: { a: string | null; b: string | null } = { a: null, b: null };
   const prefix = p.exp === "trust" ? "trust" : "ultimatum";
   if (p.status === "closed" && p.a) {
-    settled = { a: p.stake, b: 0, note: "kept it" };
-    const rec = await send({ session: p.id, to: p.a.payTo, value: p.stake, reason: `${prefix}-a` as PayoutReason });
+    // "closed" only ever happens on Trust (see the instant-keep branch in
+    // PUT below), so this is Trust's disclosed keep-all rule, see
+    // TRUST_KEEP_PCT's own comment in lib/pair.ts for why it isn't 100%.
+    const kept = Math.round(p.stake * TRUST_KEEP_PCT);
+    settled = { a: kept, b: 0, note: "kept it" };
+    const rec = await send({ session: p.id, to: p.a.payTo, value: kept, reason: `${prefix}-a` as PayoutReason });
     settlement.a = rec.status === "sent" ? rec.txHash : null;
   } else if (p.status === "revealed" && p.a && p.b) {
     settled = payoff(p);

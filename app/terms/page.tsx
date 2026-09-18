@@ -33,9 +33,27 @@ export default function Terms() {
             {NAME} is a set of short behavioural experiments played with
             real NIM. You make a decision, predict what another person will
             do, and find out what actually happened. It is a research and
-            prediction product, not a game of chance, there is no house
-            edge, no jackpot, and no random outcome, every result comes from
-            a real decision another real person made.
+            prediction product, not a game of chance: there is no jackpot
+            and no random outcome, every result comes from a real decision
+            another real person made, or from a rule stated to you before
+            you acted on it, see &ldquo;Disclosed {NAME} rules&rdquo; below.
+          </p>
+        </div>
+
+        <p className="section-label">Disclosed {NAME} rules</p>
+        <div className="card">
+          <p className="soft">
+            {NAME}&rsquo;s experiments are inspired by established
+            behavioural-economics games, but {NAME} isn&rsquo;t a faithful
+            academic replication, it&rsquo;s a product with its own rules
+            where those make the decision more interesting. The one place
+            this changes a payout: in Trust, keeping the stake instead of
+            trusting someone with it pays 25% of the stake, not the full
+            amount. That number is stated on the decision card itself
+            before you choose, the same 25% every time, for everyone, never
+            decided case by case and never changed after you&rsquo;ve
+            committed. See <Link href="/research">Research</Link> for the
+            comparison against the standard version of the game.
           </p>
         </div>
 
