@@ -27,7 +27,7 @@
 :root {
   --paper:      #131110;
   --card:       #1c1916;
-  --ink:        #f3ede2;
+  --ink:        #efe2c9;
   --ink-soft:   #ab9f8e;
   --ink-faint:  #7c7365;
   --line:       #322c24;
@@ -241,6 +241,13 @@ h1 .hl, h2 .hl {
   background-size: 100% 0.4em;
   background-position: 0 82%;
   padding: 0 0.1em;
+  /* Unlike body text's .hl, this strip only paints a thin band near the
+     baseline, not most of the glyph height, so forcing the base rule's dark
+     --hl-ink here left almost the whole word sitting on the dark page
+     behind it: dark text on a near-black hero is the "people?" is invisible
+     bug. Reset to the heading's own light ink, the strip underneath is
+     decoration, not a surface the word needs to stay readable against. */
+  color: var(--ink);
 }
 
 button, .btn {
