@@ -813,20 +813,23 @@ input[type="range"] {
   .site-nav-links { display: flex; }
 }
 
-/* Full-bleed, not a centered column: .site-nav above it already runs edge
-   to edge with its own padding, "Hunch" on the far left and "Play Hunch" on
-   the far right of the actual viewport, not of some narrower box floating
-   inside it. A max-width here put the footer's own edges noticeably short
-   of that on anything wider than ~1024px, "Hunch" in the corner up top,
-   "Discover / The Build / Trust" nowhere near the corresponding corner down
-   here. Matching the nav's own edges is what makes the two read as the same
-   page, not a wide page with a narrower footer glued to the bottom of it. */
+/* Centered, same width as the page content above it: .screen.wide caps out
+   at 75rem, and every divider and section edge on this page (the loop's own
+   border-bottom, the card grid) lines up with that box, not with the raw
+   viewport edge, the nav bar is the one full-bleed exception, not the rule.
+   64rem read visibly narrower than that content column, so the footer's
+   own right edge fell well short of where every line above it actually
+   ends. 75rem matches it instead of trying to reach all the way out to the
+   nav's own edges. */
 .site-footer {
   display: grid;
   gap: 1.5rem;
   padding: 2.5rem 1.25rem calc(2rem + env(safe-area-inset-bottom));
   margin-top: 1rem;
   border-top: 2px solid var(--line);
+  max-width: 75rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 .site-footer-mark {
   font-family: var(--display);
