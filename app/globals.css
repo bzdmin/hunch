@@ -325,6 +325,44 @@ input[type="range"] {
   background: transparent;
 }
 
+/* Split's amount screen: a number field, not a slider, because the player
+   is naming a stake not splitting one. min-width: 0 so the flex child can
+   shrink on a 375px phone instead of pushing the page sideways. */
+.stake-entry {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.6rem;
+  min-width: 0;
+}
+.stake-entry input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.stake-presets {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+.stake-presets button {
+  width: auto;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+}
+.stake-presets button.is-on { opacity: 1; }
+.stake-presets button:not(.is-on) { opacity: 0.6; }
+
 .split-readout {
   display: flex;
   justify-content: space-between;

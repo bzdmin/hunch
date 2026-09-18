@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { build, type Decision } from "@/lib/message";
-import { STAKE, FLOOR } from "@/lib/brand";
+import { STAKE, STAKE_NIM, FLOOR } from "@/lib/brand";
 import { put, get, nextUnclaimedGift, claimGift, population } from "@/lib/store";
 import { send, splitHouseMode } from "@/lib/payout";
 import { verifySignedMessage } from "@/lib/verify";
@@ -69,22 +69,41 @@ export async function POST(req: Request) {
   const { stake, give, predict } = decision;
 
   // The relay means the endowment varies, so it cannot simply be trusted, a client
-  // claiming a 50,000 NIM stake would otherwise have us record a decision over money
-  // that was never passed to it. Recompute what this player was actually entitled to.
-  // Must mirror app/split/page.tsx exactly, including the terminal case. It did not,
-  // so a player at the end of a chain was told "stake does not match what was passed
-  // to you" while looking at the correct amount on screen.
+  // claiming a 50,000 NIM stake for an inherited link would otherwise have us record
+  // a decision over money that was never passed to it. Recompute what this player
+  // was actually entitled to. Must mirror app/split/page.tsx exactly, including the
+  // terminal case. It did not, so a player at the end of a chain was told "stake
+  // does not match what was passed to you" while looking at the correct amount on
+  // screen.
   const gift = await nextUnclaimedGift(from, publicKey);
   const isTerminal = gift !== null && gift.give > 0 && gift.give < FLOOR;
   const inherited = gift && !isTerminal ? gift : null;
-  const expectedStake = isTerminal ? gift!.give : inherited ? inherited.give : STAKE;
   if (isTerminal && give !== 0) {
     return NextResponse.json(
       { error: "the chain ends here, there is nothing to pass on" },
       { status: 400 },
     );
   }
-  if (stake !== expectedStake) {
+
+  // A fresh self-funded start is the one case where "stake" isn't ours to
+  // dictate: it's the player's own NIM, not a windfall this server handed
+  // out, so there's nothing to recompute it against, expectedStake becomes
+  // whatever they actually submitted, once it clears the floor below. Every
+  // other case, house money and every inherited link, still has to match
+  // exactly, that money's provenance is known and fixed.
+  const freshSelfStart = !gift && decision.mode === "self";
+  const expectedStake = isTerminal ? gift!.give
+    : inherited ? inherited.give
+    : freshSelfStart ? stake
+    : STAKE;
+  if (freshSelfStart) {
+    if (!Number.isInteger(stake) || !Number.isSafeInteger(stake) || stake < STAKE) {
+      return NextResponse.json(
+        { error: `Bring at least ${STAKE_NIM.toLocaleString()} NIM to start a chain.` },
+        { status: 400 },
+      );
+    }
+  } else if (stake !== expectedStake) {
     return NextResponse.json(
       { error: "stake does not match what was passed to you", expected: expectedStake },
       { status: 400 },

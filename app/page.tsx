@@ -119,8 +119,9 @@ export default async function Home() {
         <h2>What would you keep?</h2>
         <p className="metaphor">KEEP &harr; GIVE</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          You have {STAKE_NIM.toLocaleString()} NIM. Decide how much to pass
-          to the next person. Then see what other people choose.
+          Bring at least {STAKE_NIM.toLocaleString()} NIM of your own. Decide
+          how much to pass to the next person. Then see what other people
+          choose.
         </p>
         <div className="meta">
           <span>Solo</span>

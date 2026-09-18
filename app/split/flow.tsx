@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { NAME, STAKE, STAKE_NIM, type Mode } from "@/lib/brand";
+import { NAME, STAKE_NIM, type Mode } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { build, nim, ref as makeRef, session as makeSession, type Decision } from "@/lib/message";
 import { SPLIT_MEAN_GIVEN, SPLIT_GAVE_SOMETHING } from "@/lib/benchmarks";
@@ -11,7 +11,10 @@ import { addHistory } from "@/lib/history";
 
 const POOL = process.env.NEXT_PUBLIC_POOL_ADDRESS ?? "";
 
-type Stage = "decide" | "predict" | "working" | "result";
+type Stage = "amount" | "decide" | "predict" | "working" | "result";
+
+/** Presets shown on the amount screen, min first so it reads as the floor it is. */
+const STAKE_PRESETS_NIM = [1_000, 2_500, 5_000, 10_000];
 type Result = {
   mode: Mode;
   keep: number;
@@ -32,7 +35,21 @@ export default function Flow({
 }) {
   const house = mode === "house";
 
-  const [stage, setStage] = useState<Stage>("decide");
+  /**
+   * 1,000 NIM used to be the only number Split ever ran on. It's still the
+   * floor, house-funded rounds and every inherited link in a chain still use
+   * exactly the `stake` this component was handed, that money isn't the
+   * player's to resize. But a fresh self-funded start is the one case where
+   * the "amount" is genuinely the player's own NIM, so here alone they pick
+   * how much of it to bring, from 1,000 NIM up, no ceiling, see the amount
+   * stage below.
+   */
+  const canChooseStake = mode === "self" && !inheritedFrom && !terminal;
+  const [stakeNim, setStakeNim] = useState(STAKE_NIM);
+  const lunaPerNim = 100_000;
+  const effectiveStake = canChooseStake ? stakeNim * lunaPerNim : stake;
+
+  const [stage, setStage] = useState<Stage>(canChooseStake ? "amount" : "decide");
 
   /**
    * Both sliders start at zero (builder's call, 5 Sep).
@@ -75,15 +92,22 @@ export default function Flow({
   }, []);
   const noWallet = hasWallet === false;
 
-  const keep = stake - give;
-  const givePct = Math.round((give / stake) * 100);
+  const keep = effectiveStake - give;
+  const givePct = effectiveStake > 0 ? Math.round((give / effectiveStake) * 100) : 0;
+
+  // Changing the stake after a decision was already dragged would leave
+  // `give` past the new max, and an HTML range input silently clamps the
+  // thumb without updating React state. Keep them in lockstep.
+  useEffect(() => {
+    if (give > effectiveStake) setGive(effectiveStake);
+  }, [effectiveStake, give]);
 
   async function commit() {
     setErr("");
     setStage("working");
 
     const decision: Decision = {
-      exp: "split", mode, session, stake, give, predict, ref: makeRef(),
+      exp: "split", mode, session, stake: effectiveStake, give, predict, ref: makeRef(),
     };
     const message = build(decision);
 
@@ -127,7 +151,7 @@ export default function Flow({
       setRes(bodyJson);
       addHistory({
         exp: "split",
-        call: `You had ${nim(stake)} NIM and kept ${nim(keep)} NIM.`,
+        call: `You had ${nim(effectiveStake)} NIM and kept ${nim(keep)} NIM.`,
         outcome: `You passed on ${givePct}%.`,
         href: "/split",
       });
@@ -150,10 +174,9 @@ export default function Flow({
           <div className="game-context">
             <h1>This chain ends with you.</h1>
             <p className="soft">
-              It started at {STAKE_NIM.toLocaleString()} NIM and has been
-              passed from stranger to stranger, getting smaller each time.
-              What&rsquo;s left is {nim(stake)} NIM, too little to split
-              again without it becoming meaningless.
+              It&rsquo;s been passed from stranger to stranger, getting
+              smaller each time. What&rsquo;s left is {nim(stake)} NIM, too
+              little to split again without it becoming meaningless.
             </p>
           </div>
 
@@ -184,6 +207,80 @@ export default function Flow({
     );
   }
 
+  // ----------------------------------------------------------------- amount
+  // Only reachable when canChooseStake, a fresh self-funded start: house
+  // money and inherited links never pass through here, stage starts at
+  // "decide" for both, see canChooseStake above.
+  if (stage === "amount") {
+    const belowFloor = !Number.isInteger(stakeNim) || stakeNim < STAKE_NIM;
+    const tooBig = !Number.isSafeInteger(stakeNim * lunaPerNim);
+    return (
+      <main className="screen game">
+        <ExperimentHeader experiment="Split" index={1} />
+        <div className="game-shell">
+          <div className="game-context">
+            <h1>How much NIM do you want to bring?</h1>
+            <p className="soft">
+              This is your own NIM, not a windfall from {NAME}. Bring as much
+              as you want, {STAKE_NIM.toLocaleString()} NIM is the floor, not
+              a limit.
+            </p>
+          </div>
+
+          <div className="game-card">
+            <div className="card">
+              <span className="k">Your stake</span>
+              <div className="stake-entry">
+                <input
+                  type="number" inputMode="numeric" min={STAKE_NIM} step={1}
+                  value={stakeNim}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    setStakeNim(Number.isFinite(n) ? Math.round(n) : 0);
+                  }}
+                  aria-label="How much NIM to bring"
+                />
+                <span className="faint">NIM</span>
+              </div>
+              {belowFloor && (
+                <p className="faint" style={{ marginTop: "0.5rem", color: "var(--warm)" }}>
+                  {STAKE_NIM.toLocaleString()} NIM minimum.
+                </p>
+              )}
+              {tooBig && (
+                <p className="faint" style={{ marginTop: "0.5rem", color: "var(--warm)" }}>
+                  That&rsquo;s more than this screen can hold. Try a smaller amount.
+                </p>
+              )}
+              <div className="stake-presets">
+                {STAKE_PRESETS_NIM.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`ghost${stakeNim === p ? " is-on" : ""}`}
+                    onClick={() => setStakeNim(p)}
+                  >
+                    {p.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {noWallet && <WalletNotice />}
+
+            <div className="grow" />
+            <button onClick={() => setStage("decide")} disabled={belowFloor || tooBig || noWallet}>
+              Continue
+            </button>
+            <p className="faint" style={{ textAlign: "center" }}>
+              Nothing moves yet. You decide what to keep and pass on next.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   // ---------------------------------------------------------------- decide
   if (stage === "decide") {
     return (
@@ -197,7 +294,7 @@ export default function Flow({
                 to live here moved to the bottom helper below, the one place
                 it actually changes what's true (self mode really does send
                 from this player's own wallet, house mode never does). */}
-            <h1>You have {nim(stake)} NIM.<br />How much will you pass on?</h1>
+            <h1>You have {nim(effectiveStake)} NIM.<br />How much will you pass on?</h1>
             <p className="soft">
               Keep as much as you want, or pass some to the next person.
               They&rsquo;ll never know it was your decision.
@@ -224,7 +321,7 @@ export default function Flow({
                 </div>
               </div>
               <input
-                type="range" min={0} max={stake} step={Math.max(1, Math.round(stake / 100))} value={give}
+                type="range" min={0} max={effectiveStake} step={Math.max(1, Math.round(effectiveStake / 100))} value={give}
                 onChange={(e) => setGive(Number(e.target.value))}
                 aria-label="Drag left to keep more, right to pass on more"
               />
@@ -243,6 +340,11 @@ export default function Flow({
 
             <div className="grow" />
             <button onClick={() => setStage("predict")} disabled={noWallet}>Continue</button>
+            {canChooseStake && (
+              <button className="ghost" onClick={() => setStage("amount")} disabled={noWallet}>
+                Change the amount
+              </button>
+            )}
             <p className="faint" style={{ textAlign: "center" }}>
               {house
                 ? "This NIM is already yours. You can change your mind on the next screen."

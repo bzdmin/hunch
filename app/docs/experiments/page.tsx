@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NAME } from "@/lib/brand";
+import { NAME, STAKE_NIM } from "@/lib/brand";
 import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
 import { DocsSidebar } from "@/app/docs/sidebar";
@@ -38,7 +38,10 @@ export default function ExperimentsDoc() {
             <p className="section-label" id="split">Split</p>
             <div className="card">
               <p className="soft">
-                A fresh chain starts at 1,000 NIM. You decide how much to
+                A fresh self-funded chain starts at whatever you bring,
+                {" "}{STAKE_NIM.toLocaleString()} NIM minimum, no ceiling.
+                House-funded chains still start at{" "}
+                {STAKE_NIM.toLocaleString()} NIM. You decide how much to
                 keep and how much to pass to the next person, any whole
                 amount from zero up to your stake. Your prediction is a
                 percentage: what share of their stake you think most
