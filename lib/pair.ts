@@ -393,6 +393,47 @@ export async function completedRoundCount(exp: PairExperiment): Promise<number> 
     .length;
 }
 
+export type PairEvent = {
+  exp: "trust" | "ultimatum";
+  at: number;
+  stake: number;
+  /** trust only, 3; ultimatum's pot never multiplies */
+  multiplier: number;
+  /** trust only: A kept everything instead of trusting a stranger */
+  kept: boolean;
+  /** trust: what B returned, in luna. ultimatum: A's offer, in luna */
+  move: number;
+  /** ultimatum only */
+  accepted: boolean | null;
+};
+
+/**
+ * The last real Trust/Ultimatum reveals, for Hunch Live's "what just
+ * happened" feed. Individual anecdotes, not an aggregate, the same
+ * distinction randomWorkedExample() above already draws and the reason
+ * this needs no play-gate: it never says what people usually do, only what
+ * one real round did, the identical move the pre-play worked-example cards
+ * already make safely. No identity anywhere in the shape, on purpose, the
+ * feed is the decision, never who made it.
+ */
+export async function recentPairEvents(limit: number): Promise<PairEvent[]> {
+  const rows = await db().all(COLL);
+  return rows
+    .map((r) => r.data as Pair)
+    .filter((p) => p.a && (p.status === "revealed" || p.status === "closed"))
+    .sort((a, b) => (b.revealedAt ?? 0) - (a.revealedAt ?? 0))
+    .slice(0, limit)
+    .map((p) => ({
+      exp: p.exp,
+      at: p.revealedAt ?? 0,
+      stake: p.stake,
+      multiplier: p.multiplier,
+      kept: p.status === "closed",
+      move: p.status === "closed" ? 0 : (p.exp === "trust" ? p.b!.move : p.a!.move),
+      accepted: p.exp === "ultimatum" && p.b ? payoff(p).note === "accepted" : null,
+    }));
+}
+
 /**
  * The active half of the hybrid expiry model: reclaims the "open" bucket by
  * writing "expired" onto every row the lazy check in getPair would also

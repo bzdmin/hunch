@@ -121,6 +121,22 @@ export async function distribution(mode: "house" | "self"): Promise<number[]> {
   return buckets;
 }
 
+export type SplitEvent = { at: number; stake: number; give: number };
+
+/**
+ * The last real Split decisions, Split's half of Hunch Live's "what just
+ * happened" feed. Same reasoning as recentPairEvents in lib/pair.ts: one
+ * real anecdote at a time, the same move randomWorkedExample already makes
+ * safely, never an aggregate, so it needs no play-gate. No identity in the
+ * shape, the feed is the decision, never who made it.
+ */
+export async function recentSplitEvents(limit: number): Promise<SplitEvent[]> {
+  return (await settled())
+    .sort((a, b) => b.at - a.at)
+    .slice(0, limit)
+    .map((c) => ({ at: c.at, stake: c.stake, give: c.give }));
+}
+
 /**
  * Live distribution of what players passed on, as a share of stake.
  *

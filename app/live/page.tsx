@@ -8,12 +8,28 @@ import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
 
 const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
+const nim = (luna: number) => (luna / 100000).toFixed(2);
+
+/** "2 min ago", down to seconds, up to days, no identity anywhere in the shape. */
+function timeAgo(at: number): string {
+  const mins = Math.round((Date.now() - at) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  return `${Math.round(hours / 24)} day${Math.round(hours / 24) === 1 ? "" : "s"} ago`;
+}
+
+type FeedItem =
+  | { kind: "pair"; exp: "trust"; at: number; stake: number; multiplier: number; kept: boolean; move: number; accepted: boolean | null }
+  | { kind: "pair"; exp: "ultimatum"; at: number; stake: number; multiplier: number; kept: boolean; move: number; accepted: boolean | null }
+  | { kind: "split"; at: number; stake: number; give: number };
 
 type SplitPop = { n: number; meanPct: number; gaveSomethingPct: number; distribution: number[] };
 type SplitLive = { waiting: number; n: number; house?: SplitPop | null; self?: SplitPop | null };
 type TrustLive = { waiting: number; n: number; joinId: string | null; players?: { n: number; meanReturnedPct: number } | null };
 type UltimatumLive = { waiting: number; n: number; joinId: string | null; players?: { n: number; meanOfferPct: number; acceptedPct: number } | null };
-type Data = { split?: SplitLive; trust?: TrustLive; ultimatum?: UltimatumLive };
+type Data = { feed?: FeedItem[]; split?: SplitLive; trust?: TrustLive; ultimatum?: UltimatumLive };
 
 /**
  * "Hunch is happening right now", not "here are our three games". Two kinds
@@ -45,6 +61,41 @@ export default function Live() {
 
   const maxBucket = (dist: number[]) => Math.max(1, ...dist);
 
+  /**
+   * One real anecdote, plain-language, no identity. "Someone" and "they",
+   * never a name, address, or "Player 0x...", the interesting object is
+   * the decision, not who made it, see recentPairEvents/recentSplitEvents.
+   */
+  function describeFeedItem(item: FeedItem): { color: string; line: string; badge: string } {
+    if (item.kind === "split") {
+      if (item.give === 0) {
+        return { color: "var(--accent)", line: `Someone kept all ${nim(item.stake)} NIM.`, badge: "Kept it all" };
+      }
+      return {
+        color: "var(--accent)",
+        line: `Someone passed ${nim(item.give)} NIM to the next player.`,
+        badge: `${pct(Math.round((item.give / item.stake) * 100))} passed on`,
+      };
+    }
+    if (item.exp === "trust") {
+      if (item.kept) {
+        return { color: "var(--good)", line: "Someone kept everything instead of trusting a stranger.", badge: "Kept it all" };
+      }
+      const pot = item.stake * item.multiplier;
+      return {
+        color: "var(--good)",
+        line: `${nim(item.stake)} NIM was handed to a stranger. They returned ${nim(item.move)} NIM.`,
+        badge: `${pct(Math.round((item.move / pot) * 100))} came back`,
+      };
+    }
+    // ultimatum
+    return {
+      color: "var(--warm)",
+      line: `Someone offered ${pct(Math.round((item.move / item.stake) * 100))}. The other player ${item.accepted ? "accepted" : "rejected"} it.`,
+      badge: item.accepted ? "Deal accepted" : "Deal rejected",
+    };
+  }
+
   return (
     <>
       <Nav />
@@ -58,7 +109,33 @@ export default function Live() {
           </p>
         </div>
 
-        <p className="section-label">Right now</p>
+        <p className="section-label">What just happened</p>
+        <div className="card-grid cols-3">
+          {!data.feed ? (
+            <p className="faint">Loading&hellip;</p>
+          ) : data.feed.length === 0 ? (
+            <div className="card">
+              <p className="soft">
+                Nothing&rsquo;s happened yet. Be the first real decision on
+                this page.
+              </p>
+            </div>
+          ) : (
+            data.feed.map((item, i) => {
+              const label = item.kind === "split" ? "Split" : item.exp === "trust" ? "Trust" : "Ultimatum";
+              const { color, line, badge } = describeFeedItem(item);
+              return (
+                <div key={i} className="pick" style={{ "--pick-color": color } as React.CSSProperties}>
+                  <p className="eyebrow">{label} &middot; {timeAgo(item.at)}</p>
+                  <p className="soft" style={{ marginTop: "0.5rem" }}>{line}</p>
+                  <p className="k" style={{ marginTop: "0.6rem" }}>{badge}</p>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <p className="section-label" style={{ marginTop: "1rem" }}>Right now</p>
 
         <div className="picks">
           <div className="pick" style={{ "--pick-color": "var(--accent)" } as React.CSSProperties}>

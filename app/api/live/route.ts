@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
-import { countWaitingRounds, completedRoundCount, findWaitingRound, trustPopulation, ultimatumPopulation } from "@/lib/pair";
-import { unclaimedGiftCount, totalPlayers, population as splitPopulation, distribution as splitDistribution } from "@/lib/store";
+import {
+  countWaitingRounds, completedRoundCount, findWaitingRound, trustPopulation, ultimatumPopulation,
+  recentPairEvents, type PairEvent,
+} from "@/lib/pair";
+import {
+  unclaimedGiftCount, totalPlayers, population as splitPopulation, distribution as splitDistribution,
+  recentSplitEvents, type SplitEvent,
+} from "@/lib/store";
+
+const FEED_LIMIT = 8;
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +17,14 @@ type Exp = "split" | "trust" | "ultimatum";
 const KNOWN: Exp[] = ["split", "trust", "ultimatum"];
 
 /**
- * Backs the Hunch Live page (app/live/page.tsx). Two different trust levels
- * in one response, on purpose:
+ * Backs the Hunch Live page (app/live/page.tsx). Three different trust
+ * levels in one response, on purpose:
+ *
+ *   "feed" ("what just happened") is one real anecdote at a time, never an
+ *   aggregate, the exact move randomWorkedExample() already makes safely on
+ *   Trust/Ultimatum's own pre-play screens. So, like "right now" below, it
+ *   needs no play-gate, always real, always public, see
+ *   recentPairEvents/recentSplitEvents' own comments.
  *
  *   "right now" (waiting, a live join link) is presence, not an answer. It
  *   says a real person is mid-round, never what they decided, so it is
@@ -32,14 +46,26 @@ export async function GET(req: Request) {
     raw.split(",").map((s) => s.trim()).filter((s): s is Exp => (KNOWN as string[]).includes(s)),
   );
 
-  const [splitWaiting, trustWaiting, ultimatumWaiting, splitTotal, trustTotal, ultimatumTotal] = await Promise.all([
+  const [splitWaiting, trustWaiting, ultimatumWaiting, splitTotal, trustTotal, ultimatumTotal, pairEvents, splitEvents] = await Promise.all([
     unclaimedGiftCount(),
     countWaitingRounds("trust"),
     countWaitingRounds("ultimatum"),
     totalPlayers(),
     completedRoundCount("trust"),
     completedRoundCount("ultimatum"),
+    recentPairEvents(FEED_LIMIT),
+    recentSplitEvents(FEED_LIMIT),
   ]);
+
+  // Two real sources, one feed. Anecdotes, not a statistic, see
+  // recentPairEvents/recentSplitEvents' own comments for why this needs no
+  // play-gate, unlike everything below it in this response.
+  const feed: ((PairEvent & { kind: "pair" }) | (SplitEvent & { kind: "split" }))[] = [
+    ...pairEvents.map((e) => ({ ...e, kind: "pair" as const })),
+    ...splitEvents.map((e) => ({ ...e, kind: "split" as const })),
+  ]
+    .sort((a, b) => b.at - a.at)
+    .slice(0, FEED_LIMIT);
 
   const [trustJoin, ultimatumJoin] = await Promise.all([
     trustWaiting > 0 ? findWaitingRound("trust") : null,
@@ -47,6 +73,7 @@ export async function GET(req: Request) {
   ]);
 
   const out: Record<string, unknown> = {
+    feed,
     split: { waiting: splitWaiting, n: splitTotal },
     trust: { waiting: trustWaiting, n: trustTotal, joinId: trustJoin?.id ?? null },
     ultimatum: { waiting: ultimatumWaiting, n: ultimatumTotal, joinId: ultimatumJoin?.id ?? null },
