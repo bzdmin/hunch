@@ -16,15 +16,15 @@ export const metadata: Metadata = {
  * userScalable stays on, disabling pinch-zoom on a page about reading a decision
  * carefully is the wrong trade.
  *
- * One colour, not a pair: Hunch is light in every environment now, so a
- * dark-scheme entry here would tint the chrome around a page that never goes
- * dark. See the palette note at the top of globals.css.
+ * One colour, not a pair: Hunch is dark in every environment now, so a
+ * light-scheme entry here would tint the chrome around a page that never
+ * goes light. See the palette note at the top of globals.css.
  */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f5f1e8",
+  themeColor: "#131110",
 };
 
 /**

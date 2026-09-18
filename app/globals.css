@@ -3,28 +3,40 @@
    desktop above it, not that same phone layout stretched wider. See the
    breakpoint scale and .game-shell primitive further down for how.
 
-   The palette is deliberately warm. This is a product about people and their money,
-   and the previous cool blue-grey read as clinical, competent, but it looked like
-   nothing. Cream and warm ink cost nothing and change the whole disposition.
+   Dark, on purpose, as the final visual identity, not a toggled theme layered
+   on top of the original cream one. Hunch reads real decisions off real
+   people, a near-black instrument panel with a single warm accent says that
+   before a word of copy does, the way an oscilloscope or a lab readout looks
+   like it means something. Warm, not cool-grey: charcoal with a brown
+   undertone and off-white ink, never blue-black, so it still feels like the
+   same product that used to run on cream, inverted, not swapped for a
+   generic dark template.
 
-   One signature move: the highlighter. It goes behind the number that matters and
-   nowhere else. A device used everywhere stops being a device. */
+   Borders and shadows still key off --ink, same as the original light
+   system, they were always "whatever the primary ink colour is", which now
+   means a light hairline and a light hard-offset shadow on a dark card,
+   not a redesign of that system, just what the same rule produces once ink
+   itself is light.
+
+   One signature move, unchanged: the highlighter. It goes behind the number
+   that matters and nowhere else. Bright yellow reads even better against
+   near-black than it did against cream. */
 
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&display=swap");
 
 :root {
-  --paper:      #f5f1e8;
-  --card:       #fffdf7;
-  --ink:        #171614;
-  --ink-soft:   #57524a;
-  --ink-faint:  #867f73;
-  --line:       #e3dccb;
-  --accent:     #a25c10;
-  --accent-soft:#f6e9cd;
+  --paper:      #131110;
+  --card:       #1c1916;
+  --ink:        #f3ede2;
+  --ink-soft:   #ab9f8e;
+  --ink-faint:  #7c7365;
+  --line:       #322c24;
+  --accent:     #e2823f;
+  --accent-soft:#2c2013;
   --highlight:  #ffd84d;
   --hl-ink:     #171614;
-  --good:       #2f6b4f;
-  --warm:       #ad4127;
+  --good:       #4fb280;
+  --warm:       #e2724f;
   --shadow:     3px 3px 0 var(--ink);
   --shadow-sm:  2px 2px 0 var(--ink);
 
@@ -32,18 +44,17 @@
   --body:    "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Light on purpose, in every environment.
-   This used to follow prefers-color-scheme, which meant most phones rendered a
-   dark Hunch and desktop rendered something heavier than the product wants to
-   be. Ivory and warm ink IS the product now, so it is the same on a judge's
-   laptop, in Nimiq Pay at midnight, and in every screenshot, rather than a
-   coin flip decided by someone's system setting. */
+/* Dark on purpose, in every environment, the same reasoning the old "light
+   everywhere" rule used, just pointed the other way: this does not follow
+   prefers-color-scheme, so it is the same instrument on a judge's laptop, in
+   Nimiq Pay at midnight, and in every screenshot, rather than a coin flip
+   decided by someone's system setting. */
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html {
   background: var(--paper);
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -189,13 +200,20 @@ p { margin: 0; }
 /* The signature move. Behind the number that matters, nowhere else. Slightly uneven
    edges so it reads as drawn rather than as a filled box. */
 .hl {
-  /* A marker stroke, not a filled box. Sweeping only the lower half leaves the
-     text its own colour, keeps contrast in both themes, and looks like
-     something drawn over the words rather than a filled highlighter box.
-     Fine at body-text size, where this class is used most, a percentage
-     gradient measured against the inline element's own line box works out
-     close enough to "under the glyphs" that nobody notices the difference
-     between that and the actual visual bottom of the letters. */
+  /* A marker stroke, not a filled box. Sweeping only the lower half instead
+     of filling behind the whole glyph looks like something drawn over the
+     words rather than a filled highlighter box. Fine at body-text size,
+     where this class is used most, a percentage gradient measured against
+     the inline element's own line box works out close enough to "under the
+     glyphs" that nobody notices the difference between that and the actual
+     visual bottom of the letters.
+
+     Text colour is forced to --hl-ink rather than left to inherit, on
+     purpose: this marker shows up inside .soft and .faint text too (see
+     ultimatum/flow.tsx's worked example), and --ink-soft/--ink-faint are
+     light in the dark theme, unreadable against a bright yellow strip.
+     --hl-ink exists specifically so the text sitting on the marker is
+     always legible regardless of what colour the sentence around it is. */
   background: linear-gradient(
     to top,
     var(--highlight) 0%,
@@ -204,6 +222,7 @@ p { margin: 0; }
     transparent 100%
   );
   padding: 0 0.1em 0.04em;
+  color: var(--hl-ink);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
