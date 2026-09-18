@@ -32,83 +32,190 @@ export default function Terms() {
           <p className="soft">
             {NAME} is a set of short behavioural experiments played with
             real NIM. You make a decision, predict what another person will
-            do, and find out what actually happened. It is a research and
-            prediction product, not a game of chance: there is no jackpot
-            and no random outcome, every result comes from a real decision
-            another real person made, or from a rule stated to you before
-            you acted on it, see &ldquo;Disclosed {NAME} rules&rdquo; below.
+            do, and then see what actually happened.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            The outcome isn&rsquo;t random. It comes from another
+            player&rsquo;s decision, or from a rule that was shown to you
+            before you played, see &ldquo;{NAME}&rsquo;s rules&rdquo; below.
           </p>
         </div>
 
-        <p className="section-label">Disclosed {NAME} rules</p>
+        <p className="section-label">{NAME}&rsquo;s rules</p>
         <div className="card">
           <p className="soft">
-            {NAME}&rsquo;s experiments are inspired by established
-            behavioural-economics games, but {NAME} isn&rsquo;t a faithful
-            academic replication, it&rsquo;s a product with its own rules
-            where those make the decision more interesting. The one place
-            this changes a payout: in Trust, keeping the stake instead of
-            trusting someone with it pays 25% of the stake, not the full
-            amount. That number is stated on the decision card itself
-            before you choose, the same 25% every time, for everyone, never
-            decided case by case and never changed after you&rsquo;ve
-            committed. See <Link href="/research">Research</Link> for the
-            comparison against the standard version of the game.
+            {NAME}&rsquo;s experiments are inspired by well-known
+            behavioural experiments, but they aren&rsquo;t exact copies.{" "}
+            {NAME} has its own rules where they make the experiment more
+            interesting.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            In Trust, there&rsquo;s one important difference: if you choose
+            to keep the NIM instead of handing it to another player, you
+            keep 25% of it.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            You&rsquo;ll see this rule before you make your choice. It is
+            always 25% and never changes after you commit. See{" "}
+            <Link href="/research">Research</Link> to compare {NAME} with
+            the original experiments.
           </p>
         </div>
 
         <p className="section-label">What you need to play</p>
         <div className="card">
           <p className="soft">
-            A Nimiq wallet capable of signing messages, either Nimiq Pay or
-            the Nimiq Hub. You are responsible for that wallet, its keys,
-            and whatever laws apply to using cryptocurrency where you live.{" "}
-            {NAME} doesn&rsquo;t custody your funds and can&rsquo;t recover
-            them for you.
+            You need a Nimiq wallet that can sign messages, such as Nimiq
+            Pay or Nimiq Hub.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            Your wallet and its keys are your responsibility. {NAME} does
+            not hold your funds or have access to your keys.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            You are also responsible for following the laws that apply to
+            you when using cryptocurrency.
           </p>
         </div>
 
-        <p className="section-label">House-funded rounds</p>
+        <p className="section-label">Split and your NIM</p>
         <div className="card">
           <p className="soft">
-            Trust and Ultimatum are funded by a wallet {NAME} controls, not
-            by you. That wallet opens a round only when it can cover the
-            worst case, and it is subject to a daily spending cap and
-            per-key and per-device limits, so a round can be refused if
-            those are reached. Split can run on your own NIM or on the same
-            house funding, the app tells you which before you commit.
+            Split can use your own NIM or NIM provided by {NAME}. The app
+            tells you which before you commit.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            If you play with your own NIM, anything you pass on is actually
+            sent to the next player. You can&rsquo;t take that amount back
+            after you commit. Anything you keep stays with you.
+          </p>
+        </div>
+
+        <p className="section-label">Trust</p>
+        <div className="card">
+          <p className="soft">
+            In Trust, you choose between keeping the NIM or handing it to
+            another player.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            Keep it and you receive 25% of the stake. Hand it over and the
+            amount becomes 3&times; in the other player&rsquo;s hands. They
+            then decide how much comes back to you.
+          </p>
+        </div>
+
+        <p className="section-label">Ultimatum</p>
+        <div className="card">
+          <p className="soft">
+            In Ultimatum, one player chooses an offer and the other chooses
+            the minimum share they would accept, before seeing it.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            If the offer meets their minimum, the deal goes through. If it
+            doesn&rsquo;t, the deal is rejected and neither player receives
+            anything.
+          </p>
+        </div>
+
+        <p className="section-label">{NAME}-funded rounds</p>
+        <div className="card">
+          <p className="soft">
+            Trust and Ultimatum use NIM provided by {NAME}, so you
+            don&rsquo;t need to bring your own NIM to play them.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            {NAME} only starts a round when its funding wallet can cover
+            the possible payout. There are also daily, wallet, and device
+            limits. If those limits have been reached, a new round may not
+            be available.
+          </p>
+        </div>
+
+        <p className="section-label">Who you play with</p>
+        <div className="card">
+          <p className="soft">
+            Trust and Ultimatum are played with other {NAME} players, not
+            people you choose yourself.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            {NAME} matches waiting players into available rounds. You
+            don&rsquo;t get to choose the other player&rsquo;s wallet or
+            decision.
+          </p>
+        </div>
+
+        <p className="section-label">Blind decisions</p>
+        <div className="card">
+          <p className="soft">
+            In Trust and Ultimatum, both players commit without seeing the
+            other&rsquo;s answer.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            {NAME} doesn&rsquo;t reveal either answer until both sides have
+            committed.
+          </p>
+        </div>
+
+        <p className="section-label">When NIM is paid</p>
+        <div className="card">
+          <p className="soft">
+            {NAME}-funded payouts are sent from a {NAME} wallet. Depending
+            on the network and the app&rsquo;s current funding setup, a
+            payout may be sent automatically or settled manually.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            {NAME} only treats a payout as settled once the Nimiq
+            transaction has actually been sent. When there is a transaction
+            hash, you can verify it on the Nimiq blockchain.
           </p>
         </div>
 
         <p className="section-label">Rounds can expire</p>
         <div className="card">
           <p className="soft">
-            If you start a round that needs a second person and nobody
-            answers within 48 hours, it expires. Nothing is lost, since
-            nothing was taken from you to open it, but that specific round
-            can no longer be answered, and starting a new one is the only
-            way back in.
+            If a round needs another player and nobody joins within 48
+            hours, the round expires.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            You don&rsquo;t lose anything, since nothing was taken from your
+            wallet to start it. That round simply can&rsquo;t be answered
+            anymore, and you&rsquo;ll need to start a new one.
+          </p>
+        </div>
+
+        <p className="section-label">Blockchain transactions</p>
+        <div className="card">
+          <p className="soft">
+            {NAME} doesn&rsquo;t custody your funds or hold your keys, and
+            it can&rsquo;t reverse a transaction once it has been sent.
+            This is especially relevant for Split, where your own NIM can
+            actually leave your wallet.
           </p>
         </div>
 
         <p className="section-label">No investment advice, no guaranteed value</p>
         <div className="card">
           <p className="soft">
-            Nothing in {NAME} is financial or investment advice. NIM is a
-            real cryptocurrency with a real, fluctuating value that{" "}
-            {NAME} does not control and makes no promises about.
+            {NAME} is not financial or investment advice.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            NIM is a real cryptocurrency and its value can change. {NAME}{" "}
+            does not control its value and makes no promises about what it
+            will be worth.
           </p>
         </div>
 
-        <p className="section-label">This is a work in progress</p>
+        <p className="section-label">About the project</p>
         <div className="card">
           <p className="soft">
-            {NAME} is provided as-is, built and maintained by one person
-            outside of a company. It can have bugs, downtime, or change as
-            the product develops, including these terms. There is no
-            uptime guarantee. If something breaks a round in a way that
-            actually cost you real NIM, the fastest way to reach the
-            builder is through{" "}
+            {NAME} is built and maintained independently by one person. It
+            is provided as-is and may have bugs, downtime, or changes as it
+            develops.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            There is no uptime guarantee. If something goes wrong with a
+            round and you believe it caused you to lose real NIM, contact
+            the builder through{" "}
             <a href="https://github.com/bzdmin/hunch" target="_blank" rel="noopener noreferrer">
               the GitHub repository
             </a>.
@@ -118,16 +225,22 @@ export default function Terms() {
         <p className="section-label">Playing fair</p>
         <div className="card">
           <p className="soft">
-            The abuse limits described above exist to keep house funding
-            available for real players. Deliberately working around them,
-            for instance splitting a house-funded outcome between two
-            devices you control, is against these terms and may get a key
-            or device blocked from house-funded rounds.
+            {NAME} limits house-funded rounds so there is NIM available for
+            real players.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            Don&rsquo;t try to get around these limits, for example by
+            using multiple wallets or devices that you control to create
+            or answer rounds.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem" }}>
+            If you deliberately work around these limits, {NAME} may block
+            the wallet or device from future {NAME}-funded rounds.
           </p>
         </div>
 
         <div className="grow" />
-        <Link href="/privacy" className="btn ghost">Read the privacy page</Link>
+        <Link href="/privacy" className="btn ghost">Read the privacy policy &rarr;</Link>
       </main>
       <Footer />
     </>
