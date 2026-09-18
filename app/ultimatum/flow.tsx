@@ -169,59 +169,65 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "resolved" && resolved) {
     const accepted = resolved.payoff.note === "accepted";
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Ultimatum</p>
-        <div className="card"><h2>{ultimatumTier(resolved.offerPct, accepted)}</h2></div>
+        <div className="game-shell">
+          <div className="game-context">
+            <div className="card"><h2>{ultimatumTier(resolved.offerPct, accepted)}</h2></div>
 
-        <p className="soft">
-          You offered {nim(resolved.offer)} NIM of the {nim(resolved.stake)} NIM
-          you had, {resolved.offerPct}% of it.
-        </p>
+            <p className="soft">
+              You offered {nim(resolved.offer)} NIM of the {nim(resolved.stake)} NIM
+              you had, {resolved.offerPct}% of it.
+            </p>
 
-        <ReportCard
-          experiment="Ultimatum"
-          color="var(--warm)"
-          call={<>You offered {nim(resolved.offer)} NIM, {resolved.offerPct}% of your stake.</>}
-          hunch={<>You guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
-          outcome={<>The least they&rsquo;d actually take was {resolved.theirThreshold}%.</>}
-          verdictLabel="How well did you read them?"
-          verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold))}
-          settlementHash={resolved.settlementHash}
-        >
-          <div className="split-readout" style={{ marginBottom: "1rem" }}>
-            <div>
-              <span className="k">You end with</span>
-              <span className="v">{nim(resolved.payoff.a)} NIM</span>
-            </div>
-            <div className="right">
-              <span className="k">They end with</span>
-              <span className="v">{nim(resolved.payoff.b)} NIM</span>
-            </div>
+            <p className="faint">
+              {accepted
+                ? "Your offer cleared what they said they'd accept, so the deal went through."
+                : "Your offer fell short of what they said they'd accept, so neither of you got anything."}
+            </p>
           </div>
-        </ReportCard>
 
-        <p className="faint">
-          {accepted
-            ? "Your offer cleared what they said they'd accept, so the deal went through."
-            : "Your offer fell short of what they said they'd accept, so neither of you got anything."}
-        </p>
+          <div className="game-card">
+            <ReportCard
+              experiment="Ultimatum"
+              color="var(--warm)"
+              call={<>You offered {nim(resolved.offer)} NIM, {resolved.offerPct}% of your stake.</>}
+              hunch={<>You guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
+              outcome={<>The least they&rsquo;d actually take was {resolved.theirThreshold}%.</>}
+              verdictLabel="How well did you read them?"
+              verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold))}
+              settlementHash={resolved.settlementHash}
+            >
+              <div className="split-readout" style={{ marginBottom: "1rem" }}>
+                <div>
+                  <span className="k">You end with</span>
+                  <span className="v">{nim(resolved.payoff.a)} NIM</span>
+                </div>
+                <div className="right">
+                  <span className="k">They end with</span>
+                  <span className="v">{nim(resolved.payoff.b)} NIM</span>
+                </div>
+              </div>
+            </ReportCard>
 
-        <ShareCard
-          experiment="Ultimatum"
-          color="var(--warm)"
-          path="/ultimatum"
-          predicted={<>I guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
-          happened={<>The least they&rsquo;d take was {resolved.theirThreshold}%.</>}
-          challenge="Could you have read them?"
-          shareText={
-            `I offered a stranger ${resolved.offerPct}% and guessed they'd accept anything ` +
-            `above ${resolved.yourGuess}%. The least they'd take was ${resolved.theirThreshold}%. ` +
-            `Could you have read them?`
-          }
-        />
+            <ShareCard
+              experiment="Ultimatum"
+              color="var(--warm)"
+              path="/ultimatum"
+              predicted={<>I guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
+              happened={<>The least they&rsquo;d take was {resolved.theirThreshold}%.</>}
+              challenge="Could you have read them?"
+              shareText={
+                `I offered a stranger ${resolved.offerPct}% and guessed they'd accept anything ` +
+                `above ${resolved.yourGuess}%. The least they'd take was ${resolved.theirThreshold}%. ` +
+                `Could you have read them?`
+              }
+            />
 
-        <div className="grow" />
-        <a className="btn ghost" href="/ultimatum">Play again</a>
+            <div className="grow" />
+            <a className="btn ghost" href="/ultimatum">Play again</a>
+          </div>
+        </div>
       </main>
     );
   }
@@ -281,101 +287,106 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   // ----------------------------------------------------------------- offer
   if (stage === "offer") {
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Ultimatum</p>
-        <h1>You have {nim(stake)} NIM. Offer a share to a stranger.</h1>
-        <p className="soft">
-          They&rsquo;ll set the least they&rsquo;re willing to accept before they
-          ever see your offer. Offer them less than that, and{" "}
-          <span className="hl">you both walk away with nothing</span>, including
-          the part you meant to keep.
-        </p>
-
-        {/* Real, not matched: this only links to an offer someone else already
-            committed to, the existing correct B screen at /u/[id]. See
-            findWaitingRound() in lib/pair.ts for why this never silently
-            assigns a seat instead of letting the visitor choose one. */}
-        {waiting && (
-          <div className="card">
-            <h2>Someone&rsquo;s waiting for an answer</h2>
-            <p className="soft" style={{ marginTop: "0.5rem" }}>
-              A real offer is already on the table, waiting to find out
-              whether you&rsquo;d accept it. No invite needed.
-            </p>
-            <Link href={`/u/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
-              Answer their offer &rarr;
-            </Link>
-          </div>
-        )}
-
-        {example && (
-          <div className="card guess">
-            <p className="faint" style={{ marginBottom: "0.5rem" }}>
-              A round that already happened
-            </p>
+        <div className="game-shell">
+          <div className="game-context">
+            <h1>You have {nim(stake)} NIM.<br />Decide how much to offer a stranger.</h1>
             <p className="soft">
-              Someone offered {example.offerPct}% of {nim(example.stake)} NIM. The
-              other person&rsquo;s line was {example.thresholdPct}%.{" "}
-              {example.accepted
-                ? "The offer cleared it, so the deal went through."
-                : "The offer fell short, so neither of them got anything."}
+              They&rsquo;ll set the minimum share they&rsquo;re willing to accept
+              before they see your offer. Offer less than that, and the deal
+              fails. <span className="hl">You both get 0 NIM.</span>
             </p>
-          </div>
-        )}
 
-        <div className="card">
-          <div className="split-readout">
-            <div>
-              <span className="k">You keep, if accepted</span>
-              <span className="v">{nim(stake - offer)} NIM</span>
-            </div>
-            <div className="right">
-              <span className="k">You offer</span>
-              <span className="v">{nim(offer)} NIM</span>
-            </div>
+            {/* Real, not matched: this only links to an offer someone else already
+                committed to, the existing correct B screen at /u/[id]. See
+                findWaitingRound() in lib/pair.ts for why this never silently
+                assigns a seat instead of letting the visitor choose one. */}
+            {waiting && (
+              <div className="card">
+                <h2>Someone&rsquo;s waiting for an answer</h2>
+                <p className="soft" style={{ marginTop: "0.5rem" }}>
+                  A real offer is already on the table, waiting to find out
+                  whether you&rsquo;d accept it. No invite needed.
+                </p>
+                <Link href={`/u/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
+                  Answer their offer &rarr;
+                </Link>
+              </div>
+            )}
+
+            {example && (
+              <div className="card guess">
+                <p className="faint" style={{ marginBottom: "0.5rem" }}>
+                  A round that already happened
+                </p>
+                <p className="soft">
+                  Someone offered {example.offerPct}% of {nim(example.stake)} NIM.
+                  The other person would only accept {example.thresholdPct}%.{" "}
+                  {example.accepted
+                    ? "The offer cleared it, so the deal went through."
+                    : "The offer was too low, so the deal failed and both got 0 NIM."}
+                </p>
+              </div>
+            )}
           </div>
-          <input
-            type="range" min={0} max={100} step={1} value={offerPct}
-            onChange={(e) => setOfferPct(Number(e.target.value))}
-            aria-label="What share to offer"
-          />
-          <div className="ends">
-            <span>&larr; Offer nothing</span>
-            <span>Offer it all &rarr;</span>
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
-            <input
-              type="number" inputMode="numeric" min={0} max={100} step={1}
-              value={offerPct}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                setOfferPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
-              }}
-              aria-label="Type an exact share"
-              style={{
-                flex: 1, background: "var(--paper)", color: "var(--ink)",
-                border: "2px solid var(--ink)", borderRadius: "8px",
-                padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
-              }}
-            />
-            <span className="faint">%</span>
+
+          <div className="game-card">
+            <div className="card">
+              <div className="split-readout">
+                <div>
+                  <span className="k">You keep if accepted</span>
+                  <span className="v">{nim(stake - offer)} NIM</span>
+                </div>
+                <div className="right">
+                  <span className="k">You offer</span>
+                  <span className="v">{nim(offer)} NIM</span>
+                </div>
+              </div>
+              <input
+                type="range" min={0} max={100} step={1} value={offerPct}
+                onChange={(e) => setOfferPct(Number(e.target.value))}
+                aria-label="What share to offer"
+              />
+              <div className="ends">
+                <span>&larr; Offer nothing</span>
+                <span>Offer it all &rarr;</span>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
+                <input
+                  type="number" inputMode="numeric" min={0} max={100} step={1}
+                  value={offerPct}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    setOfferPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
+                  }}
+                  aria-label="Type an exact share"
+                  style={{
+                    flex: 1, background: "var(--paper)", color: "var(--ink)",
+                    border: "2px solid var(--ink)", borderRadius: "8px",
+                    padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
+                  }}
+                />
+                <span className="faint">%</span>
+              </div>
+            </div>
+
+            {noWallet && (
+              <div className="card">
+                <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
+                <p className="soft" style={{ marginTop: "0.5rem" }}>
+                  Real NIM moves here, so it has to happen inside the wallet app.
+                </p>
+              </div>
+            )}
+            {err && <p className="err">{err}</p>}
+
+            <div className="grow" />
+            <button onClick={() => setStage("predict")} disabled={noWallet}>
+              Continue
+            </button>
           </div>
         </div>
-
-        {noWallet && (
-          <div className="card">
-            <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
-            <p className="soft" style={{ marginTop: "0.5rem" }}>
-              Real NIM moves here, so it has to happen inside the wallet app.
-            </p>
-          </div>
-        )}
-        {err && <p className="err">{err}</p>}
-
-        <div className="grow" />
-        <button onClick={() => setStage("predict")} disabled={noWallet}>
-          Continue
-        </button>
       </main>
     );
   }
@@ -384,66 +395,72 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "predict" || stage === "working") {
     const busy = stage === "working";
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Ultimatum · Step 2 of 2</p>
+        <div className="game-shell">
+          <div className="game-context">
+            <div className="locked">
+              <span className="k">Your offer, locked</span>
+              <span className="v">{nim(offer)} NIM of {nim(stake)} NIM</span>
+            </div>
 
-        <div className="locked">
-          <span className="k">Your offer, locked</span>
-          <span className="v">{nim(offer)} NIM of {nim(stake)} NIM</span>
-        </div>
-
-        <h1>What&rsquo;s the least you think they&rsquo;d accept?</h1>
-        <p className="soft">
-          They&rsquo;re deciding this without seeing your offer, at the same time
-          you&rsquo;re guessing it. How close do you think you&rsquo;ll land?
-        </p>
-
-        <div className="card guess">
-          <p className="eyebrow" style={{ marginBottom: "0.4rem" }}>Your hunch</p>
-          <p className="soft" style={{ marginBottom: "0.4rem" }}>
-            I think they&rsquo;d refuse anything below&hellip;
-          </p>
-          <div className="amount">{predictPct}<small>% of the stake</small></div>
-          <input
-            type="range" min={0} max={100} step={1} value={predictPct}
-            onChange={(e) => setPredictPct(Number(e.target.value))}
-            disabled={busy}
-            aria-label="What share you think their minimum is"
-          />
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
-            <input
-              type="number" inputMode="numeric" min={0} max={100} step={1}
-              value={predictPct}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                setPredictPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
-              }}
-              disabled={busy}
-              aria-label="Type an exact share"
-              style={{
-                flex: 1, background: "var(--paper)", color: "var(--ink)",
-                border: "2px solid var(--ink)", borderRadius: "8px",
-                padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
-              }}
-            />
-            <span className="faint">%</span>
+            <h1>What&rsquo;s the least you think they&rsquo;d accept?</h1>
+            <p className="soft">
+              They&rsquo;re deciding this without seeing your offer, at the same
+              time you&rsquo;re guessing it. How close do you think you&rsquo;ll
+              land?
+            </p>
           </div>
-          <p className="faint" style={{ marginTop: "0.5rem" }}>
-            {predict > offer
-              ? "Your own offer would fall below your guess, you'd expect them to refuse it."
-              : "Your offer clears your own guess, you'd expect them to accept it."}
-          </p>
+
+          <div className="game-card">
+            <div className="card guess">
+              <p className="eyebrow" style={{ marginBottom: "0.4rem" }}>Your hunch</p>
+              <p className="soft" style={{ marginBottom: "0.4rem" }}>
+                I think they&rsquo;d refuse anything below&hellip;
+              </p>
+              <div className="amount">{predictPct}<small>% of the stake</small></div>
+              <input
+                type="range" min={0} max={100} step={1} value={predictPct}
+                onChange={(e) => setPredictPct(Number(e.target.value))}
+                disabled={busy}
+                aria-label="What share you think their minimum is"
+              />
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
+                <input
+                  type="number" inputMode="numeric" min={0} max={100} step={1}
+                  value={predictPct}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    setPredictPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
+                  }}
+                  disabled={busy}
+                  aria-label="Type an exact share"
+                  style={{
+                    flex: 1, background: "var(--paper)", color: "var(--ink)",
+                    border: "2px solid var(--ink)", borderRadius: "8px",
+                    padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
+                  }}
+                />
+                <span className="faint">%</span>
+              </div>
+              <p className="faint" style={{ marginTop: "0.5rem" }}>
+                {predict > offer
+                  ? "Your own offer would fall below your guess, you'd expect them to refuse it."
+                  : "Your offer clears your own guess, you'd expect them to accept it."}
+              </p>
+            </div>
+
+            {err && <p className="err">{err}</p>}
+
+            <div className="grow" />
+            <button onClick={commit} disabled={busy}>
+              {busy ? "Confirming…" : "Send the offer"}
+            </button>
+            <button className="ghost" onClick={() => setStage("offer")} disabled={busy}>
+              Back
+            </button>
+          </div>
         </div>
-
-        {err && <p className="err">{err}</p>}
-
-        <div className="grow" />
-        <button onClick={commit} disabled={busy}>
-          {busy ? "Confirming…" : "Send the offer"}
-        </button>
-        <button className="ghost" onClick={() => setStage("offer")} disabled={busy}>
-          Back
-        </button>
       </main>
     );
   }

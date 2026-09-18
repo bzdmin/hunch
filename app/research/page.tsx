@@ -70,7 +70,7 @@ export default function Research() {
         </div>
 
         {played === null ? null : (
-          <>
+          <div className="card-grid cols-3">
             {EXPERIMENTS.map(({ exp, label, href }) => {
               if (!played.has(exp)) {
                 return (
@@ -214,7 +214,7 @@ export default function Research() {
                 </div>
               );
             })}
-          </>
+          </div>
         )}
 
         <div className="grow" />

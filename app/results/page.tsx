@@ -81,7 +81,7 @@ export default function Results() {
             </p>
           </div>
         ) : (
-          <div style={{ display: "grid", gap: "0.9rem" }}>
+          <div className="card-grid cols-3">
             {entries.map((e) => (
               <div
                 key={e.id}

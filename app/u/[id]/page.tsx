@@ -42,44 +42,59 @@ export default async function UltimatumLanding({
   const done = pair.status === "revealed";
   const expired = pair.status === "expired";
 
-  return (
-    <main className="screen">
-      <p className="eyebrow">{NAME} · Ultimatum</p>
+  // Finished/expired states have nothing for Respond to do but point back
+  // to a fresh round, a plain narrow screen fits that fine, splitting it
+  // into a column with nothing beside it would not.
+  if (done || expired) {
+    return (
+      <main className="screen">
+        <p className="eyebrow">{NAME} · Ultimatum</p>
+        {expired ? (
+          <>
+            <h1>This invite expired.</h1>
+            <p className="soft">
+              Nobody answered it in time. Nothing is lost, you can start your
+              own round right now.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1>This round is already finished.</h1>
+            <p className="soft">
+              Someone else answered it first. You can start one of your own, it
+              takes about a minute.
+            </p>
+          </>
+        )}
+        <div className="grow" />
+        <Respond id={pair.id} finished />
+        <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+          What is {NAME}?
+        </Link>
+      </main>
+    );
+  }
 
-      {expired ? (
-        <>
-          <h1>This invite expired.</h1>
-          <p className="soft">
-            Nobody answered it in time. Nothing is lost, you can start your
-            own round right now.
-          </p>
-        </>
-      ) : done ? (
-        <>
-          <h1>This round is already finished.</h1>
-          <p className="soft">
-            Someone else answered it first. You can start one of your own, it
-            takes about a minute.
-          </p>
-        </>
-      ) : (
-        <>
+  return (
+    <main className="screen game">
+      <p className="eyebrow">{NAME} · Ultimatum</p>
+      <div className="game-shell">
+        <div className="game-context">
           <h1>A stranger is offering you a share of something real.</h1>
           <p className="soft">
             You set the least you&rsquo;ll accept before you see what they
             offered. If their offer falls below your line, neither of you gets
             anything, not even the share they meant to keep for themselves.
           </p>
-        </>
-      )}
+        </div>
 
-      <div className="grow" />
-
-      <Respond id={pair.id} finished={done || expired} />
-
-      <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-        What is {NAME}?
-      </Link>
+        <div className="game-card">
+          <Respond id={pair.id} finished={false} />
+          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+            What is {NAME}?
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }

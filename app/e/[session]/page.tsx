@@ -29,52 +29,55 @@ export default async function Landing({
   const waiting = from?.give ?? 0;
 
   return (
-    <main className="screen">
+    <main className="screen game">
       <p className="eyebrow">{NAME}</p>
+      <div className="game-shell">
+        <div className="game-context">
+          {waiting > 0 ? (
+            <>
+              <h1>Someone passed you {nim(waiting)} NIM.</h1>
+              {/* The wording has to match how that player actually got their money.
+                  Saying "they were given a sum" about a self-mode player describes a
+                  windfall that never happened, the same fiction we removed from the
+                  decide screen, hiding in a second file. */}
+              <p className="soft">
+                {from?.mode === "house"
+                  ? "They were given a sum of money and asked how much of it to keep. They chose to pass this much to whoever came next. That turned out to be you."
+                  : "They were asked how much of their own money they'd hand to a stranger. This is what they chose to pass on, and it came to you."}{" "}
+                It reaches you when you take your own turn.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1>Someone wants to know what you&rsquo;d do.</h1>
+              <p className="soft">
+                You&rsquo;ll be given a small sum of real NIM and one decision to
+                make about it. No trick, no catch, nothing to pay.
+              </p>
+            </>
+          )}
 
-      {waiting > 0 ? (
-        <>
-          <h1>Someone passed you {nim(waiting)} NIM.</h1>
-          {/* The wording has to match how that player actually got their money.
-              Saying "they were given a sum" about a self-mode player describes a
-              windfall that never happened, the same fiction we removed from the
-              decide screen, hiding in a second file. */}
-          <p className="soft">
-            {from?.mode === "house"
-              ? "They were given a sum of money and asked how much of it to keep. They chose to pass this much to whoever came next. That turned out to be you."
-              : "They were asked how much of their own money they'd hand to a stranger. This is what they chose to pass on, and it came to you."}{" "}
-            It reaches you when you take your own turn.
-          </p>
-        </>
-      ) : (
-        <>
-          <h1>Someone wants to know what you&rsquo;d do.</h1>
-          <p className="soft">
-            You&rsquo;ll be given a small sum of real NIM and one decision to make
-            about it. No trick, no catch, nothing to pay.
-          </p>
-        </>
-      )}
+          <div className="card">
+            <h2>How it works</h2>
+            <p className="soft" style={{ marginTop: "0.6rem" }}>
+              You make one choice, and you guess what most other people chose. Then
+              you find out how you compare to everyone who&rsquo;s played, and to
+              what researchers found running this same test on thousands of people.
+            </p>
+          </div>
+        </div>
 
-      <div className="card">
-        <h2>How it works</h2>
-        <p className="soft" style={{ marginTop: "0.6rem" }}>
-          You make one choice, and you guess what most other people chose. Then you
-          find out how you compare to everyone who&rsquo;s played, and to what
-          researchers found running this same test on thousands of people.
-        </p>
+        <div className="game-card">
+          {/* Renders the install route by default. If the visitor turns out to be
+              inside Nimiq Pay already, it swaps itself for a play button, telling
+              someone to install an app they are currently using reads as broken. */}
+          <Enter waiting={waiting} session={session} />
+
+          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+            What is {NAME}?
+          </Link>
+        </div>
       </div>
-
-      <div className="grow" />
-
-      {/* Renders the install route by default. If the visitor turns out to be
-          inside Nimiq Pay already, it swaps itself for a play button, telling
-          someone to install an app they are currently using reads as broken. */}
-      <Enter waiting={waiting} session={session} />
-
-      <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-        What is {NAME}?
-      </Link>
     </main>
   );
 }

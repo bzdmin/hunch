@@ -1,5 +1,7 @@
 /* Hunch, one screen at a time, on a phone, inside a WebView.
-   Sized for a thumb and a 375px viewport first.
+   Sized for a thumb and a 375px viewport first, and genuinely composed for
+   desktop above it, not that same phone layout stretched wider. See the
+   breakpoint scale and .game-shell primitive further down for how.
 
    The palette is deliberately warm. This is a product about people and their money,
    and the previous cool blue-grey read as clinical, competent, but it looked like
@@ -66,17 +68,87 @@ body {
   gap: 1.25rem;
 }
 
-/* The home screen only.
-   Every other screen stays a single narrow column on purpose: an experiment is
-   one decision at a time, and a decision does not get better for being 1400px
-   wide. The front door is the one screen with several things to compare, so it
-   is the one screen that earns the extra width. */
-.screen.wide { max-width: 64rem; }
+/* Content pages: home, live, research, results, how-it-works. These have
+   several things to compare (cards, stats, a research citation next to a
+   headline), so they earn real desktop width. ~1150px, the middle of the
+   1100-1200px range a page like this reads well at, wide enough for a
+   multi-column composition without lines getting hard to track. */
+.screen.wide { max-width: 72rem; }
 
 @media (min-width: 52rem) {
   .screen.wide { padding: 4rem 2rem calc(3rem + env(safe-area-inset-bottom)); gap: 1.75rem; }
   .screen.wide h1 { font-size: 3.4rem; max-width: 18ch; }
   .screen.wide > .soft { font-size: 1.15rem; max-width: 46ch; }
+}
+
+/* A row of cards that would otherwise just stack full-width the way they do
+   on a phone, live/research/how-it-works's per-experiment or per-topic
+   cards. Single column below 52rem, exactly the current mobile stack,
+   unchanged, real columns above it. */
+.card-grid { display: grid; gap: 1rem; }
+@media (min-width: 52rem) {
+  .card-grid.cols-2 { grid-template-columns: repeat(2, 1fr); align-items: start; }
+  .card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); align-items: start; }
+}
+
+/* --------------------------------------------------------- game layout ---
+   Split, Trust, Ultimatum, and their /t and /u respond screens used to force
+   every viewport into the same 30rem column, .screen's default: a decision
+   at 1400px wide looked pixel-identical to one at 400px, a phone layout
+   stretched onto a desktop rather than a desktop composition. That was a
+   deliberate call once ("one decision at a time doesn't get better for
+   being wide"), but it reads as unfinished on anything bigger than a phone,
+   which is most of how a judge actually opens a link.
+
+   Three tiers, mobile first, nothing changes below 48rem on purpose, that
+   layout already works and stays exactly as it is:
+
+     < 48rem   phone.     .screen.game is the same 30rem column as always.
+     48-64rem  tablet.    A wider single column, room to breathe without
+                          forcing a second column into a space too narrow
+                          for it to mean anything.
+     >= 64rem  desktop.   .game-shell becomes two columns, context and
+                          example content on the left, the live decision
+                          card on the right, capped at 72rem so the row
+                          itself never gets so wide the eye has to travel
+                          too far.
+
+   Getting a second column costs nothing in markup: .game-shell's children
+   are written in the same order this app has always used (heading and
+   context first, the interactive card after), a plain div stacks them
+   exactly like that below 64rem, and CSS grid's own auto-placement puts
+   the first child left and the second right above it, no reordering, no
+   JS, no per-component media query to maintain. */
+.screen.game { max-width: 30rem; }
+
+/* .game-shell defaults to the exact same flex column .screen has always
+   been, same gap, so nesting content one level deeper into
+   .game-context/.game-card changes nothing about mobile's spacing: a gap
+   between the last item of one group and the first of the next is
+   indistinguishable from the old flat list. Both groups stay flex columns
+   at every width too, .grow's flex:1 push-to-bottom trick only means
+   anything inside a flex container, and .game-card is where every
+   "continue"/"lock it in" button already relies on it. */
+.game-shell { display: flex; flex-direction: column; gap: 1.25rem; }
+.game-context, .game-card { display: flex; flex-direction: column; gap: 1.25rem; }
+
+@media (min-width: 48rem) {
+  .screen.game { max-width: 38rem; }
+}
+
+@media (min-width: 64rem) {
+  .screen.game { max-width: 72rem; }
+
+  .game-shell {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+
+  /* The decision card is the one thing on the page that changes as someone
+     interacts with it, so it is the one thing worth keeping in view while
+     the context beside it may run longer than the viewport's height. */
+  .game-shell > .game-card { position: sticky; top: 2rem; align-self: start; }
 }
 
 .eyebrow {

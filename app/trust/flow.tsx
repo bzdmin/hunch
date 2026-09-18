@@ -226,61 +226,67 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     const sharePct = Math.round((resolved.returned / resolved.pot) * 100);
     const predictPct = Math.round((resolved.predict / resolved.pot) * 100);
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Trust</p>
-        <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
+        <div className="game-shell">
+          <div className="game-context">
+            <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
 
-        <p className="soft">
-          You handed over {nim(resolved.stake)} NIM, and it became{" "}
-          {nim(resolved.pot)} NIM in their hands.
-        </p>
+            <p className="soft">
+              You handed over {nim(resolved.stake)} NIM, and it became{" "}
+              {nim(resolved.pot)} NIM in their hands.
+            </p>
 
-        <ReportCard
-          experiment="Trust"
-          color="var(--good)"
-          call={<>You handed over {nim(resolved.stake)} NIM.</>}
-          hunch={<>You expected {nim(resolved.predict)} NIM back.</>}
-          outcome={<>They sent back {nim(resolved.returned)} NIM.</>}
-          verdictLabel="How well did you read them?"
-          verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(predictPct, sharePct))}
-          settlementHash={resolved.settlementHash}
-        >
-          <div className="split-readout" style={{ marginBottom: "1rem" }}>
-            <div>
-              <span className="k">You end with</span>
-              <span className="v">{nim(resolved.payoff.a)} NIM</span>
-            </div>
-            <div className="right">
-              <span className="k">They end with</span>
-              <span className="v">{nim(resolved.payoff.b)} NIM</span>
-            </div>
+            <p className="faint">
+              {resolved.payoff.a > resolved.stake
+                ? `Trusting them paid off, you came out ${nim(resolved.payoff.a - resolved.stake)} NIM ahead.`
+                : resolved.payoff.a === resolved.stake
+                  ? "You broke even."
+                  : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
+            </p>
           </div>
-        </ReportCard>
 
-        <p className="faint">
-          {resolved.payoff.a > resolved.stake
-            ? `Trusting them paid off, you came out ${nim(resolved.payoff.a - resolved.stake)} NIM ahead.`
-            : resolved.payoff.a === resolved.stake
-              ? "You broke even."
-              : `You lost ${nim(resolved.stake - resolved.payoff.a)} NIM by trusting them.`}
-        </p>
+          <div className="game-card">
+            <ReportCard
+              experiment="Trust"
+              color="var(--good)"
+              call={<>You handed over {nim(resolved.stake)} NIM.</>}
+              hunch={<>You expected {nim(resolved.predict)} NIM back.</>}
+              outcome={<>They sent back {nim(resolved.returned)} NIM.</>}
+              verdictLabel="How well did you read them?"
+              verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(predictPct, sharePct))}
+              settlementHash={resolved.settlementHash}
+            >
+              <div className="split-readout" style={{ marginBottom: "1rem" }}>
+                <div>
+                  <span className="k">You end with</span>
+                  <span className="v">{nim(resolved.payoff.a)} NIM</span>
+                </div>
+                <div className="right">
+                  <span className="k">They end with</span>
+                  <span className="v">{nim(resolved.payoff.b)} NIM</span>
+                </div>
+              </div>
+            </ReportCard>
 
-        <ShareCard
-          experiment="Trust"
-          color="var(--good)"
-          path="/trust"
-          predicted={<>I predicted they&rsquo;d return {nim(resolved.predict)} NIM.</>}
-          happened={<>They returned {nim(resolved.returned)} NIM.</>}
-          challenge="How well would you read them?"
-          shareText={
-            `I trusted a stranger with ${nim(resolved.stake)} NIM and predicted ` +
-            `${nim(resolved.predict)} NIM would come back. ${nim(resolved.returned)} NIM did. ` +
-            `How well would you read them?`
-          }
-        />
+            <ShareCard
+              experiment="Trust"
+              color="var(--good)"
+              path="/trust"
+              predicted={<>I predicted they&rsquo;d return {nim(resolved.predict)} NIM.</>}
+              happened={<>They returned {nim(resolved.returned)} NIM.</>}
+              challenge="How well would you read them?"
+              shareText={
+                `I trusted a stranger with ${nim(resolved.stake)} NIM and predicted ` +
+                `${nim(resolved.predict)} NIM would come back. ${nim(resolved.returned)} NIM did. ` +
+                `How well would you read them?`
+              }
+            />
 
-        <div className="grow" />
-        <a className="btn ghost" href="/trust">Play again</a>
+            <div className="grow" />
+            <a className="btn ghost" href="/trust">Play again</a>
+          </div>
+        </div>
       </main>
     );
   }
@@ -304,91 +310,98 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   // ---------------------------------------------------------------- choose
   if (stage === "choose") {
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Trust</p>
-        <h1>You have {nim(stake)} NIM. Keep it, or risk it.</h1>
-        <p className="soft">
-          If you hand it over, it becomes{" "}
-          <span className="hl">{nim(pot)} NIM</span> in the other person&rsquo;s
-          hands. Then <em>they</em> decide how much comes back to you. It could be
-          more than you started with. It could be nothing.
-        </p>
-
-        {/* Real, not matched: this only links to a round someone else already
-            committed to, the existing correct B screen at /t/[id]. See
-            findWaitingRound() in lib/pair.ts for why this never silently
-            assigns a seat instead of letting the visitor choose one. */}
-        {waiting && (
-          <div className="card">
-            <h2>Someone&rsquo;s waiting for an answer</h2>
-            <p className="soft" style={{ marginTop: "0.5rem" }}>
-              A real round is already open, they&rsquo;ve made their call and
-              are waiting to find out what you do. No invite needed.
-            </p>
-            <Link href={`/t/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
-              Answer their round &rarr;
-            </Link>
-          </div>
-        )}
-
-        {/* The trust game is the worst-understood of all five standard economic
-            games, misunderstood by 62-70% of participants in the 2025 comprehension
-            study across 1568 people, and the canonical implementation most platforms
-            build on never explains the multiplier at all. A real completed round,
-            pulled at random from recent play so it is not the same one twice, does
-            that work instead of an instructions block. */}
-        {example && (
-          <div className="card guess">
-            <p className="faint" style={{ marginBottom: "0.5rem" }}>
-              A round that already happened
-            </p>
+        <div className="game-shell">
+          <div className="game-context">
+            <h1>You have {nim(stake)} NIM. Keep it, or risk it.</h1>
             <p className="soft">
-              Someone had {nim(example.stake)} NIM and handed it over. The other
-              person sent back {nim(example.returned)} NIM, leaving the first
-              player with <strong>{nim(example.final)} NIM</strong>
-              {example.final < example.stake
-                ? `, ${nim(example.stake - example.final)} NIM less than if they'd just kept it.`
-                : example.final === example.stake
-                  ? ", almost exactly what they'd have had by keeping it."
-                  : `, ${nim(example.final - example.stake)} NIM more than if they'd just kept it.`}
+              If you hand it over, it becomes{" "}
+              <span className="hl">{nim(pot)} NIM</span> in the other
+              person&rsquo;s hands. Then <em>they</em> decide how much comes
+              back to you. It could be more than you started with. It could
+              be nothing.
             </p>
-          </div>
-        )}
 
-        <div className="card">
-          <div className="split-readout">
-            <div>
-              <span className="k">Keep it</span>
-              <span className="v">{nim(stake)} NIM</span>
-            </div>
-            <div className="right">
-              <span className="k">Hand it over</span>
-              <span className="v">{nim(pot)} NIM</span>
-            </div>
+            {/* Real, not matched: this only links to a round someone else already
+                committed to, the existing correct B screen at /t/[id]. See
+                findWaitingRound() in lib/pair.ts for why this never silently
+                assigns a seat instead of letting the visitor choose one. */}
+            {waiting && (
+              <div className="card">
+                <h2>Someone&rsquo;s waiting for an answer</h2>
+                <p className="soft" style={{ marginTop: "0.5rem" }}>
+                  A real round is already open, they&rsquo;ve made their call
+                  and are waiting to find out what you do. No invite needed.
+                </p>
+                <Link href={`/t/${waiting.id}`} className="btn" style={{ marginTop: "0.9rem" }}>
+                  Answer their round &rarr;
+                </Link>
+              </div>
+            )}
+
+            {/* The trust game is the worst-understood of all five standard economic
+                games, misunderstood by 62-70% of participants in the 2025 comprehension
+                study across 1568 people, and the canonical implementation most platforms
+                build on never explains the multiplier at all. A real completed round,
+                pulled at random from recent play so it is not the same one twice, does
+                that work instead of an instructions block. */}
+            {example && (
+              <div className="card guess">
+                <p className="faint" style={{ marginBottom: "0.5rem" }}>
+                  A round that already happened
+                </p>
+                <p className="soft">
+                  Someone had {nim(example.stake)} NIM and handed it over. The
+                  other person sent back {nim(example.returned)} NIM, leaving
+                  the first player with <strong>{nim(example.final)} NIM</strong>
+                  {example.final < example.stake
+                    ? `, ${nim(example.stake - example.final)} NIM less than if they'd just kept it.`
+                    : example.final === example.stake
+                      ? ", almost exactly what they'd have had by keeping it."
+                      : `, ${nim(example.final - example.stake)} NIM more than if they'd just kept it.`}
+                </p>
+              </div>
+            )}
           </div>
-          <p className="faint" style={{ marginTop: "0.6rem" }}>
-            Handing over is all or nothing, which is what makes it a test
-            of trust and not a hedge.
-          </p>
+
+          <div className="game-card">
+            <div className="card">
+              <div className="split-readout">
+                <div>
+                  <span className="k">Keep it</span>
+                  <span className="v">{nim(stake)} NIM</span>
+                </div>
+                <div className="right">
+                  <span className="k">Hand it over</span>
+                  <span className="v">{nim(pot)} NIM</span>
+                </div>
+              </div>
+              <p className="faint" style={{ marginTop: "0.6rem" }}>
+                Handing over is all or nothing, which is what makes it a test
+                of trust and not a hedge.
+              </p>
+            </div>
+
+            {noWallet && (
+              <div className="card">
+                <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
+                <p className="soft" style={{ marginTop: "0.5rem" }}>
+                  Real NIM moves here, so it has to happen inside the wallet app.
+                </p>
+              </div>
+            )}
+            {err && <p className="err">{err}</p>}
+
+            <div className="grow" />
+            <button onClick={() => setStage("predict")} disabled={noWallet}>
+              Hand it over
+            </button>
+            <button className="ghost" onClick={() => commit(0)} disabled={noWallet}>
+              Keep the {nim(stake)} NIM
+            </button>
+          </div>
         </div>
-
-        {noWallet && (
-          <div className="card">
-            <h2>You&rsquo;ll need Nimiq Pay for this bit</h2>
-            <p className="soft" style={{ marginTop: "0.5rem" }}>
-              Real NIM moves here, so it has to happen inside the wallet app.
-            </p>
-          </div>
-        )}
-        {err && <p className="err">{err}</p>}
-
-        <div className="grow" />
-        <button onClick={() => setStage("predict")} disabled={noWallet}>
-          Hand it over
-        </button>
-        <button className="ghost" onClick={() => commit(0)} disabled={noWallet}>
-          Keep the {nim(stake)} NIM
-        </button>
       </main>
     );
   }
@@ -397,88 +410,94 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "predict" || stage === "working") {
     const busy = stage === "working";
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Trust · Step 2 of 2</p>
+        <div className="game-shell">
+          <div className="game-context">
+            <div className="locked">
+              <span className="k">Your answer, locked</span>
+              <span className="v">You hand over {nim(stake)} NIM</span>
+            </div>
 
-        <div className="locked">
-          <span className="k">Your answer, locked</span>
-          <span className="v">You hand over {nim(stake)} NIM</span>
-        </div>
+            <h1>How much do you think comes back?</h1>
+            <p className="soft">
+              They&rsquo;ll be holding {nim(pot)} NIM. Keeping all of it costs
+              them nothing, and you&rsquo;ll never meet them. What do you
+              actually expect?
+            </p>
 
-        <h1>How much do you think comes back?</h1>
-        <p className="soft">
-          They&rsquo;ll be holding {nim(pot)} NIM. Keeping all of it costs them
-          nothing, and you&rsquo;ll never meet them. What do you actually expect?
-        </p>
-
-        <div className="card guess">
-          <p className="eyebrow" style={{ marginBottom: "0.4rem" }}>Your hunch</p>
-          <p className="soft" style={{ marginBottom: "0.4rem" }}>
-            I expect them to send back&hellip;
-          </p>
-          <div className="amount">{predictPct}<small>% of it</small></div>
-          <input
-            type="range" min={0} max={100} step={1} value={predictPct}
-            onChange={(e) => setPredictPct(Number(e.target.value))}
-            disabled={busy}
-            aria-label="What share you expect back"
-          />
-          {/* The ends labels sit right under the slider, where the CSS spacing
-              between them was actually tuned. An input row used to sit between them
-              and the slider, which pulled the labels up into the input's own edge. */}
-          <div className="ends">
-            <span>&larr; Nothing</span>
-            <span>All of it &rarr;</span>
+            {/* This is the specific fact the trust game loses people on: not the
+                multiplier, the COMPARISON against what they'd have had by keeping it.
+                It was a faint one-line footnote here before, easy to skip. Now it is
+                its own block, live, using the same styling the reveal screens use for
+                the one sentence on the page that actually matters. Break-even is a
+                third of the pot, that is exactly the stake handed over. */}
+            <div className="verdict">
+              <p className="soft" style={{ marginBottom: "0.35rem" }}>
+                If that&rsquo;s what comes back, here&rsquo;s where you end up.
+              </p>
+              <p>
+                <span className="hl">{nim(predict)} NIM</span>.{" "}
+                {predictPct < 33
+                  ? `That's ${nim(stake - predict)} NIM less than the ${nim(stake)} NIM you'd have had by just keeping it.`
+                  : predictPct < 34
+                    ? `That's almost exactly the ${nim(stake)} NIM you'd have had by keeping it.`
+                    : `That's ${nim(predict - stake)} NIM more than the ${nim(stake)} NIM you'd have had by keeping it.`}
+              </p>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
-            <input
-              type="number" inputMode="numeric" min={0} max={100} step={1}
-              value={predictPct}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                setPredictPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
-              }}
-              disabled={busy}
-              aria-label="Type an exact share"
-              style={{
-                flex: 1, background: "var(--paper)", color: "var(--ink)",
-                border: "2px solid var(--ink)", borderRadius: "8px",
-                padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
-              }}
-            />
-            <span className="faint">%</span>
+
+          <div className="game-card">
+            <div className="card guess">
+              <p className="eyebrow" style={{ marginBottom: "0.4rem" }}>Your hunch</p>
+              <p className="soft" style={{ marginBottom: "0.4rem" }}>
+                I expect them to send back&hellip;
+              </p>
+              <div className="amount">{predictPct}<small>% of it</small></div>
+              <input
+                type="range" min={0} max={100} step={1} value={predictPct}
+                onChange={(e) => setPredictPct(Number(e.target.value))}
+                disabled={busy}
+                aria-label="What share you expect back"
+              />
+              {/* The ends labels sit right under the slider, where the CSS spacing
+                  between them was actually tuned. An input row used to sit between them
+                  and the slider, which pulled the labels up into the input's own edge. */}
+              <div className="ends">
+                <span>&larr; Nothing</span>
+                <span>All of it &rarr;</span>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.6rem" }}>
+                <input
+                  type="number" inputMode="numeric" min={0} max={100} step={1}
+                  value={predictPct}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    setPredictPct(Math.min(100, Math.max(0, Math.round(Number.isFinite(n) ? n : 0))));
+                  }}
+                  disabled={busy}
+                  aria-label="Type an exact share"
+                  style={{
+                    flex: 1, background: "var(--paper)", color: "var(--ink)",
+                    border: "2px solid var(--ink)", borderRadius: "8px",
+                    padding: "0.5rem 0.7rem", font: "inherit", fontSize: "1rem",
+                  }}
+                />
+                <span className="faint">%</span>
+              </div>
+            </div>
+
+            {err && <p className="err">{err}</p>}
+
+            <div className="grow" />
+            <button onClick={() => commit(stake)} disabled={busy}>
+              {busy ? "Confirming…" : "Hand it over"}
+            </button>
+            <button className="ghost" onClick={() => setStage("choose")} disabled={busy}>
+              Back
+            </button>
           </div>
         </div>
-
-        {/* This is the specific fact the trust game loses people on: not the
-            multiplier, the COMPARISON against what they'd have had by keeping it.
-            It was a faint one-line footnote here before, easy to skip. Now it is
-            its own block, live, using the same styling the reveal screens use for
-            the one sentence on the page that actually matters. Break-even is a
-            third of the pot, that is exactly the stake handed over. */}
-        <div className="verdict">
-          <p className="soft" style={{ marginBottom: "0.35rem" }}>
-            If that&rsquo;s what comes back, here&rsquo;s where you end up.
-          </p>
-          <p>
-            <span className="hl">{nim(predict)} NIM</span>.{" "}
-            {predictPct < 33
-              ? `That's ${nim(stake - predict)} NIM less than the ${nim(stake)} NIM you'd have had by just keeping it.`
-              : predictPct < 34
-                ? `That's almost exactly the ${nim(stake)} NIM you'd have had by keeping it.`
-                : `That's ${nim(predict - stake)} NIM more than the ${nim(stake)} NIM you'd have had by keeping it.`}
-          </p>
-        </div>
-
-        {err && <p className="err">{err}</p>}
-
-        <div className="grow" />
-        <button onClick={() => commit(stake)} disabled={busy}>
-          {busy ? "Confirming…" : "Hand it over"}
-        </button>
-        <button className="ghost" onClick={() => setStage("choose")} disabled={busy}>
-          Back
-        </button>
       </main>
     );
   }

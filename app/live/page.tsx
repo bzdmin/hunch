@@ -152,7 +152,7 @@ export default function Live() {
         <p className="section-label" style={{ marginTop: "1rem" }}>The numbers so far</p>
 
         {played === null ? null : (
-          <>
+          <div className="card-grid cols-3">
             <div className="card">
               <h2>Split</h2>
               {!data.split ? (
@@ -260,7 +260,7 @@ export default function Live() {
                 </>
               )}
             </div>
-          </>
+          </div>
         )}
 
         <div className="grow" />

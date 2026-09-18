@@ -82,27 +82,29 @@ export default function HowItWorks() {
           </div>
         </div>
 
-        <div className="card">
-          <h2>Why real NIM?</h2>
-          <p className="soft" style={{ marginTop: "0.5rem" }}>
-            If a decision costs nothing, it&rsquo;s easy to say what you think
-            you should do. It&rsquo;s a different question once something real
-            is behind it. That&rsquo;s the whole reason {NAME} runs on NIM
-            instead of points: real NIM gives the decision consequences, and
-            consequences are what make a hunch worth having.
-          </p>
-        </div>
+        <div className="card-grid cols-2">
+          <div className="card">
+            <h2>Why real NIM?</h2>
+            <p className="soft" style={{ marginTop: "0.5rem" }}>
+              If a decision costs nothing, it&rsquo;s easy to say what you think
+              you should do. It&rsquo;s a different question once something real
+              is behind it. That&rsquo;s the whole reason {NAME} runs on NIM
+              instead of points: real NIM gives the decision consequences, and
+              consequences are what make a hunch worth having.
+            </p>
+          </div>
 
-        <div className="card">
-          <h2>Your hunch is a hypothesis</h2>
-          <p className="soft" style={{ marginTop: "0.5rem" }}>
-            Every experiment asks you to do two things: make a decision, then
-            predict someone else&rsquo;s. The interesting part is the gap
-            between the two. You might think people are more generous than
-            they are. You might trust someone who doesn&rsquo;t reciprocate.
-            You might reject an offer almost everyone else would take.{" "}
-            {NAME} is how you find out which.
-          </p>
+          <div className="card">
+            <h2>Your hunch is a hypothesis</h2>
+            <p className="soft" style={{ marginTop: "0.5rem" }}>
+              Every experiment asks you to do two things: make a decision, then
+              predict someone else&rsquo;s. The interesting part is the gap
+              between the two. You might think people are more generous than
+              they are. You might trust someone who doesn&rsquo;t reciprocate.
+              You might reject an offer almost everyone else would take.{" "}
+              {NAME} is how you find out which.
+            </p>
+          </div>
         </div>
 
         <div className="grow" />

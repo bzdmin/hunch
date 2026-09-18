@@ -43,56 +43,69 @@ export default async function TrustLanding({
   const done = pair.status === "revealed";
   const expired = pair.status === "expired";
 
-  return (
-    <main className="screen">
-      <p className="eyebrow">{NAME} · Trust</p>
+  // Finished/expired states have nothing for Respond to do but point back
+  // to a fresh round, a plain narrow screen fits that fine, splitting it
+  // into a column with nothing beside it would not.
+  if (done || expired) {
+    return (
+      <main className="screen">
+        <p className="eyebrow">{NAME} · Trust</p>
+        {expired ? (
+          <>
+            <h1>This invite expired.</h1>
+            <p className="soft">
+              Nobody answered it in time. Nothing is lost, you can start your
+              own round right now.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1>This round is already finished.</h1>
+            <p className="soft">
+              Someone else answered it first. You can start one of your own,
+              it takes about a minute.
+            </p>
+          </>
+        )}
+        <div className="grow" />
+        <Respond id={pair.id} stake={pair.stake} multiplier={pair.multiplier} finished />
+        <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+          What is {NAME}?
+        </Link>
+      </main>
+    );
+  }
 
-      {expired ? (
-        <>
-          <h1>This invite expired.</h1>
-          <p className="soft">
-            Nobody answered it in time. Nothing is lost, you can start your
-            own round right now.
-          </p>
-        </>
-      ) : done ? (
-        <>
-          <h1>This round is already finished.</h1>
-          <p className="soft">
-            Someone else answered it first. You can start one of your own,
-            it takes about a minute.
-          </p>
-        </>
-      ) : (
-        <>
+  return (
+    <main className="screen game">
+      <p className="eyebrow">{NAME} · Trust</p>
+      <div className="game-shell">
+        <div className="game-context">
           {/* Deliberately no NIM figures here. Leading with the tripled total turns
               this into a math problem, how much of a big number do I keep, before the
               person has even weighed the fact that a stranger trusted them with
               everything. The pot size only appears later, on the decide card, where
-              it is functionally needed to set an amount. Same anchor fix as Split. */}
+              it is functionally needed to set an amount. Same anchor fix as Split.
+              This heading persists across every stage Respond renders (decide,
+              predict, done), same as it always has, just beside them now instead
+              of only above them. */}
           <h1>A stranger just trusted you with everything they had.</h1>
           <p className="soft">
             They could have kept it. They handed it to you instead, and it grew
             because of that. How much comes back to them is entirely your call, and
             keeping all of it costs you nothing.
           </p>
-        </>
-      )}
+        </div>
 
-      <div className="grow" />
-
-      {/* Renders the install route by default and swaps itself for the real
-          decision if the visitor turns out to be inside Nimiq Pay. */}
-      <Respond
-        id={pair.id}
-        stake={pair.stake}
-        multiplier={pair.multiplier}
-        finished={done || expired}
-      />
-
-      <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-        What is {NAME}?
-      </Link>
+        <div className="game-card">
+          {/* Renders the install route by default and swaps itself for the real
+              decision if the visitor turns out to be inside Nimiq Pay. */}
+          <Respond id={pair.id} stake={pair.stake} multiplier={pair.multiplier} finished={false} />
+          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+            What is {NAME}?
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }

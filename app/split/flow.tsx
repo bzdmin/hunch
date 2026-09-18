@@ -144,36 +144,42 @@ export default function Flow({
   // it ends here and they are told so plainly.
   if (terminal && stage !== "result") {
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Split · End of the chain</p>
-        <h1>This chain ends with you.</h1>
-        <p className="soft">
-          It started at {STAKE_NIM.toLocaleString()} NIM and has been passed from
-          stranger to stranger, getting smaller each time. What&rsquo;s left is{" "}
-          {nim(stake)} NIM, too little to split again without it becoming
-          meaningless.
-        </p>
+        <div className="game-shell">
+          <div className="game-context">
+            <h1>This chain ends with you.</h1>
+            <p className="soft">
+              It started at {STAKE_NIM.toLocaleString()} NIM and has been
+              passed from stranger to stranger, getting smaller each time.
+              What&rsquo;s left is {nim(stake)} NIM, too little to split
+              again without it becoming meaningless.
+            </p>
+          </div>
 
-        <div className="card">
-          <span className="k" style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-faint)" }}>
-            Yours to keep
-          </span>
-          <div className="amount">{nim(stake)}<small>NIM</small></div>
-          <p className="faint" style={{ marginTop: "0.5rem" }}>
-            Nothing to decide. You&rsquo;re the last link.
-          </p>
+          <div className="game-card">
+            <div className="card">
+              <span className="k" style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-faint)" }}>
+                Yours to keep
+              </span>
+              <div className="amount">{nim(stake)}<small>NIM</small></div>
+              <p className="faint" style={{ marginTop: "0.5rem" }}>
+                Nothing to decide. You&rsquo;re the last link.
+              </p>
+            </div>
+
+            {noWallet && <WalletNotice />}
+            {err && <p className="err">{err}</p>}
+
+            <div className="grow" />
+            <button onClick={commit} disabled={stage === "working" || noWallet}>
+              {stage === "working" ? "Confirming…" : `Take the last ${nim(stake)} NIM`}
+            </button>
+            <button className="ghost" onClick={() => { setGive(0); setStage("predict"); }} disabled={stage === "working" || noWallet}>
+              Start a new chain instead
+            </button>
+          </div>
         </div>
-
-        {noWallet && <WalletNotice />}
-        {err && <p className="err">{err}</p>}
-
-        <div className="grow" />
-        <button onClick={commit} disabled={stage === "working" || noWallet}>
-          {stage === "working" ? "Confirming…" : `Take the last ${nim(stake)} NIM`}
-        </button>
-        <button className="ghost" onClick={() => { setGive(0); setStage("predict"); }} disabled={stage === "working" || noWallet}>
-          Start a new chain instead
-        </button>
       </main>
     );
   }
@@ -181,65 +187,71 @@ export default function Flow({
   // ---------------------------------------------------------------- decide
   if (stage === "decide") {
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Split</p>
-        <h1>
-          {inherited
-            ? `Someone passed you ${nim(stake)} NIM.`
-            : house
-              ? `You've been given ${STAKE_NIM.toLocaleString()} NIM.`
-              : `You're deciding over ${STAKE_NIM.toLocaleString()} NIM of your own.`}
-        </h1>
-        <p className="soft">
-          {inherited
-            ? "Now it's your turn with it. Keep what you want and pass the rest to the next person, a stranger who'll never know it was you. Keeping all of it is a real option."
-            : house
-              ? "It's yours. Split it however you like between yourself and the next person who plays, a stranger who'll never know it was you. Keeping all of it is a real option."
-              : "Split it however you like between yourself and the next person who plays, a stranger who'll never know it was you. Passing on nothing is a real option."}
-        </p>
+        <div className="game-shell">
+          <div className="game-context">
+            <h1>
+              {inherited
+                ? `Someone passed you ${nim(stake)} NIM.`
+                : house
+                  ? `You've been given ${STAKE_NIM.toLocaleString()} NIM.`
+                  : `You're deciding over ${STAKE_NIM.toLocaleString()} NIM of your own.`}
+            </h1>
+            <p className="soft">
+              {inherited
+                ? "Now it's your turn with it. Keep what you want and pass the rest to the next person, a stranger who'll never know it was you. Keeping all of it is a real option."
+                : house
+                  ? "It's yours. Split it however you like between yourself and the next person who plays, a stranger who'll never know it was you. Keeping all of it is a real option."
+                  : "Split it however you like between yourself and the next person who plays, a stranger who'll never know it was you. Passing on nothing is a real option."}
+            </p>
+          </div>
 
-        <div className="card">
-          {/* Both numbers, always, neither one framed as "the question".
-              Give-frames and take-frames provably produce different answers
-              (Bardsley 2008, List 2007), so leading with either would bias the
-              result, and a give-only readout hides that keeping it all is a
-              legitimate choice. "Stays with you" is true in both modes: in house
-              mode it lands in the wallet, in self mode it never leaves. */}
-          <div className="split-readout">
-            <div>
-              <span className="k">Stays with you</span>
-              <span className="v">{nim(keep)} NIM</span>
+          <div className="game-card">
+            <div className="card">
+              {/* Both numbers, always, neither one framed as "the question".
+                  Give-frames and take-frames provably produce different answers
+                  (Bardsley 2008, List 2007), so leading with either would bias the
+                  result, and a give-only readout hides that keeping it all is a
+                  legitimate choice. "Stays with you" is true in both modes: in house
+                  mode it lands in the wallet, in self mode it never leaves. */}
+              <div className="split-readout">
+                <div>
+                  <span className="k">Stays with you</span>
+                  <span className="v">{nim(keep)} NIM</span>
+                </div>
+                <div className="right">
+                  <span className="k">Passes on</span>
+                  <span className="v">{nim(give)} NIM</span>
+                </div>
+              </div>
+              <input
+                type="range" min={0} max={stake} step={Math.max(1, Math.round(stake / 100))} value={give}
+                onChange={(e) => setGive(Number(e.target.value))}
+                aria-label="Drag left to keep more, right to pass on more"
+              />
+              {/* The direction was discoverable only by dragging. Naming both ends
+                  makes it readable without touching anything. */}
+              <div className="ends">
+                <span>&larr; Keep it all</span>
+                <span>Pass it all &rarr;</span>
+              </div>
+              <p className="faint" style={{ marginTop: "0.5rem" }}>
+                {100 - givePct}% stays with you, {givePct}% passed on.
+              </p>
             </div>
-            <div className="right">
-              <span className="k">Passes on</span>
-              <span className="v">{nim(give)} NIM</span>
-            </div>
+
+            {noWallet && <WalletNotice />}
+
+            <div className="grow" />
+            <button onClick={() => setStage("predict")} disabled={noWallet}>Continue</button>
+            <p className="faint" style={{ textAlign: "center" }}>
+              {house
+                ? "This NIM is already yours. You can still change your mind on the next screen."
+                : "Real NIM, out of your own wallet. You can still change your mind on the next screen."}
+            </p>
           </div>
-          <input
-            type="range" min={0} max={stake} step={Math.max(1, Math.round(stake / 100))} value={give}
-            onChange={(e) => setGive(Number(e.target.value))}
-            aria-label="Drag left to keep more, right to pass on more"
-          />
-          {/* The direction was discoverable only by dragging. Naming both ends
-              makes it readable without touching anything. */}
-          <div className="ends">
-            <span>&larr; Keep it all</span>
-            <span>Pass it all &rarr;</span>
-          </div>
-          <p className="faint" style={{ marginTop: "0.5rem" }}>
-            {100 - givePct}% stays with you, {givePct}% passed on.
-          </p>
         </div>
-
-        {noWallet && <WalletNotice />}
-
-        <div className="grow" />
-        <button onClick={() => setStage("predict")} disabled={noWallet}>Continue</button>
-        <p className="faint" style={{ textAlign: "center" }}>
-          {house
-            ? "This NIM is already yours. You can still change your mind on the next screen."
-            : "Real NIM, out of your own wallet. You can still change your mind on the next screen."}
-        </p>
       </main>
     );
   }
@@ -248,54 +260,60 @@ export default function Flow({
   if (stage === "predict" || stage === "working") {
     const busy = stage === "working";
     return (
-      <main className="screen">
+      <main className="screen game">
         <p className="eyebrow">{NAME} · Split · Step 2 of 2</p>
+        <div className="game-shell">
+          <div className="game-context">
+            {/* The decision is done. Show it as settled, at the top, before asking
+                anything else, on 5 Sep the builder himself moved this screen's slider
+                believing he was still adjusting his own amount. Two identical sliders
+                in a row is the bug; this bar is what breaks the pattern. */}
+            <div className="locked">
+              <span className="k">Your answer, locked</span>
+              <span className="v">You pass on {nim(give)} NIM &middot; {givePct}%</span>
+            </div>
 
-        {/* The decision is done. Show it as settled, at the top, before asking
-            anything else, on 5 Sep the builder himself moved this screen's slider
-            believing he was still adjusting his own amount. Two identical sliders
-            in a row is the bug; this bar is what breaks the pattern. */}
-        <div className="locked">
-          <span className="k">Your answer, locked</span>
-          <span className="v">You pass on {nim(give)} NIM &middot; {givePct}%</span>
-        </div>
-
-        <h1>Now the hard part: what does everyone <em>else</em> do?</h1>
-        <p className="soft">
-          This is a guess about other people, not about you. Across everyone who has
-          faced this decision, what share do you think the average person passes on?
-        </p>
-
-        <div className="card guess">
-          <p className="soft" style={{ marginBottom: "0.4rem" }}>
-            I think the average person passes on&hellip;
-          </p>
-          <div className="amount">
-            {predict}<small>% of their money</small>
+            <h1>Now the hard part: what does everyone <em>else</em> do?</h1>
+            <p className="soft">
+              This is a guess about other people, not about you. Across
+              everyone who has faced this decision, what share do you think
+              the average person passes on?
+            </p>
           </div>
-          <input
-            type="range" min={0} max={100} step={1} value={predict}
-            onChange={(e) => setPredict(Number(e.target.value))}
-            disabled={busy}
-            aria-label="What share you think the average person passes on"
-          />
+
+          <div className="game-card">
+            <div className="card guess">
+              <p className="soft" style={{ marginBottom: "0.4rem" }}>
+                I think the average person passes on&hellip;
+              </p>
+              <div className="amount">
+                {predict}<small>% of their money</small>
+              </div>
+              <input
+                type="range" min={0} max={100} step={1} value={predict}
+                onChange={(e) => setPredict(Number(e.target.value))}
+                disabled={busy}
+                aria-label="What share you think the average person passes on"
+              />
+            </div>
+
+            {noWallet && <WalletNotice />}
+            {err && <p className="err">{err}</p>}
+
+            <div className="grow" />
+            <button onClick={commit} disabled={busy || noWallet}>
+              {busy ? "Confirming…" : "Lock it in"}
+            </button>
+            <button className="ghost" onClick={() => setStage("decide")} disabled={busy}>
+              Back
+            </button>
+            <p className="faint" style={{ textAlign: "center" }}>
+              {house
+                ? "You'll be asked to sign. That records your answer, it doesn't send anything."
+                : `You'll sign your answer, then approve sending ${nim(give)} NIM.`}
+            </p>
+          </div>
         </div>
-
-        {noWallet && <WalletNotice />}
-        {err && <p className="err">{err}</p>}
-
-        <div className="grow" />
-        <button onClick={commit} disabled={busy || noWallet}>
-          {busy ? "Confirming…" : "Lock it in"}
-        </button>
-        <button className="ghost" onClick={() => setStage("decide")} disabled={busy}>
-          Back
-        </button>
-        <p className="faint" style={{ textAlign: "center" }}>
-          {house
-            ? "You'll be asked to sign. That records your answer, it doesn't send anything."
-            : `You'll sign your answer, then approve sending ${nim(give)} NIM.`}
-        </p>
       </main>
     );
   }
@@ -310,84 +328,90 @@ export default function Flow({
   ];
 
   return (
-    <main className="screen">
+    <main className="screen game">
       <p className="eyebrow">{NAME} · Split</p>
-      <h1>You passed on <span className="hl">{nim(give)} NIM</span>.</h1>
+      <div className="game-shell">
+        <div className="game-context">
+          <h1>You passed on <span className="hl">{nim(give)} NIM</span>.</h1>
 
-      {/* The guess was being asked and then never answered, the screen reported it
-          back and scored it against nothing. "Can you predict another human?" is the
-          whole premise, so this is the payoff, not a footnote. */}
-      <div className="verdict">
-        <p className="soft" style={{ marginBottom: "0.35rem" }}>
-          You guessed most people pass on <strong>{predict}%</strong>.
-        </p>
-        <p>
-          {(() => {
-            const truth = live ? Math.round(pop!.meanPct) : SPLIT_MEAN_GIVEN.value;
-            const gap = Math.round((predict - truth) * 10) / 10;
-            const src = live ? `players here average ${truth}%` : `research puts it at ${truth}%`;
-            if (Math.abs(gap) <= 3) {
-              return <>Almost exactly right, {src}.</>;
-            }
-            return (
-              <>
-                You were <span className="hl">{Math.abs(gap)} points {gap < 0 ? "low" : "high"}</span>
-                , {src}. You think people are{" "}
-                {gap < 0 ? "stingier" : "more generous"} than they are.
-              </>
-            );
-          })()}
-        </p>
-      </div>
-
-      <div className="card bars">
-        {bars.map((b) => (
-          <div className={`bar ${b.cls}`} key={b.label}>
-            <div className="top">
-              <span>{b.label}</span>
-              <span>{b.pct}%</span>
-            </div>
-            <div className="track">
-              <div className="fill" style={{ width: `${Math.min(100, b.pct)}%` }} />
-            </div>
+          {/* The guess was being asked and then never answered, the screen reported it
+              back and scored it against nothing. "Can you predict another human?" is the
+              whole premise, so this is the payoff, not a footnote. */}
+          <div className="verdict">
+            <p className="soft" style={{ marginBottom: "0.35rem" }}>
+              You guessed most people pass on <strong>{predict}%</strong>.
+            </p>
+            <p>
+              {(() => {
+                const truth = live ? Math.round(pop!.meanPct) : SPLIT_MEAN_GIVEN.value;
+                const gap = Math.round((predict - truth) * 10) / 10;
+                const src = live ? `players here average ${truth}%` : `research puts it at ${truth}%`;
+                if (Math.abs(gap) <= 3) {
+                  return <>Almost exactly right, {src}.</>;
+                }
+                return (
+                  <>
+                    You were <span className="hl">{Math.abs(gap)} points {gap < 0 ? "low" : "high"}</span>
+                    , {src}. You think people are{" "}
+                    {gap < 0 ? "stingier" : "more generous"} than they are.
+                  </>
+                );
+              })()}
+            </p>
           </div>
-        ))}
+
+          {/* Written for the person playing, not for a judge reading the submission.
+              The citation earns its place by being checkable, not by being long. */}
+          <p className="note">
+            Researchers have run this exact test on thousands of people since the 1980s.
+            On average they give away {SPLIT_MEAN_GIVEN.value}%, and{" "}
+            {SPLIT_GAVE_SOMETHING.value}% give something rather than nothing.
+            {!house && " Those studies handed people free money, though, you were deciding over your own, which usually makes people keep more."}
+            <br />
+            <span style={{ opacity: 0.7 }}>{SPLIT_MEAN_GIVEN.source}</span>
+          </p>
+        </div>
+
+        <div className="game-card">
+          <div className="card bars">
+            {bars.map((b) => (
+              <div className={`bar ${b.cls}`} key={b.label}>
+                <div className="top">
+                  <span>{b.label}</span>
+                  <span>{b.pct}%</span>
+                </div>
+                <div className="track">
+                  <div className="fill" style={{ width: `${Math.min(100, b.pct)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grow" />
+
+          {/* Split's deep link is /e/{session}, not /split: it carries the NIM this
+              player passed on, so whoever taps it inherits that exact stake and is
+              deciding over real money someone actually handed them. The generic
+              route would start them a fresh round and break the chain. */}
+          <ShareCard
+            experiment="Split"
+            color="var(--accent)"
+            path={`/e/${session}`}
+            predicted={<>I predicted most people pass on {predict}%.</>}
+            happened={<>Studies say it&rsquo;s {SPLIT_MEAN_GIVEN.value}%.</>}
+            challenge="Think you'd predict better?"
+            shareText={
+              `I passed on ${givePct}% of the money and predicted most people pass on ${predict}%. ` +
+              `Published studies say most people pass ${SPLIT_MEAN_GIVEN.value}%. ` +
+              `Think you'd predict better?`
+            }
+          />
+
+          <p className="faint" style={{ textAlign: "center" }}>
+            They see what you predicted, not what you kept.
+          </p>
+        </div>
       </div>
-
-      {/* Written for the person playing, not for a judge reading the submission.
-          The citation earns its place by being checkable, not by being long. */}
-      <p className="note">
-        Researchers have run this exact test on thousands of people since the 1980s.
-        On average they give away {SPLIT_MEAN_GIVEN.value}%, and{" "}
-        {SPLIT_GAVE_SOMETHING.value}% give something rather than nothing.
-        {!house && " Those studies handed people free money, though, you were deciding over your own, which usually makes people keep more."}
-        <br />
-        <span style={{ opacity: 0.7 }}>{SPLIT_MEAN_GIVEN.source}</span>
-      </p>
-
-      <div className="grow" />
-
-      {/* Split's deep link is /e/{session}, not /split: it carries the NIM this
-          player passed on, so whoever taps it inherits that exact stake and is
-          deciding over real money someone actually handed them. The generic
-          route would start them a fresh round and break the chain. */}
-      <ShareCard
-        experiment="Split"
-        color="var(--accent)"
-        path={`/e/${session}`}
-        predicted={<>I predicted most people pass on {predict}%.</>}
-        happened={<>Studies say it&rsquo;s {SPLIT_MEAN_GIVEN.value}%.</>}
-        challenge="Think you'd predict better?"
-        shareText={
-          `I passed on ${givePct}% of the money and predicted most people pass on ${predict}%. ` +
-          `Published studies say most people pass ${SPLIT_MEAN_GIVEN.value}%. ` +
-          `Think you'd predict better?`
-        }
-      />
-
-      <p className="faint" style={{ textAlign: "center" }}>
-        They see what you predicted, not what you kept.
-      </p>
     </main>
   );
 }
