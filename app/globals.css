@@ -828,14 +828,35 @@ input[type="range"] {
   font-weight: 800;
   font-size: 1.1rem;
 }
-.site-footer-cols { display: flex; gap: 2.5rem; flex-wrap: wrap; }
-.site-footer-col { display: grid; gap: 0.5rem; }
+/* A grid, not flex: three equal-ish columns so DISCOVER / THE BUILD / TRUST
+   line up at consistent x-positions above their links, the header row
+   reads as a header row rather than three independently-sized blocks that
+   happen to sit near each other. */
+.site-footer-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(7.5rem, auto));
+  gap: 1.5rem 2.5rem;
+}
+.site-footer-col { display: grid; gap: 0.5rem; align-content: start; }
+.site-footer-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.15rem;
+}
 .site-footer-col a {
   color: var(--ink-soft);
   text-decoration: none;
   font-size: 0.88rem;
 }
 .site-footer-col a:hover { color: var(--ink); }
+
+/* Not yet a real link, see the comment on Footer in app/footer.tsx, styled
+   to match one so it reads as "credit, linked when there's somewhere to
+   send it" rather than as inert copy. */
+.site-footer-credit { color: var(--accent); font-weight: 600; }
 
 @media (min-width: 52rem) {
   .site-footer { grid-template-columns: 1fr auto; align-items: start; padding: 3rem 2rem; }
