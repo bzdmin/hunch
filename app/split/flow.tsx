@@ -361,7 +361,7 @@ export default function Flow({
           {/* Written for the person playing, not for a judge reading the submission.
               The citation earns its place by being checkable, not by being long. */}
           <p className="note">
-            Researchers have run this exact test on thousands of people since the 1980s.
+            Researchers have studied this kind of decision on thousands of people since the 1980s.
             On average they give away {SPLIT_MEAN_GIVEN.value}%, and{" "}
             {SPLIT_GAVE_SOMETHING.value}% give something rather than nothing.
             {!house && " Those studies handed people free money, though, you were deciding over your own, which usually makes people keep more."}

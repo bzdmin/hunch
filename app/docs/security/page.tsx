@@ -39,14 +39,22 @@ export default function SecurityDoc() {
             <p className="section-label">Commitment integrity</p>
             <div className="card">
               <p className="soft">
-                Nothing about a round is trusted from the browser. The
-                server rebuilds the exact message a wallet was asked to
-                sign from the values submitted, and rejects the request if
-                it doesn&rsquo;t match. It verifies the signature actually
-                belongs to the public key claiming it. And it bounds every
-                move against the rules of the experiment on screen, so no
-                client can hand itself a better game than the one it was
-                shown.
+                No security-sensitive part of a commitment is trusted from
+                the browser. The server rebuilds the exact message a wallet
+                was asked to sign from the values submitted, and rejects
+                the request if it doesn&rsquo;t match. It verifies the
+                signature actually belongs to the public key claiming it.
+                And it bounds every move against the rules of the
+                experiment on screen, so no client can hand itself a
+                better game than the one it was shown.
+              </p>
+              <p className="soft" style={{ marginTop: "0.5rem" }}>
+                A few fields are the deliberate exception: things like a
+                device identifier or where a slider started are stored as
+                client-reported metadata, never part of the signed
+                commitment. A lying client only corrupts its own record of
+                those, it can&rsquo;t move money or forge someone
+                else&rsquo;s answer.
               </p>
             </div>
 

@@ -10,9 +10,18 @@ research.
 
 Built for the Nimiq Mini Apps Competition, Cycle II.
 
-Site map: `/` (pick an experiment) → `/how-it-works` (the loop, explained) →
-`/research` (the citations) → `/results` (this device's own history) →
-`/split`, `/trust`, `/ultimatum` (the three experiments).
+Site map:
+
+```
+/              pick an experiment
+/live          real rounds and recent decisions
+/how-it-works  the loop, explained
+/research      published benchmarks and methodology
+/results       this device's own history
+/docs          technical documentation
+/split /trust /ultimatum   the three experiments
+/terms /privacy            rules and data
+```
 
 ## The idea
 

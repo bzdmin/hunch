@@ -151,10 +151,13 @@ Offers 20%                      commits to accept 25% or more
               <p className="soft">
                 Trust and Ultimatum are blind by construction: A commits
                 without knowing B&rsquo;s answer, B commits without seeing
-                A&rsquo;s. A round has two persisted states that matter for
-                a two-player experiment: open (one side has committed,
-                waiting on the other) and revealed (both sides have
-                committed and the payoff is computed).
+                A&rsquo;s. The status field a round can hold allows for
+                more states than this in principle, but only two are ever
+                actually written for a two-player round: open (one side
+                has committed, waiting on the other) and revealed (both
+                sides have committed and the payoff is computed). Nothing
+                in between is ever persisted, see the next paragraph for
+                why that matters.
               </p>
               <p className="soft" style={{ marginTop: "0.5rem" }}>
                 The reveal happens inside the same request that receives

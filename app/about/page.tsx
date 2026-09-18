@@ -37,10 +37,10 @@ export default function About() {
             You choose how much to pass to the next stranger who plays. Keeping all
             of it is a real option.
           </li>
-          <li>Before you see anything, you guess what most people do.</li>
+          <li>Before you see anything, you guess what the average person does.</li>
           <li>
             Then you find out: your choice, your guess, and what researchers
-            found running the same test on thousands of people.
+            found studying the same kind of decision.
           </li>
         </ol>
       </div>
