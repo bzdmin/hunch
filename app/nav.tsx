@@ -30,6 +30,7 @@ export function Nav() {
         <Link href="/how-it-works">How it works</Link>
         <Link href="/research">Research</Link>
         <Link href="/results">Results</Link>
+        <Link href="/docs">Docs</Link>
       </div>
       <Link href="/#experiments" className="btn site-nav-cta">Play {NAME}</Link>
     </nav>

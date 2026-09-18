@@ -28,6 +28,7 @@ export function Footer() {
           <Link href="/results">Results</Link>
         </div>
         <div className="site-footer-col">
+          <Link href="/docs">Docs</Link>
           <a href="https://nimiq.watch" target="_blank" rel="noopener noreferrer">Nimiq Explorer</a>
           <a href="https://github.com/bzdmin/hunch" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
