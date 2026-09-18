@@ -22,8 +22,10 @@
    that matters and nowhere else. Bright yellow reads even better against
    near-black than it did against cream. */
 
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&display=swap");
-
+/* --display and --body are no longer declared here: next/font/google in
+   app/layout.tsx loads both fonts and injects these same two variable
+   names on <html>, self-hosted instead of a render-blocking @import from
+   fonts.googleapis.com, see the comment there for why that swap happened. */
 :root {
   --paper:      #131110;
   --card:       #1c1916;
@@ -39,9 +41,6 @@
   --warm:       #e2724f;
   --shadow:     3px 3px 0 var(--ink);
   --shadow-sm:  2px 2px 0 var(--ink);
-
-  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
-  --body:    "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Dark on purpose, in every environment, the same reasoning the old "light
@@ -93,10 +92,18 @@ body {
 
 /* A row of cards that would otherwise just stack full-width the way they do
    on a phone, live/research/how-it-works's per-experiment or per-topic
-   cards. Single column below 52rem, exactly the current mobile stack,
-   unchanged, real columns above it. */
-.card-grid { display: grid; gap: 1rem; }
+   cards. Single column below 52rem, real columns above it.
+
+   1rem was tuned as a column gutter for the desktop row, not as a section
+   break for the mobile stack: on Research and Live, where each item is its
+   own labelled block (a section-label plus one or two cards), 1rem read as
+   the next experiment's title crowding the bottom of the previous one's
+   card rather than a new section starting. Mobile gets a wider gap of its
+   own, back to 1rem once there's a real row to gutter instead of a list to
+   separate. */
+.card-grid { display: grid; gap: 2rem; }
 @media (min-width: 52rem) {
+  .card-grid { gap: 1rem; }
   .card-grid.cols-2 { grid-template-columns: repeat(2, 1fr); align-items: start; }
   .card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); align-items: start; }
 }
@@ -286,6 +293,13 @@ button.ghost, .btn.ghost {
   padding: 1.15rem 1.2rem;
   box-shadow: var(--shadow);
 }
+/* Research stacks two cards inside one experiment's block on a strong
+   result ("What research found" then "Hunch players"), plain sibling divs
+   with no gap utility between them, so they sat edge to edge, two borders
+   touching with no breathing room. One rule catches every place two cards
+   land back to back like that, rather than each caller remembering to add
+   a gap wrapper. */
+.card + .card { margin-top: 1rem; }
 
 .amount {
   font-family: var(--display);
@@ -862,20 +876,27 @@ input[type="range"] {
   font-weight: 800;
   font-size: 1.1rem;
 }
-/* A grid, not flex: three equal-ish columns so DISCOVER / THE BUILD / TRUST
-   line up at consistent x-positions above their links, the header row
-   reads as a header row rather than three independently-sized blocks that
-   happen to sit near each other.
+/* Flex-wrap on a phone, sized to each column's own short content rather
+   than a hard-coded minimum, exactly what this was before it briefly
+   became an unconditional 3-column grid: that grid needed about 30rem just
+   for its own columns and gaps, a floor no phone width can satisfy, and
+   was the actual source of Hunch's horizontal scroll on mobile. Stacking it
+   to one full-width column instead fixed the overflow but made the footer
+   noticeably taller than it needs to be, DISCOVER's five links alone push
+   THE BUILD and TRUST a full screen further down. Flex-wrap lets two
+   narrow columns sit side by side wherever they fit, the same as the
+   original footer always did, and still can't overflow: nothing here has
+   a fixed or minimum width, a column is exactly as wide as its longest
+   word, so the browser always has room to wrap it onto its own line
+   instead of forcing horizontal scroll.
 
-   That grid is desktop-only. The 3x minmax(7.5rem, ...) columns plus their
-   gaps need about 30rem just for themselves, a hard floor no phone width
-   can satisfy, so left unguarded this was the actual source of Hunch's
-   horizontal scroll on mobile, not any transform or negative margin. One
-   column, full width, groups stacked, below the breakpoint. */
+   The 3-column grid (below) is desktop-only, where there's room for the
+   fixed minmax columns that keep DISCOVER / THE BUILD / TRUST's headers
+   aligned to a consistent x-position, see that block for why. */
 .site-footer-cols {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem 2.5rem;
 }
 .site-footer-col { display: grid; gap: 0.5rem; align-content: start; }
 .site-footer-label {
@@ -900,7 +921,7 @@ input[type="range"] {
 
 @media (min-width: 52rem) {
   .site-footer { grid-template-columns: 1fr auto; align-items: start; padding: 3rem 2rem; }
-  .site-footer-cols { grid-template-columns: repeat(3, minmax(7.5rem, auto)); gap: 1.5rem 2.5rem; }
+  .site-footer-cols { display: grid; grid-template-columns: repeat(3, minmax(7.5rem, auto)); gap: 1.5rem 2.5rem; }
 }
 
 /* The home hero, in two columns once there is room: headline and loop on the
@@ -1067,7 +1088,18 @@ input[type="range"] {
   border-radius: 10px;
   padding: 1rem 1.1rem;
   color: var(--ink-soft);
+  /* iOS Safari paints its own translucent "there's more here" scroll
+     indicator on an overflow-x:auto box without being asked. Android
+     Chrome doesn't, a diagram wider than the phone just looks like it
+     ends there, nothing suggests it's scrollable. Themed so every
+     platform gets the same explicit hint instead of only the ones whose
+     browser happens to volunteer one. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
+.diagram::-webkit-scrollbar { height: 6px; }
+.diagram::-webkit-scrollbar-track { background: transparent; }
+.diagram::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
 
 /* table-layout: fixed, not the default auto: auto sizes each column to its
    widest line of content before it will even consider wrapping, which is

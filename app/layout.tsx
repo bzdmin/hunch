@@ -1,7 +1,36 @@
 import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, Public_Sans } from "next/font/google";
 import { NAME, TAGLINE } from "@/lib/brand";
 import Boot from "./boot";
 import "./globals.css";
+
+/**
+ * Self-hosted through next/font instead of globals.css's old @import from
+ * fonts.googleapis.com: an @import at the top of a stylesheet is render-
+ * blocking, nothing in that file applies, including the p{margin:0} and
+ * h1{margin:...} resets right below it, until that third-party request
+ * resolves. On a fast connection that's invisible; on a real phone over
+ * cellular it's a real window where the page renders in the browser's
+ * default serif font with default (much larger) heading and paragraph
+ * margins, which reads exactly like a layout bug even though nothing in
+ * the CSS is wrong. next/font fetches at build time and serves the font
+ * files from this origin, so there's no external request to block on at
+ * all. `variable` is set to the same custom property names --display and
+ * --body globals.css has always used, so nothing else in that file needs
+ * to change, this only replaces how the font gets onto the page.
+ */
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--display",
+  display: "swap",
+});
+const body = Public_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--body",
+  display: "swap",
+});
 
 const DEFINITION = "short behavioural experiments played with real NIM";
 
@@ -60,7 +89,7 @@ const DIAG = `(function(){
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body>
         {dev && <script dangerouslySetInnerHTML={{ __html: DIAG }} />}
         {children}
