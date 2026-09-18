@@ -257,6 +257,17 @@ h1 .hl, h2 .hl {
   color: var(--ink);
 }
 
+/* Hero only. Yellow is the product highlighter, it marks a number that
+   matters. "people" is the hazard, so it borrows --warm, the same risk
+   token Ultimatum already uses for refusal, rather than a stop-sign red
+   that would fight the orange CTA and read as a form error. A thin rust
+   band under "people" around the lower part of the text. */
+h1 .hl-risk {
+  background-image: linear-gradient(var(--warm), var(--warm));
+  background-size: 100% 0.22em;
+  background-position: 0 88%;
+}
+
 button, .btn {
   display: block;
   width: 100%;

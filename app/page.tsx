@@ -71,7 +71,7 @@ export default async function Home() {
       <div className="hero-grid">
         <div>
           <p className="eyebrow">{NAME}</p>
-          <h1>Can you predict <span className="hl">people</span>?</h1>
+          <h1>Can you predict <span className="hl hl-risk">people</span>?</h1>
           <p className="soft">
             Make a real decision with NIM.<br />
             Lock your prediction.<br />

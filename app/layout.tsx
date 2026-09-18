@@ -34,22 +34,54 @@ const body = Public_Sans({
 
 const DEFINITION = "short behavioural experiments played with real NIM";
 
+const PROD_URL = "https://hunch-teal.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined) ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+    PROD_URL
+  ),
   title: `${NAME}: ${DEFINITION}`,
-  applicationName: NAME,
+  applicationName: "Hunch",
   description: `${TAGLINE} ${NAME} is a collection of ${DEFINITION}. Make a decision, predict what another person will do, then find out.`,
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.png", sizes: "180x180", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.ico"],
+  },
+  openGraph: {
+    title: `${NAME}: ${DEFINITION}`,
+    description: `${TAGLINE} Make a decision, predict what another person will do, then find out.`,
+    url: PROD_URL,
+    siteName: "Hunch",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Hunch mark",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: `${NAME}: ${DEFINITION}`,
+    description: `${TAGLINE} Make a decision, predict what another person will do, then find out.`,
+    images: ["/icon-512.png"],
   },
   appleWebApp: {
     capable: true,
-    title: NAME,
+    title: "Hunch",
     statusBarStyle: "black-translucent",
   },
 };

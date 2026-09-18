@@ -8,11 +8,12 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/**/*": ["./node_modules/@nimiq/core/**/*", "./node_modules/comlink/**/*"],
   },
-  // iOS requests apple-touch-icon-precomposed.png without reading <link>.
-  // The PNG itself is the raster of app/icon.svg, not a redrawn mark.
+  // iOS requests apple-touch-icon-precomposed.png or explicit dimension variants without reading <link>.
   async rewrites() {
     return [
       { source: "/apple-touch-icon-precomposed.png", destination: "/apple-touch-icon.png" },
+      { source: "/apple-touch-icon-180x180.png", destination: "/apple-touch-icon.png" },
+      { source: "/apple-touch-icon-120x120.png", destination: "/apple-touch-icon.png" },
     ];
   },
 };
