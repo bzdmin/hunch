@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { NAME, STAKE, STAKE_NIM, type Mode } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { build, nim, ref as makeRef, session as makeSession, type Decision } from "@/lib/message";
 import { SPLIT_MEAN_GIVEN, SPLIT_GAVE_SOMETHING } from "@/lib/benchmarks";
 import { signWithAddress, sendNim, readable, available } from "@/lib/wallet";
@@ -30,7 +31,6 @@ export default function Flow({
   terminal: boolean;
 }) {
   const house = mode === "house";
-  const inherited = inheritedFrom !== null;
 
   const [stage, setStage] = useState<Stage>("decide");
 
@@ -145,7 +145,7 @@ export default function Flow({
   if (terminal && stage !== "result") {
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Split · End of the chain</p>
+        <ExperimentHeader experiment="Split" index={1} />
         <div className="game-shell">
           <div className="game-context">
             <h1>This chain ends with you.</h1>
@@ -188,34 +188,32 @@ export default function Flow({
   if (stage === "decide") {
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Split</p>
+        <ExperimentHeader experiment="Split" index={1} />
         <div className="game-shell">
           <div className="game-context">
-            <h1>
-              {inherited
-                ? `Someone passed you ${nim(stake)} NIM.`
-                : house
-                  ? `You've been given ${STAKE_NIM.toLocaleString()} NIM.`
-                  : `You're deciding over ${STAKE_NIM.toLocaleString()} NIM of your own.`}
-            </h1>
+            {/* One headline regardless of inherited/house/self: whoever is
+                looking at this screen does, factually, have this NIM right
+                now, however it arrived. The provenance distinction that used
+                to live here moved to the bottom helper below, the one place
+                it actually changes what's true (self mode really does send
+                from this player's own wallet, house mode never does). */}
+            <h1>You have {nim(stake)} NIM.<br />How much will you pass on?</h1>
             <p className="soft">
-              {inherited
-                ? "Now it's your turn with it. Keep what you want and pass the rest to the next person, a stranger who'll never know it was you. Keeping all of it is a real option."
-                : house
-                  ? "It's yours. Split it however you like between yourself and the next person who plays, a stranger who'll never know it was you. Keeping all of it is a real option."
-                  : "Split it however you like between yourself and the next person who plays, a stranger who'll never know it was you. Passing on nothing is a real option."}
+              Keep as much as you want, or pass some to the next person.
+              They&rsquo;ll never know it was your decision.
             </p>
           </div>
 
           <div className="game-card">
             <div className="card">
+              <span className="k">Your decision</span>
               {/* Both numbers, always, neither one framed as "the question".
                   Give-frames and take-frames provably produce different answers
                   (Bardsley 2008, List 2007), so leading with either would bias the
                   result, and a give-only readout hides that keeping it all is a
                   legitimate choice. "Stays with you" is true in both modes: in house
                   mode it lands in the wallet, in self mode it never leaves. */}
-              <div className="split-readout">
+              <div className="split-readout" style={{ marginTop: "0.6rem" }}>
                 <div>
                   <span className="k">Stays with you</span>
                   <span className="v">{nim(keep)} NIM</span>
@@ -237,7 +235,7 @@ export default function Flow({
                 <span>Pass it all &rarr;</span>
               </div>
               <p className="faint" style={{ marginTop: "0.5rem" }}>
-                {100 - givePct}% stays with you, {givePct}% passed on.
+                {100 - givePct}% stays with you. {givePct}% passed on.
               </p>
             </div>
 
@@ -247,8 +245,8 @@ export default function Flow({
             <button onClick={() => setStage("predict")} disabled={noWallet}>Continue</button>
             <p className="faint" style={{ textAlign: "center" }}>
               {house
-                ? "This NIM is already yours. You can still change your mind on the next screen."
-                : "Real NIM, out of your own wallet. You can still change your mind on the next screen."}
+                ? "This NIM is already yours. You can change your mind on the next screen."
+                : "Real NIM, from your wallet. You can change your mind on the next screen."}
             </p>
           </div>
         </div>
@@ -261,7 +259,7 @@ export default function Flow({
     const busy = stage === "working";
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Split · Step 2 of 2</p>
+        <ExperimentHeader experiment="Split" index={1} />
         <div className="game-shell">
           <div className="game-context">
             {/* The decision is done. Show it as settled, at the top, before asking
@@ -329,7 +327,7 @@ export default function Flow({
 
   return (
     <main className="screen game">
-      <p className="eyebrow">{NAME} · Split</p>
+      <ExperimentHeader experiment="Split" index={1} />
       <div className="game-shell">
         <div className="game-context">
           <h1>You passed on <span className="hl">{nim(give)} NIM</span>.</h1>

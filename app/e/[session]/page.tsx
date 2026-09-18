@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Enter from "./enter";
 import { NAME } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { nim } from "@/lib/message";
 import { get } from "@/lib/store";
 
@@ -30,7 +31,7 @@ export default async function Landing({
 
   return (
     <main className="screen game">
-      <p className="eyebrow">{NAME}</p>
+      <ExperimentHeader experiment="Split" index={1} />
       <div className="game-shell">
         <div className="game-context">
           {waiting > 0 ? (

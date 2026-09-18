@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { getPair } from "@/lib/pair";
 import Respond from "./respond";
 
@@ -27,7 +28,7 @@ export default async function UltimatumLanding({
   if (!pair || !pair.a) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <h1>That round isn&rsquo;t there.</h1>
         <p className="soft">
           The link may be mistyped, or the round was never finished. Nothing is
@@ -48,7 +49,7 @@ export default async function UltimatumLanding({
   if (done || expired) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         {expired ? (
           <>
             <h1>This invite expired.</h1>
@@ -77,7 +78,7 @@ export default async function UltimatumLanding({
 
   return (
     <main className="screen game">
-      <p className="eyebrow">{NAME} · Ultimatum</p>
+      <ExperimentHeader experiment="Ultimatum" index={3} />
       <div className="game-shell">
         <div className="game-context">
           <h1>A stranger is offering you a share of something real.</h1>

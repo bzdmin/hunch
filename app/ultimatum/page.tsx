@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NAME, ULTIMATUM_MAX_STAKE, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { ultimatumOpen } from "@/lib/payout";
 import { randomWorkedExample, findWaitingRound, payoff } from "@/lib/pair";
 import Flow from "./flow";
@@ -42,7 +43,7 @@ export default async function UltimatumPage() {
   if (!funded) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <h1>Ultimatum isn&rsquo;t open yet.</h1>
         <p className="soft">
           You offer a stranger a share of somewhere between{" "}

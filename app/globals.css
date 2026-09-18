@@ -70,10 +70,9 @@ body {
 
 /* Content pages: home, live, research, results, how-it-works. These have
    several things to compare (cards, stats, a research citation next to a
-   headline), so they earn real desktop width. ~1150px, the middle of the
-   1100-1200px range a page like this reads well at, wide enough for a
+   headline), so they earn real desktop width, ~1200px, wide enough for a
    multi-column composition without lines getting hard to track. */
-.screen.wide { max-width: 72rem; }
+.screen.wide { max-width: 75rem; }
 
 @media (min-width: 52rem) {
   .screen.wide { padding: 4rem 2rem calc(3rem + env(safe-area-inset-bottom)); gap: 1.75rem; }
@@ -109,7 +108,7 @@ body {
                           for it to mean anything.
      >= 64rem  desktop.   .game-shell becomes two columns, context and
                           example content on the left, the live decision
-                          card on the right, capped at 72rem so the row
+                          card on the right, capped at 75rem (1200px) so the row
                           itself never gets so wide the eye has to travel
                           too far.
 
@@ -137,7 +136,7 @@ body {
 }
 
 @media (min-width: 64rem) {
-  .screen.game { max-width: 72rem; }
+  .screen.game { max-width: 75rem; }
 
   .game-shell {
     display: grid;
@@ -150,6 +149,9 @@ body {
      the context beside it may run longer than the viewport's height. */
   .game-shell > .game-card { position: sticky; top: 2rem; align-self: start; }
 }
+
+/* Split/Trust/Ultimatum's shared header, see app/experiment-header.tsx. */
+.exp-header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 
 .eyebrow {
   font-size: 0.7rem;

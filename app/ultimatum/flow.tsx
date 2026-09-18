@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
 import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
@@ -49,6 +50,8 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   const [err, setErr] = useState("");
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [manualCopy, setManualCopy] = useState(false);
   // Set at commit time, or restored from a resumed round, since the "sent"
   // screen can render without offerPct ever having been touched this session.
   const [sentOffer, setSentOffer] = useState(0);
@@ -157,7 +160,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "loading") {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <h1>Setting up your round&hellip;</h1>
       </main>
     );
@@ -170,7 +173,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     const accepted = resolved.payoff.note === "accepted";
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <div className="game-shell">
           <div className="game-context">
             <div className="card"><h2>{ultimatumTier(resolved.offerPct, accepted)}</h2></div>
@@ -235,7 +238,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "unavailable" || !round) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <h1>Ultimatum isn&rsquo;t open right now.</h1>
         <p className="soft">{err || "Try again in a moment, or play Split instead."}</p>
         <div className="grow" />
@@ -288,7 +291,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "offer") {
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Ultimatum</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <div className="game-shell">
           <div className="game-context">
             <h1>You have {nim(stake)} NIM.<br />Decide how much to offer a stranger.</h1>
@@ -396,7 +399,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     const busy = stage === "working";
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Ultimatum · Step 2 of 2</p>
+        <ExperimentHeader experiment="Ultimatum" index={3} />
         <div className="game-shell">
           <div className="game-context">
             <div className="locked">
@@ -466,9 +469,25 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   }
 
   // ------------------------------------------------------------------ sent
+  // No figures, same reason as Trust: this reaches them before the app ever
+  // opens, and their whole screen is built around not knowing the number
+  // until they've already set their own line.
+  const shareText = `I'm offering a complete stranger a share of something real. They set their own minimum before they see what I offered. ${link}`;
+
+  async function send() {
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try { await navigator.share({ text: shareText }); return; } catch { /* fall through */ }
+    }
+    try { await navigator.clipboard.writeText(shareText); setCopied(true); } catch { setManualCopy(true); }
+  }
+
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(link); setLinkCopied(true); } catch { setManualCopy(true); }
+  }
+
   return (
     <main className="screen">
-      <p className="eyebrow">{NAME} · Ultimatum</p>
+      <ExperimentHeader experiment="Ultimatum" index={3} />
       <h1>It&rsquo;s in their hands now.</h1>
       <p className="soft">
         Send this to someone. They&rsquo;ll set their line before they see what
@@ -480,22 +499,34 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
         <div className="amount">{nim(sentOffer)}<small>NIM</small></div>
       </div>
 
+      {/* No raw link as visible page text, same reasoning as Trust's sent
+          stage: Copy link puts it on the clipboard directly, the manual
+          textarea is the last resort when that write itself fails. */}
+      {manualCopy && (
+        <div className="card">
+          <p className="faint" style={{ marginBottom: "0.5rem" }}>
+            Copying is blocked here. Select this and send it to someone:
+          </p>
+          <textarea
+            readOnly
+            value={link}
+            rows={3}
+            style={{
+              width: "100%", background: "var(--paper)", color: "var(--ink)",
+              border: "2px solid var(--ink)", borderRadius: "8px",
+              padding: "0.6rem 0.7rem", font: "inherit", fontSize: "0.9rem",
+            }}
+          />
+        </div>
+      )}
+
       <div className="grow" />
-      <button
-        onClick={async () => {
-          // No figures, same reason as Trust: this reaches them before the app
-          // ever opens, and their whole screen is built around not knowing the
-          // number until they've already set their own line.
-          const text = `I'm offering a complete stranger a share of something real. They set their own minimum before they see what I offered. ${link}`;
-          if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-            try { await navigator.share({ text }); return; } catch { /* fall through */ }
-          }
-          try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); }
-        }}
-      >
+      <button onClick={send}>
         {copied ? "Copied, paste it anywhere" : "Send it to someone"}
       </button>
-      <p className="faint" style={{ textAlign: "center", wordBreak: "break-all" }}>{link}</p>
+      <button className="ghost" onClick={copyLink}>
+        {linkCopied ? "Link copied" : "Copy link"}
+      </button>
     </main>
   );
 }

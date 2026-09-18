@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NAME, TRUST_MAX_STAKE, TRUST_STAKE_OPTIONS_NIM } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { trustOpen } from "@/lib/payout";
 import { randomWorkedExample, findWaitingRound, payoff } from "@/lib/pair";
 import Flow from "./flow";
@@ -43,7 +44,7 @@ export default async function TrustPage() {
   if (!funded) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <h1>Trust isn&rsquo;t open yet.</h1>
         <p className="soft">
           In this one you hand over somewhere between{" "}

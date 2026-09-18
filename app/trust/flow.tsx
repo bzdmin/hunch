@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { nim, ref as makeRef, trustMessage } from "@/lib/message";
 import { trustOpeningTier, trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
@@ -54,6 +55,8 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   const [err, setErr] = useState("");
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [manualCopy, setManualCopy] = useState(false);
   const [gaveAway, setGaveAway] = useState(false);
   // Set at commit time, or restored from a resumed round, since the "sent"
   // screen can render without predictPct ever having been touched this session.
@@ -213,7 +216,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "loading") {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <h1>Setting up your round&hellip;</h1>
       </main>
     );
@@ -227,7 +230,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     const predictPct = Math.round((resolved.predict / resolved.pot) * 100);
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <div className="game-shell">
           <div className="game-context">
             <div className="card"><h2>{trustReturnTier(sharePct)}</h2></div>
@@ -294,7 +297,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "unavailable" || !round) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <h1>Trust isn&rsquo;t open right now.</h1>
         <p className="soft">{err || "Try again in a moment, or play Split instead."}</p>
         <div className="grow" />
@@ -311,7 +314,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "choose") {
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <div className="game-shell">
           <div className="game-context">
             <h1>You have {nim(stake)} NIM. Keep it, or risk it.</h1>
@@ -411,7 +414,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
     const busy = stage === "working";
     return (
       <main className="screen game">
-        <p className="eyebrow">{NAME} · Trust · Step 2 of 2</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <div className="game-shell">
           <div className="game-context">
             <div className="locked">
@@ -506,7 +509,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   if (stage === "kept") {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <div className="card"><h2>{trustOpeningTier(false)}</h2></div>
         <h1>You kept the {nim(stake)} NIM.</h1>
         <p className="soft">
@@ -522,37 +525,77 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
   }
 
   // ------------------------------------------------------------------ sent
+  const sentPredictPct = Math.round((sentPredict / pot) * 100);
+  // No figures here on purpose. B's whole screen is built around never
+  // seeing the exact pot before deciding, this message reaches B before the
+  // app even opens, so a NIM amount here would spoil it before it starts.
+  const shareText = `I just trusted a complete stranger with real NIM. It tripled in their hands, and now it's entirely up to them what comes back to me. ${link}`;
+
+  async function send() {
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try { await navigator.share({ text: shareText }); return; } catch { /* fall through */ }
+    }
+    try { await navigator.clipboard.writeText(shareText); setCopied(true); } catch { setManualCopy(true); }
+  }
+
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(link); setLinkCopied(true); } catch { setManualCopy(true); }
+  }
+
   return (
     <main className="screen">
-      <p className="eyebrow">{NAME} · Trust</p>
-      {gaveAway && <div className="card"><h2>{trustOpeningTier(true)}</h2></div>}
+      <ExperimentHeader experiment="Trust" index={2} />
+      {gaveAway && (
+        <div className="card">
+          <span className="k">You&rsquo;ve handed it over</span>
+          <p className="soft" style={{ marginTop: "0.4rem" }}>{nim(pot)} NIM is now in their hands.</p>
+        </div>
+      )}
       <h1>It&rsquo;s out of your hands.</h1>
       <p className="soft">
-        Send this to someone. They&rsquo;ll be holding {nim(pot)} NIM and deciding
-        what comes back to you. You&rsquo;ll find out when they answer.
+        Send this round to another person. They&rsquo;ll decide how much of
+        the {nim(pot)} NIM comes back to you. You won&rsquo;t know until they
+        answer.
       </p>
 
       <div className="card">
-        <span className="k">You expect back</span>
+        <span className="k">Your expectation</span>
         <div className="amount">{nim(sentPredict)}<small>NIM</small></div>
+        <p className="faint" style={{ marginTop: "0.4rem" }}>
+          You&rsquo;re predicting they&rsquo;ll return {sentPredictPct}%.
+        </p>
       </div>
 
+      {/* No raw link as visible page text: it invites the wrong kind of
+          share (screenshotting or retyping it) and reads like a debug
+          artifact. Copy link puts it on the clipboard directly instead,
+          the manual textarea only appears if the clipboard write itself
+          fails, the actual last resort, not the default presentation. */}
+      {manualCopy && (
+        <div className="card">
+          <p className="faint" style={{ marginBottom: "0.5rem" }}>
+            Copying is blocked here. Select this and send it to someone:
+          </p>
+          <textarea
+            readOnly
+            value={link}
+            rows={3}
+            style={{
+              width: "100%", background: "var(--paper)", color: "var(--ink)",
+              border: "2px solid var(--ink)", borderRadius: "8px",
+              padding: "0.6rem 0.7rem", font: "inherit", fontSize: "0.9rem",
+            }}
+          />
+        </div>
+      )}
+
       <div className="grow" />
-      <button
-        onClick={async () => {
-          // No figures here on purpose. B's whole screen is built around never
-          // seeing the exact pot before deciding, this message reaches B before the
-          // app even opens, so a NIM amount here would spoil it before it starts.
-          const text = `I just trusted a complete stranger with real NIM. It tripled in their hands, and now it's entirely up to them what comes back to me. ${link}`;
-          if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-            try { await navigator.share({ text }); return; } catch { /* fall through */ }
-          }
-          try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); }
-        }}
-      >
+      <button onClick={send}>
         {copied ? "Copied, paste it anywhere" : "Send it to someone"}
       </button>
-      <p className="faint" style={{ textAlign: "center", wordBreak: "break-all" }}>{link}</p>
+      <button className="ghost" onClick={copyLink}>
+        {linkCopied ? "Link copied" : "Copy link"}
+      </button>
     </main>
   );
 }

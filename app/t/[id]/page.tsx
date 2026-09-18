@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
+import { ExperimentHeader } from "@/app/experiment-header";
 import { nim } from "@/lib/message";
 import { getPair } from "@/lib/pair";
 import Respond from "./respond";
@@ -27,7 +28,7 @@ export default async function TrustLanding({
   if (!pair || !pair.a) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         <h1>That round isn&rsquo;t there.</h1>
         <p className="soft">
           The link may be mistyped, or the round was never finished. Nothing is lost
@@ -49,7 +50,7 @@ export default async function TrustLanding({
   if (done || expired) {
     return (
       <main className="screen">
-        <p className="eyebrow">{NAME} · Trust</p>
+        <ExperimentHeader experiment="Trust" index={2} />
         {expired ? (
           <>
             <h1>This invite expired.</h1>
@@ -78,7 +79,7 @@ export default async function TrustLanding({
 
   return (
     <main className="screen game">
-      <p className="eyebrow">{NAME} · Trust</p>
+      <ExperimentHeader experiment="Trust" index={2} />
       <div className="game-shell">
         <div className="game-context">
           {/* Deliberately no NIM figures here. Leading with the tripled total turns
