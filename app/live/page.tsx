@@ -8,7 +8,11 @@ import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
 
 const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
-const nim = (luna: number) => (luna / 100000).toFixed(2);
+// Whole NIM, comma-separated, no decimals: this feeds a narrative sentence
+// ("200 NIM was handed to a stranger"), not a transaction readout, decimals
+// belong on the actual decision cards where the exact amount matters, here
+// they just make the copy read like accounting.
+const nim = (luna: number) => Math.round(luna / 100000).toLocaleString();
 
 /** "2 min ago", down to seconds, up to days, no identity anywhere in the shape. */
 function timeAgo(at: number): string {
@@ -104,12 +108,12 @@ export default function Live() {
           <p className="eyebrow">{NAME} Live</p>
           <h1>People are actually here.</h1>
           <p className="soft" style={{ marginTop: "0.5rem", maxWidth: "60ch" }}>
-            Real rounds, sitting open right now, and what {NAME} players have
-            actually decided so far.
+            Real rounds happening now, plus what {NAME} players have decided
+            so far.
           </p>
         </div>
 
-        <p className="section-label">What just happened</p>
+        <p className="section-label">Just happened</p>
         <div className="card-grid cols-3">
           {!data.feed ? (
             <p className="faint">Loading&hellip;</p>
@@ -341,7 +345,7 @@ export default function Live() {
         )}
 
         <div className="grow" />
-        <Link href="/#experiments" className="btn">Add to the numbers</Link>
+        <Link href="/#experiments" className="btn">Play a Hunch &rarr;</Link>
       </main>
       <Footer />
     </>
