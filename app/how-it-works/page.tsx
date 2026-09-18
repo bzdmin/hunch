@@ -22,11 +22,16 @@ export default function HowItWorks() {
         </div>
 
         <p className="soft" style={{ maxWidth: "60ch" }}>
-          {NAME} is a handful of short behavioural experiments where your
-          decisions involve real NIM. You don&rsquo;t take a personality test.
-          Nobody tells you what kind of person you are. You make a real
-          choice, then you make a hunch about what someone else will do, then{" "}
-          {NAME} shows you what actually happened.
+          {NAME} is a collection of short experiments about how people make
+          decisions.
+        </p>
+        <p className="soft" style={{ maxWidth: "60ch" }}>
+          You make a real choice with NIM, predict what another person will
+          do, then see what actually happened.
+        </p>
+        <p className="soft" style={{ maxWidth: "60ch" }}>
+          There&rsquo;s no personality test. Your result is simply how close
+          your prediction was.
         </p>
 
         <p className="section-label">The loop</p>
@@ -35,7 +40,7 @@ export default function HowItWorks() {
             <span className="n">01</span>
             <div>
               <p className="t">Decide</p>
-              <p className="d">Make a real decision using NIM. Keeping is always an option.</p>
+              <p className="d">Make a real choice with NIM.</p>
             </div>
           </div>
           <div className="step">
@@ -43,8 +48,8 @@ export default function HowItWorks() {
             <div>
               <p className="t">Lock</p>
               <p className="d">
-                Commit to your prediction before the other person decides.
-                This is the part that&rsquo;s hard to get right.
+                Predict what the other person will do. Your prediction is
+                locked before they decide.
               </p>
             </div>
           </div>
@@ -52,13 +57,7 @@ export default function HowItWorks() {
             <span className="n">03</span>
             <div>
               <p className="t">Wait</p>
-              <p className="d">
-                The other participant makes their choice. Enforced
-                server-side, not just in the interface: the app cannot send
-                you their answer before yours is locked in, even if someone
-                tried to force it, both sides commit blind and the reveal
-                only happens once neither can react to the other.
-              </p>
+              <p className="d">They make their choice without seeing yours.</p>
             </div>
           </div>
           <div className="step">
@@ -66,10 +65,7 @@ export default function HowItWorks() {
             <div>
               <p className="t">Reveal</p>
               <p className="d">
-                See what happened, and compare your prediction with the
-                outcome, against other {NAME} players and, where
-                there&rsquo;s a real benchmark for it, published
-                behavioural research.
+                See what they chose. Find out how close your prediction was.
               </p>
             </div>
           </div>
@@ -86,23 +82,30 @@ export default function HowItWorks() {
           <div className="card">
             <h2>Why real NIM?</h2>
             <p className="soft" style={{ marginTop: "0.5rem" }}>
-              If a decision costs nothing, it&rsquo;s easy to say what you think
-              you should do. It&rsquo;s a different question once something real
-              is behind it. That&rsquo;s the whole reason {NAME} runs on NIM
-              instead of points: real NIM gives the decision consequences, and
-              consequences are what make a hunch worth having.
+              It&rsquo;s easy to say what you would do when nothing is at
+              stake. It feels different when the decision involves something
+              real.
+            </p>
+            <p className="soft" style={{ marginTop: "0.6rem" }}>
+              That&rsquo;s why {NAME} uses NIM. What you choose has a real
+              consequence, so your decision means something.
             </p>
           </div>
 
           <div className="card">
-            <h2>Your hunch is a hypothesis</h2>
+            <h2>Your prediction meets reality</h2>
             <p className="soft" style={{ marginTop: "0.5rem" }}>
-              Every experiment asks you to do two things: make a decision, then
-              predict someone else&rsquo;s. The interesting part is the gap
-              between the two. You might think people are more generous than
-              they are. You might trust someone who doesn&rsquo;t reciprocate.
-              You might reject an offer almost everyone else would take.{" "}
-              {NAME} is how you find out which.
+              Every {NAME} asks you to make a choice and predict someone
+              else&rsquo;s choice.
+            </p>
+            <p className="soft" style={{ marginTop: "0.6rem" }}>
+              You might expect them to be generous. They might not be. You
+              might trust them to return your NIM. They might keep more than
+              you expected.
+            </p>
+            <p className="soft" style={{ marginTop: "0.6rem" }}>
+              {NAME} lets you make the prediction first, then shows you what
+              another person actually did.
             </p>
           </div>
         </div>
