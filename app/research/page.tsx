@@ -10,10 +10,11 @@ import { Footer } from "@/app/footer";
 
 const pct = (n: number) => `${Math.round(n * 10) / 10}%`;
 
+type SplitPop = { n: number; meanPct: number; gaveSomethingPct: number };
 type SplitData = {
   research: { mean: Benchmark; gaveSomething: Benchmark };
-  house: { n: number; meanPct: number } | null;
-  self: { n: number; meanPct: number } | null;
+  house: SplitPop | null;
+  self: SplitPop | null;
 };
 type TrustData = { research: Benchmark; players: { n: number; meanReturnedPct: number } | null };
 type UltimatumData = { players: { n: number; meanOfferPct: number; acceptedPct: number } | null };
@@ -26,18 +27,24 @@ const EXPERIMENTS = [
 ];
 
 /**
- * The numbers people are trying to guess must not be readable before they
- * guess them, the same rule every reveal screen in this app already follows
- * (see about/page.tsx). This page used to break it: every benchmark and
- * every live figure rendered unconditionally, server-side, one click away
- * in the global nav before anyone had played anything.
+ * The final room, not the lobby. Research explains a result you already
+ * have, it never helps decide one, so the gate is asymmetric on purpose:
  *
- * Fixed properly, not with a client-side hide: client-rendered now, reads
- * which experiments this device has actually finished from lib/history.ts,
- * and only ever requests that experiment's numbers from /api/research. An
- * unplayed experiment's figures never arrive in the browser at all, they
- * are never computed into a response the client could inspect, not merely
- * hidden behind a conditional render after arriving.
+ *   Before playing an experiment, nothing about it appears here at all, not
+ *   a published benchmark, not a Hunch average, not a distribution, not
+ *   even an empty placeholder card for the Hunch-player comparison. Reading
+ *   "people usually give 28%" before playing Split answers the one question
+ *   Split asks honestly rather than by guessing. See app/api/research's own
+ *   comment for how that's enforced server-side, not just hidden client-side.
+ *
+ *   After playing, the published benchmark shows immediately, that's a
+ *   citation, not live data, it doesn't need a Hunch sample. The Hunch-
+ *   player comparison is a second, separate gate: it only appears once the
+ *   real sample clears MIN_SAMPLE/MIN_POPULATION_SAMPLE, and when it
+ *   hasn't, this page shows nothing for it rather than an empty card
+ *   apologising for a small number. A tiny sample isn't a finding, and
+ *   showing it as one, even hedged, makes Hunch look smaller than saying
+ *   nothing does.
  */
 export default function Research() {
   const [played, setPlayed] = useState<Set<string> | null>(null);
@@ -61,11 +68,13 @@ export default function Research() {
           <p className="eyebrow">Research</p>
           <h1>Where the numbers come from</h1>
           <p className="soft" style={{ marginTop: "0.5rem", maxWidth: "60ch" }}>
-            Every experiment on {NAME} is a real paradigm behavioural
-            scientists have run for decades. Play one first, its numbers only
-            unlock here once you have, seeing them before you guess would
-            turn the one interesting question in {NAME} into a reading
-            comprehension test.
+            {NAME} uses real experiments from behavioural science as a
+            reference point.
+          </p>
+          <p className="soft" style={{ marginTop: "0.5rem", maxWidth: "60ch" }}>
+            Play first. Then come here to see how your choice compares with
+            published research and, when we have enough rounds, with other{" "}
+            {NAME} players.
           </p>
         </div>
 
@@ -77,11 +86,10 @@ export default function Research() {
                   <div key={exp}>
                     <p className="section-label">{label}</p>
                     <div className="card">
-                      <h2>Locked</h2>
+                      <h2>Not enough data yet</h2>
                       <p className="soft" style={{ marginTop: "0.5rem" }}>
-                        Play {label} once and its numbers unlock here, what
-                        people usually do, and what {NAME} players have
-                        actually done.
+                        Play {label} and we&rsquo;ll unlock this comparison
+                        once there are enough rounds.
                       </p>
                       <Link href={href} className="btn" style={{ marginTop: "0.9rem" }}>
                         Play {label} &rarr;
@@ -93,49 +101,56 @@ export default function Research() {
 
               if (exp === "split") {
                 const d = data.split;
+                const hunch = d && (d.house || d.self) ? d : null;
                 return (
                   <div key={exp}>
                     <p className="section-label">Split</p>
                     <div className="card">
-                      <h2>What people usually do</h2>
+                      <h2>What research found</h2>
                       {d ? (
                         <>
                           <p className="soft" style={{ marginTop: "0.5rem" }}>
-                            On average, people give away {pct(d.research.mean.value)} of
-                            what they&rsquo;re holding, and{" "}
-                            {pct(d.research.gaveSomething.value)} give something rather
-                            than nothing.
+                            Across hundreds of dictator-game experiments,
+                            people gave away about {Math.round(d.research.mean.value)}%
+                            of the amount they were given. About{" "}
+                            {Math.round(d.research.gaveSomething.value)}% gave
+                            something rather than keeping everything.
                           </p>
                           <p className="faint" style={{ marginTop: "0.6rem" }}>{d.research.mean.source}</p>
-                          <p className="faint" style={{ marginTop: "0.4rem" }}>{d.research.mean.caveat}</p>
+                          {d.research.mean.sourceDetail && (
+                            <p className="faint" style={{ marginTop: "0.1rem" }}>{d.research.mean.sourceDetail}</p>
+                          )}
+                          <p className="faint" style={{ marginTop: "0.6rem" }}>{d.research.mean.caveat}</p>
                         </>
                       ) : <p className="faint" style={{ marginTop: "0.5rem" }}>Loading&hellip;</p>}
                     </div>
-                    <div className="card">
-                      <h2>What {NAME} players did</h2>
-                      {!d ? (
-                        <p className="faint" style={{ marginTop: "0.5rem" }}>Loading&hellip;</p>
-                      ) : d.house || d.self ? (
-                        <div style={{ marginTop: "0.5rem", display: "grid", gap: "0.6rem" }}>
-                          {d.house && (
-                            <p className="soft">
-                              With house-funded NIM ({d.house.n} rounds), players
-                              gave away {pct(d.house.meanPct)} on average.
+                    {hunch && (
+                      <div className="card">
+                        <h2>Hunch players</h2>
+                        {hunch.house && (
+                          <>
+                            <p className="soft" style={{ marginTop: "0.5rem" }}>
+                              {pct(hunch.house.gaveSomethingPct)} of Hunch
+                              players passed something on.
                             </p>
-                          )}
-                          {d.self && (
-                            <p className="soft">
-                              With their own NIM ({d.self.n} rounds), players gave
-                              away {pct(d.self.meanPct)} on average.
+                            <p className="faint" style={{ marginTop: "0.4rem" }}>
+                              {hunch.house.n} completed rounds
                             </p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="faint" style={{ marginTop: "0.5rem" }}>
-                          Not enough rounds yet for this number to mean anything. Be one of the first.
-                        </p>
-                      )}
-                    </div>
+                          </>
+                        )}
+                        {hunch.self && (
+                          <>
+                            <p className="soft" style={{ marginTop: hunch.house ? "0.8rem" : "0.5rem" }}>
+                              {pct(hunch.self.gaveSomethingPct)} of Hunch
+                              players passed something on with their own NIM.
+                            </p>
+                            <p className="faint" style={{ marginTop: "0.4rem" }}>
+                              {hunch.self.n} completed rounds
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -146,7 +161,7 @@ export default function Research() {
                   <div key={exp}>
                     <p className="section-label">Trust</p>
                     <div className="card">
-                      <h2>What people usually do</h2>
+                      <h2>What research found</h2>
                       {d ? (
                         <>
                           <p className="soft" style={{ marginTop: "0.5rem" }}>
@@ -155,62 +170,61 @@ export default function Research() {
                             trustors send.
                           </p>
                           <p className="faint" style={{ marginTop: "0.6rem" }}>{d.research.source}</p>
-                          <p className="faint" style={{ marginTop: "0.4rem" }}>{d.research.caveat}</p>
+                          <p className="faint" style={{ marginTop: "0.6rem" }}>{d.research.caveat}</p>
                         </>
                       ) : <p className="faint" style={{ marginTop: "0.5rem" }}>Loading&hellip;</p>}
                     </div>
-                    <div className="card">
-                      <h2>What {NAME} players did</h2>
-                      {!d ? (
-                        <p className="faint" style={{ marginTop: "0.5rem" }}>Loading&hellip;</p>
-                      ) : d.players ? (
+                    {d && d.players && (
+                      <div className="card">
+                        <h2>Hunch players</h2>
                         <p className="soft" style={{ marginTop: "0.5rem" }}>
-                          Across {d.players.n} real rounds, the average return
-                          was {pct(d.players.meanReturnedPct)} of the tripled pot.
+                          Trustees returned {pct(d.players.meanReturnedPct)}{" "}
+                          of the tripled pot on average.
                         </p>
-                      ) : (
-                        <p className="faint" style={{ marginTop: "0.5rem" }}>
-                          Not enough rounds yet for this number to mean anything. Be one of the first.
+                        <p className="faint" style={{ marginTop: "0.4rem" }}>
+                          {d.players.n} completed rounds
                         </p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               }
 
-              // ultimatum
+              // ultimatum: no published benchmark exists, see lib/benchmarks.ts
               const d = data.ultimatum;
               return (
                 <div key={exp}>
                   <p className="section-label">Ultimatum</p>
-                  <div className="card">
-                    <h2>What {NAME} players did</h2>
-                    {/* No published-research card here, deliberately:
-                        lib/benchmarks.ts does not carry an Ultimatum figure,
-                        those numbers have not been verified yet. */}
-                    {!d ? (
+                  {!d ? (
+                    <div className="card">
                       <p className="faint" style={{ marginTop: "0.5rem" }}>Loading&hellip;</p>
-                    ) : d.players ? (
+                    </div>
+                  ) : d.players ? (
+                    <div className="card">
+                      <h2>Hunch players</h2>
                       <p className="soft" style={{ marginTop: "0.5rem" }}>
-                        Across {d.players.n} real rounds, the average offer
-                        was {pct(d.players.meanOfferPct)} of the stake, and{" "}
-                        {pct(d.players.acceptedPct)} of offers were accepted.
+                        The average offer was {pct(d.players.meanOfferPct)} of
+                        the stake, and {pct(d.players.acceptedPct)} of offers
+                        were accepted.
                       </p>
-                    ) : (
-                      <p className="faint" style={{ marginTop: "0.5rem" }}>
-                        Not enough rounds yet for this number to mean anything. Be one of the first.
+                      <p className="faint" style={{ marginTop: "0.4rem" }}>
+                        {d.players.n} completed rounds
                       </p>
-                    )}
-                    <p className="faint" style={{ marginTop: "0.6rem" }}>
-                      The Ultimatum Game is one of the most replicated
-                      findings in behavioural economics: people routinely
-                      refuse offers they see as unfair, even though refusing
-                      costs them money too. We haven&rsquo;t verified a
-                      specific published figure to cite here yet, so this
-                      section shows {NAME} players only, not a research
-                      comparison.
-                    </p>
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="card">
+                      <h2>Not enough data yet</h2>
+                      <p className="soft" style={{ marginTop: "0.5rem" }}>
+                        The Ultimatum Game is one of the most replicated
+                        findings in behavioural economics: people routinely
+                        refuse offers they see as unfair, even though
+                        refusing costs them money too. We haven&rsquo;t
+                        verified a published figure to cite here yet, this
+                        will show {NAME} players only, once there are enough
+                        rounds.
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -218,7 +232,7 @@ export default function Research() {
         )}
 
         <div className="grow" />
-        <Link href="/#experiments" className="btn">Add to the numbers</Link>
+        <Link href="/#experiments" className="btn">Try another experiment &rarr;</Link>
       </main>
       <Footer />
     </>

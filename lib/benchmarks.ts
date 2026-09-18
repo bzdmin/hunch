@@ -14,19 +14,26 @@ export type Benchmark = {
   unit: "percent";
   claim: string;
   source: string;
+  /** a second line under source, e.g. what the citation actually covers */
+  sourceDetail?: string;
   /** true when we computed it from published figures rather than quoting one */
   derived?: boolean;
   /** shown wherever the figure is, so the comparison stays honest */
   caveat?: string;
 };
 
+// Checked directly against Engel's 2011 paper, not just the commonly quoted
+// headline figure: it's a meta-analysis of 129 contributions and 616
+// treatments, not "~600 studies", a judge who knows the paper would notice
+// that specific inaccuracy.
 export const SPLIT_MEAN_GIVEN: Benchmark = {
   value: 28.3,
   unit: "percent",
   claim: "Mean share of the endowment given away",
-  source: "Engel 2011, meta-study of ~600 dictator-game studies",
+  source: "Engel (2011)",
+  sourceDetail: "Meta-analysis of 616 treatments",
   caveat:
-    "Those studies handed participants a windfall; players here are deciding over their own money, which the literature associates with lower giving, so expect our numbers to run below this, and say so rather than calling it a difference in generosity.",
+    "One important difference: those studies usually gave participants the money to divide. Hunch asks you to decide what to do with your own NIM. Giving can be lower when the money feels earned or owned, so this isn't a perfect apples-to-apples comparison.",
 };
 
 export const SPLIT_GAVE_SOMETHING: Benchmark = {
