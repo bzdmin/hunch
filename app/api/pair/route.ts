@@ -270,6 +270,30 @@ export async function PUT(req: Request) {
           { status: 409 },
         );
       }
+
+      // The cheap version of "these two wallets aren't really strangers":
+      // matchmaking (findWaitingRound) can hand someone a round the SAME
+      // device opened under a different key, one phone, two Nimiq Pay
+      // accounts, or two tabs in one browser. deviceId is anti-abuse
+      // metadata already, never identity (see Side.deviceId in
+      // lib/pair.ts), so this only refuses a match, it never blocks or
+      // penalises anyone, a device that's genuinely alone just gets
+      // matched with the next real stranger instead.
+      //
+      // What this does NOT catch: two different devices timed on purpose.
+      // No deterministic, no-added-randomness check can, without asking
+      // for real-world identity Hunch has no business asking for. The
+      // per-key/per-device caps and the daily house cap already bound
+      // what that costs even if it happens, see lib/abuse.ts.
+      if (deviceId && p.a.deviceId && deviceId === p.a.deviceId) {
+        return NextResponse.json(
+          {
+            error: "This looks like the same device that opened this round. " +
+              "Find someone new to answer it.",
+          },
+          { status: 409 },
+        );
+      }
     }
   }
 

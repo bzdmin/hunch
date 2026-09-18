@@ -31,6 +31,8 @@ const ICE_COLD = [
   "They gambled on a stranger. The stranger was you.",
   "Kept the lot. Every last bit of it.",
   "Somewhere, a behavioural economist is nodding grimly.",
+  "They had other ideas.",
+  "Not what you expected.",
 ];
 
 const KEPT_TIGHT = [
@@ -39,6 +41,7 @@ const KEPT_TIGHT = [
   "Technically, something came back.",
   "Just enough to not be nothing.",
   "They trusted you with everything. You returned a rounding error.",
+  "That went differently.",
 ];
 
 const FAIR_SPLIT = [
@@ -46,6 +49,8 @@ const FAIR_SPLIT = [
   "Right around what research would predict.",
   "An even hand.",
   "Textbook reciprocity.",
+  "Worth the trust?",
+  "That was your hunch.",
 ];
 
 const GENEROUS = [
@@ -53,6 +58,8 @@ const GENEROUS = [
   "More than most would.",
   "Trust, repaid with interest.",
   "A good-faith return.",
+  "They surprised you.",
+  "You saw them coming.",
 ];
 
 const CHEERFUL_GIVER = [
@@ -60,6 +67,7 @@ const CHEERFUL_GIVER = [
   "Trust repaid in full, and then some.",
   "Outdid what was even hoped for.",
   "The kind of return that makes strangers trust the next stranger.",
+  "You called it.",
 ];
 
 /** sharePct: the returned amount as a percentage of the pot, 0 to 100+. */
@@ -80,6 +88,7 @@ const A_KEPT = [
   "Stayed guarded.",
   "Chose certainty over a stranger.",
   "No risk taken.",
+  "You kept it all.",
 ];
 
 const A_HANDED_OVER = [
@@ -87,6 +96,8 @@ const A_HANDED_OVER = [
   "Trusted a complete stranger.",
   "Handed over everything.",
   "Bet on someone they'll never meet.",
+  "Bold.",
+  "You trusted them.",
 ];
 
 export function trustOpeningTier(handedOver: boolean): string {
@@ -100,6 +111,7 @@ const REJECTED = [
   "Too low, and it cost you everything.",
   "They'd rather have zero than accept that.",
   "The deal died on the table.",
+  "Your hunch missed.",
 ];
 
 const ACCEPTED_STINGY = [
@@ -112,6 +124,7 @@ const ACCEPTED_FAIR = [
   "Accepted, and it was fair.",
   "A reasonable split, taken without hesitation.",
   "Nobody walked away feeling cheated.",
+  "Close one.",
 ];
 
 const ACCEPTED_GENEROUS = [
