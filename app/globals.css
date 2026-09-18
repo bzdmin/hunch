@@ -865,11 +865,17 @@ input[type="range"] {
 /* A grid, not flex: three equal-ish columns so DISCOVER / THE BUILD / TRUST
    line up at consistent x-positions above their links, the header row
    reads as a header row rather than three independently-sized blocks that
-   happen to sit near each other. */
+   happen to sit near each other.
+
+   That grid is desktop-only. The 3x minmax(7.5rem, ...) columns plus their
+   gaps need about 30rem just for themselves, a hard floor no phone width
+   can satisfy, so left unguarded this was the actual source of Hunch's
+   horizontal scroll on mobile, not any transform or negative margin. One
+   column, full width, groups stacked, below the breakpoint. */
 .site-footer-cols {
   display: grid;
-  grid-template-columns: repeat(3, minmax(7.5rem, auto));
-  gap: 1.5rem 2.5rem;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
 }
 .site-footer-col { display: grid; gap: 0.5rem; align-content: start; }
 .site-footer-label {
@@ -894,6 +900,7 @@ input[type="range"] {
 
 @media (min-width: 52rem) {
   .site-footer { grid-template-columns: 1fr auto; align-items: start; padding: 3rem 2rem; }
+  .site-footer-cols { grid-template-columns: repeat(3, minmax(7.5rem, auto)); gap: 1.5rem 2.5rem; }
 }
 
 /* The home hero, in two columns once there is room: headline and loop on the
@@ -926,6 +933,13 @@ input[type="range"] {
   .hero-cta { grid-template-columns: 1fr 1fr; }
 }
 
+/* On a phone, the source photo's native ~2:1 crop puts "Trust? trust
+   who?" at maybe 140px wide, legible as decoration, not as the headline it
+   is meant to be. A phone gets its own, taller crop instead of the same
+   frame scaled down: object-fit:cover against a shorter aspect-ratio box
+   zooms into the dashboard's screen rather than shrinking the whole photo,
+   the same photo, a different window onto it. Desktop keeps the original
+   wide frame, set back to auto once there is room for it. */
 .hero-visual {
   margin-top: 1.75rem;
   border: 2px solid var(--ink);
@@ -933,15 +947,19 @@ input[type="range"] {
   overflow: hidden;
   box-shadow: var(--shadow);
   line-height: 0;
+  aspect-ratio: 4 / 3;
 }
 .hero-visual img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: 28% 42%;
 }
 
 @media (min-width: 52rem) {
-  .hero-visual { margin-top: 0; }
+  .hero-visual { margin-top: 0; aspect-ratio: auto; }
+  .hero-visual img { height: auto; object-fit: initial; object-position: initial; }
 }
 
 /* Shared header for the site pages, how it works / research / about, so the
@@ -1051,12 +1069,21 @@ input[type="range"] {
   color: var(--ink-soft);
 }
 
-.docs-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+/* table-layout: fixed, not the default auto: auto sizes each column to its
+   widest line of content before it will even consider wrapping, which is
+   how a "Responsibility" column full of full sentences pushed this table
+   wider than a 320px phone despite width:100% on the table itself, auto
+   table layout treats that as a target, not a limit. Fixed makes 100% an
+   actual constraint and wraps the long column's sentences inside it
+   instead, same content, same two columns, just laid out to respect the
+   viewport it's in. */
+.docs-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.9rem; }
 .docs-table th, .docs-table td {
   text-align: left;
   padding: 0.55rem 0.7rem;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
+  overflow-wrap: break-word;
 }
 .docs-table th {
   font-size: 0.68rem;
