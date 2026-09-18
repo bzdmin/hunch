@@ -6,10 +6,11 @@ import { Mark } from "@/app/mark";
  * Site chrome, see the note on Nav in ./nav.tsx. Exists so the product feels
  * finished, not because anyone will spend time down here.
  *
- * No Privacy or Terms links: those pages do not exist, and a footer link to
- * a 404 undermines the exact impression a footer is supposed to create.
- * Real external links only, Nimiq itself and the repository, nothing
- * invented to fill a column.
+ * "Nimiq Explorer" points at nimiq.watch specifically, not nimiq.com: it's
+ * the same explorer family the app itself already depends on for chain
+ * reads and RPC (see lib/chain.ts's api.nimiq.watch and
+ * lib/broadcast.ts's rpc.nimiqwatch.com), so linking it here is pointing at
+ * infrastructure this app actually uses, not a generic project link.
  */
 export function Footer() {
   return (
@@ -27,8 +28,12 @@ export function Footer() {
           <Link href="/results">Results</Link>
         </div>
         <div className="site-footer-col">
-          <a href="https://www.nimiq.com" target="_blank" rel="noopener noreferrer">Nimiq</a>
+          <a href="https://nimiq.watch" target="_blank" rel="noopener noreferrer">Nimiq Explorer</a>
           <a href="https://github.com/bzdmin/hunch" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+        <div className="site-footer-col">
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
         </div>
       </div>
     </footer>
