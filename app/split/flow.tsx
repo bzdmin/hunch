@@ -337,7 +337,7 @@ export default function Flow({
               whole premise, so this is the payoff, not a footnote. */}
           <div className="verdict">
             <p className="soft" style={{ marginBottom: "0.35rem" }}>
-              You guessed most people pass on <strong>{predict}%</strong>.
+              You guessed the average person passes on <strong>{predict}%</strong>.
             </p>
             <p>
               {(() => {
@@ -395,13 +395,13 @@ export default function Flow({
             experiment="Split"
             color="var(--accent)"
             path={`/e/${session}`}
-            predicted={<>I predicted most people pass on {predict}%.</>}
-            happened={<>Studies say it&rsquo;s {SPLIT_MEAN_GIVEN.value}%.</>}
-            challenge="Think you'd predict better?"
+            predicted={<>I predicted the average person passes on {predict}%.</>}
+            happened={<>Research puts the average at {SPLIT_MEAN_GIVEN.value}%.</>}
+            challenge="Think you can read people better?"
             shareText={
-              `I passed on ${givePct}% of the money and predicted most people pass on ${predict}%. ` +
-              `Published studies say most people pass ${SPLIT_MEAN_GIVEN.value}%. ` +
-              `Think you'd predict better?`
+              `I passed on ${givePct}% and predicted the average person would pass on ${predict}%. ` +
+              `Research puts the average at ${SPLIT_MEAN_GIVEN.value}%. ` +
+              `Think you can read people better?`
             }
           />
 

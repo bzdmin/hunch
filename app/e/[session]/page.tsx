@@ -52,7 +52,7 @@ export default async function Landing({
             <>
               <h1>Someone wants to know what you&rsquo;d do.</h1>
               <p className="soft">
-                You&rsquo;ll be given a small sum of real NIM and one decision to
+                You&rsquo;ll get a small amount of real NIM and one decision to
                 make about it. No trick, no catch, nothing to pay.
               </p>
             </>
@@ -61,9 +61,10 @@ export default async function Landing({
           <div className="card">
             <h2>How it works</h2>
             <p className="soft" style={{ marginTop: "0.6rem" }}>
-              You make one choice, and you guess what most other people chose. Then
-              you find out how you compare to everyone who&rsquo;s played, and to
-              what researchers found running this same test on thousands of people.
+              You make one choice, then guess what the average person would do.
+              Afterward, you find out how close your guess was, how other{" "}
+              {NAME} players compare, and what researchers found in studies of
+              the same kind of decision.
             </p>
           </div>
         </div>
@@ -74,8 +75,8 @@ export default async function Landing({
               someone to install an app they are currently using reads as broken. */}
           <Enter waiting={waiting} session={session} />
 
-          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-            What is {NAME}?
+          <Link href="/how-it-works" className="faint" style={{ textAlign: "center" }}>
+            How {NAME} works
           </Link>
         </div>
       </div>

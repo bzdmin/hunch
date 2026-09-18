@@ -45,7 +45,7 @@ export default function Enter({ waiting, session }: { waiting: number; session: 
     return (
       <>
         <Link href={`/split?from=${encodeURIComponent(session)}`} className="btn">
-          {waiting > 0 ? `Collect ${nim(waiting)} NIM` : `Play ${NAME}`}
+          {waiting > 0 ? `Take your ${nim(waiting)} NIM turn` : `Play ${NAME}`}
         </Link>
         {/* Say what collecting actually involves. The money is not sitting in a
             box waiting to be opened, it arrives when you take your own turn, and
