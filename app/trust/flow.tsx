@@ -386,11 +386,12 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
         <ExperimentHeader experiment="Trust" index={2} />
         <div className="game-shell">
           <div className="game-context">
-            <h1>How much would you trust a stranger?</h1>
+            <h1>{NAME} gives you {nim(stake)} NIM to play.</h1>
             <p className="soft">
-              Put {nim(stake)} NIM in another player&rsquo;s hands. They&rsquo;ll
-              decide how much comes back to you. It could be more than you
-              started with. It could be nothing.
+              Keep it, or trust a stranger with it and see what happens.
+              Trusted, it triples in their hands, then it&rsquo;s entirely
+              their call how much comes back. Could be more than you
+              started with. Could be nothing.
             </p>
 
             {/* The trust game is the worst-understood of all five standard economic

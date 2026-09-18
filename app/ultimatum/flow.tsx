@@ -357,7 +357,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
         <ExperimentHeader experiment="Ultimatum" index={3} />
         <div className="game-shell">
           <div className="game-context">
-            <h1>You have {nim(stake)} NIM.<br />Decide how much to offer a stranger.</h1>
+            <h1>{NAME} gives you {nim(stake)} NIM to play.<br />Decide how much to offer a stranger.</h1>
             <p className="soft">
               They&rsquo;ll set the minimum share they&rsquo;re willing to accept
               before they see your offer. Offer less than that, and the deal

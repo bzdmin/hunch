@@ -125,9 +125,9 @@ export default async function Home() {
         <div className="meta">
           <span>Solo</span>
           <span>Instant</span>
-          <span>{STAKE_NIM.toLocaleString()} NIM</span>
+          <span>Your NIM</span>
         </div>
-        <span className="go">Run experiment &rarr;</span>
+        <span className="go">Make your choice &rarr;</span>
       </Link>
 
       <Link
@@ -140,15 +140,15 @@ export default async function Home() {
         <h2>Hand it over, or keep it?</h2>
         <p className="metaphor">YOU &rarr; THEM &rarr; YOU</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          Put your NIM in another person&rsquo;s hands. Their decision
-          determines what comes back.
+          {NAME} gives you {range(TRUST_STAKE_OPTIONS_NIM)}. Put it in a
+          stranger&rsquo;s hands and see how much they return.
         </p>
         <div className="meta">
           <span>Two players</span>
-          <span>Up to 3&times;</span>
-          <span>{range(TRUST_STAKE_OPTIONS_NIM)}</span>
+          <span>Live</span>
+          <span>{NAME} NIM</span>
         </div>
-        <span className="go">Run experiment &rarr;</span>
+        <span className="go">Find a stranger &rarr;</span>
       </Link>
 
       <Link
@@ -161,15 +161,16 @@ export default async function Home() {
         <h2>Offer a share, or lose it all?</h2>
         <p className="metaphor">OFFER &harr; ACCEPT</p>
         <p className="soft" style={{ marginTop: "0.35rem" }}>
-          Offer another person a share of your NIM. They can accept it or
-          reject the deal for both of you.
+          {NAME} gives you {range(ULTIMATUM_STAKE_OPTIONS_NIM)}. Offer a
+          stranger a share. They can accept it or reject the deal for both
+          of you.
         </p>
         <div className="meta">
           <span>Two players</span>
-          <span>All or nothing</span>
-          <span>{range(ULTIMATUM_STAKE_OPTIONS_NIM)}</span>
+          <span>Live</span>
+          <span>{NAME} NIM</span>
         </div>
-        <span className="go">Run experiment &rarr;</span>
+        <span className="go">Find a stranger &rarr;</span>
       </Link>
       </div>
 
@@ -183,8 +184,8 @@ export default async function Home() {
           <span className="l">per round</span>
         </div>
         <div>
-          <span className="n">{realCount ? totalDecisions.toLocaleString() : "Real NIM"}</span>
-          <span className="l">{realCount ? "decisions made" : "every decision"}</span>
+          <span className="n">{realCount ? totalDecisions.toLocaleString() : "NIM"}</span>
+          <span className="l">{realCount ? "decisions made" : "in every decision"}</span>
         </div>
       </div>
 
