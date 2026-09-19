@@ -6,6 +6,7 @@ import { totalPlayers } from "@/lib/store";
 import { completedRoundCount } from "@/lib/pair";
 import { Nav } from "@/app/nav";
 import { Footer } from "@/app/footer";
+import { PlayLink, HashScrollHandler } from "@/app/play-link";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,7 @@ export default async function Home() {
     <>
       <Nav />
       <main className="screen wide">
+      <HashScrollHandler />
       <div className="hero-grid">
         <div>
           <p className="eyebrow">{NAME}</p>
@@ -78,7 +80,7 @@ export default async function Home() {
             See what another human actually does.
           </p>
           <div className="hero-cta">
-            <Link href="/#experiments" className="btn">Play a Hunch &rarr;</Link>
+            <PlayLink href="/#experiments" className="btn">Play a Hunch &rarr;</PlayLink>
             <Link href="/how-it-works" className="btn ghost">How it works &rarr;</Link>
           </div>
         </div>

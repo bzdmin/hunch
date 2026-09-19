@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NAME, TAGLINE } from "@/lib/brand";
 import { Mark } from "@/app/mark";
+import { PlayLink } from "@/app/play-link";
 
 /**
  * Site chrome, see the note on Nav in ./nav.tsx. Exists so the product feels
@@ -37,7 +38,7 @@ export function Footer() {
       <div className="site-footer-cols">
         <div className="site-footer-col">
           <p className="site-footer-label">Discover</p>
-          <Link href="/#experiments">Experiments</Link>
+          <PlayLink href="/#experiments">Experiments</PlayLink>
           <Link href="/live">Live</Link>
           <Link href="/how-it-works">How it works</Link>
           <Link href="/research">Research</Link>

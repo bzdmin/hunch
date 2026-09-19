@@ -43,3 +43,7 @@ next-env.d.ts
 # local state and spike output
 .data/
 prod.log
+
+# video demo and production files
+video/
+

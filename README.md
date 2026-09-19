@@ -2,101 +2,125 @@
 
 **Can you predict people?**
 
-A behavioural experiment you play with real NIM, inside [Nimiq Pay](https://nimiq.com)
-on a phone or through [Nimiq Hub](https://hub.nimiq.com) in a normal browser. You make
-one real decision, predict what someone else will do, then find out, how you compare
-to other Hunch players, and where there's a real benchmark for it, to published
-research.
+Hunch is a behavioral experiment you play with real NIM through Nimiq Pay.
+
+You make a real decision, lock your prediction about what another person will do, wait for their independent decision, then reveal the outcome and compare your hunch with other players and published research.
 
 Built for the Nimiq Mini Apps Competition, Cycle II.
 
-Site map:
+## The loop
 
-```
-/              pick an experiment
-/live          real rounds and recent decisions
-/how-it-works  the loop, explained
-/research      published benchmarks and methodology
-/results       this device's own history
-/docs          technical documentation
-/split /trust /ultimatum   the three experiments
-/terms /privacy            rules and data
-```
+**Decide → Predict → Wait → Reveal → Compare**
 
-## The idea
+Hunch turns everyday assumptions about people into something you can actually test.
 
-Deciding what *you* would do is easy. Guessing what *other people* do is hard, and
-almost everyone is confident and wrong. That gap is the product.
+## Experiments
 
-**Split** you hold an amount of NIM and decide how much to pass to the next
-stranger who plays. Keeping all of it is a real option. Then you guess what the
-average person passes on, and see your answer against Engel's 2011 meta-analysis of
-around 600 dictator-game studies.
+### Split
 
-The money is real, and it travels. What you pass on becomes the next player's
-endowment, so a chain moves from stranger to stranger, shrinking each time, until
-it falls below a floor, at which point the last person is told the chain ends with
-them, and keeps what's left.
+Bring your own NIM, minimum 1,000 NIM.
 
-**Trust** and **Ultimatum** run on the same two-player engine (`lib/pair.ts`) and
-land when house funding does. Both create money through a multiplier or an
-endowment, so neither can run on players' own NIM.
+Decide how much to keep and how much to pass to the next participant. What you pass forward becomes the next participant's endowment, creating a chain that continues until the remaining amount reaches the terminal floor.
 
-## Why it needs Nimiq
+You also predict how much the average person will pass forward.
 
-The amounts are cents. On any chain with meaningful fees, the fee exceeds the
-payload; through a bank, sending 40 cents to a stranger abroad is impossible.
-Nimiq Pay makes tiny, instant, feeless transfers ordinary, remove it and the
-experiment cannot run at all.
+### Trust
 
-## How the honesty works
+Hunch-funded.
 
-The premise is that the money is real, so the code has to be careful in specific
-ways:
+Start a new round with 200-500 NIM or continue an existing waiting round. Pass the NIM to another participant and predict how much they will return.
 
-- **The signed message is copy, not a payload.** Whatever string we pass is what the
-  player reads in the wallet dialog before committing. It says what they chose, in
-  plain sentences.
-- **The server rebuilds that message** from the stored fields and rejects anything
-  that doesn't match, so a tampered client can't display one thing and record another.
-- **A self-reported address is a payout target, never identity.** Nimiq Pay settles
-  from an address it does not disclose, so the paying address is read back off-chain
-  and identity is the signing key.
-- **Nothing is revealed until both sides have committed.** In two-player experiments
-  the server refuses to send one player's move to the other before sealing, enforced
-  in the API response itself, not just in the interface.
-- **The signature is actually verified**, not just present (`lib/verify.ts`), against
-  the exact byte format Nimiq Pay and Nimiq Hub both use, confirmed against real
-  signatures from both before shipping.
-- **One wallet, two real environments** (`lib/wallet/`): the Mini App SDK inside
-  Nimiq Pay, Nimiq Hub in a normal browser, picked automatically, the rest of the
-  app never knows which one answered. Neither is a fallback for the other, and
-  there is no third, simulated mode.
-- **Published figures live in one file** (`lib/benchmarks.ts`) with citations, and
-  nothing goes on screen that isn't in it with a source.
+### Ultimatum
 
-## Running it
+Hunch-funded.
+
+Start a new round with 200-500 NIM or continue an existing waiting round. Make an offer to another participant. They commit to the minimum they would accept before seeing your offer.
+
+## Why Nimiq
+
+Nimiq makes the experiments possible because the NIM involved can move directly through Nimiq Pay without requiring a traditional payment rail.
+
+Nimiq is not just used to pay at the end. The wallet is part of the experiment itself.
+
+## How decisions stay blind
+
+Two-player experiments do not reveal one participant's decision before the other has committed.
+
+1. The participant chooses.
+2. Nimiq Pay signs the commitment.
+3. Hunch verifies the signature.
+4. The server locks the decision.
+5. The other participant commits independently.
+6. Both decisions are revealed.
+7. The resulting NIM settlement is processed.
+
+The server rebuilds the signed message from stored fields and rejects signatures that do not match the recorded decision.
+
+## Wallets
+
+Hunch supports:
+
+- Nimiq Pay Mini App SDK inside Nimiq Pay
+- Nimiq Hub in a normal browser
+
+Both use the same commitment and verification model. There is no simulated wallet fallback.
+
+## Research
+
+Published behavioral research is used as context, not as a claim that Hunch exactly reproduces each study.
+
+Research sources and benchmarks are documented in the Hunch Research page.
+
+- **Split Benchmark:** Engel (2011) meta-analysis of 616 dictator game treatments across 129 studies (28.3% average given).
+- **Research Transparency:** All benchmark figures and academic citations are documented in [`lib/benchmarks.ts`](lib/benchmarks.ts) and accessible on `/research`.
+
+## Product surfaces
+
+- `/` - choose an experiment
+- `/split` - Split experiment
+- `/trust` - Trust experiment
+- `/ultimatum` - Ultimatum experiment
+- `/how-it-works` - product loop
+- `/research` - research sources and benchmarks
+- `/results` - local round history
+- `/live` - public activity feed
+- `/docs` - technical documentation
+- `/terms` - terms
+- `/privacy` - privacy
+
+## Run locally
 
 ```bash
 npm install
-npm run build && npm start        # production build; dev bundles do not run in the
-                                  # Nimiq Pay WebView
+npm run build
+npm start
 ```
 
-Then open the URL in Nimiq Pay under **Mini Apps → Custom URL**. For testing, the
-hidden dev menu (long-press settings for 10 seconds) switches to testnet and hands
-out free NIM.
+Then open the deployed URL in Nimiq Pay under **Mini Apps → Custom URL**.
 
-### Environment
+For development and testing, see the project documentation.
+
+### Environment variables
 
 | Variable | Purpose |
 | --- | --- |
-| `POSTGRES_URL` | Production storage. Unset locally, which uses JSON files. |
+| `POSTGRES_URL` | Production PostgreSQL storage. Unset locally to use local JSON file storage. |
 | `NIMIQ_NETWORK` | `test` or `main`. |
-| `NEXT_PUBLIC_POOL_ADDRESS` | Where passed-on NIM is received. |
-| `NIMLAB_HOUSE_FUNDED` | `1` enables the windfall mode, once a house wallet is funded. |
+| `NEXT_PUBLIC_POOL_ADDRESS` | Where passed-on NIM in Split is received. |
+| `NIMLAB_HOUSE_FUNDED` | `1` enables windfall mode (Trust & Ultimatum) once the house wallet is funded. |
 | `NIMLAB_DAILY_CAP_LUNA` | Hard ceiling on house spending per day. |
 
-## Licence
+## Security and privacy
 
-MIT, see [LICENSE](LICENSE).
+Hunch does not access private keys.
+
+Wallet signatures are verified server-side before decisions are accepted. Two-player decisions remain hidden until both participants have committed.
+
+See:
+- [Terms](/terms)
+- [Privacy](/privacy)
+- [Technical documentation](/docs)
+
+## License
+
+MIT
