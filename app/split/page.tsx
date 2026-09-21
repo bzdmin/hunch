@@ -1,7 +1,23 @@
+import type { Metadata } from "next";
 import { STAKE, FLOOR } from "@/lib/brand";
 import { splitHouseMode } from "@/lib/payout";
 import { nextUnclaimedGift } from "@/lib/store";
 import Flow from "./flow";
+
+export const metadata: Metadata = {
+  title: "Split · Hunch",
+  description: "One choice, one guess. Decide what to keep and what to pass on. Played with real NIM.",
+  openGraph: {
+    title: "Split · Hunch",
+    description: "One choice, one guess. Decide what to keep and what to pass on. Played with real NIM.",
+    url: "/split",
+  },
+  twitter: {
+    card: "summary",
+    title: "Split · Hunch",
+    description: "One choice, one guess. Decide what to keep and what to pass on. Played with real NIM.",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

@@ -1,8 +1,33 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { getPair } from "@/lib/pair";
 import Respond from "./respond";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const title = "Ultimatum · Hunch";
+  const desc = "A stranger is offering you a share of real NIM. Set your line: accept, or neither gets anything.";
+  return {
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      url: `/u/${id}`,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description: desc,
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -69,9 +94,11 @@ export default async function UltimatumLanding({
         )}
         <div className="grow" />
         <Respond id={pair.id} finished />
-        <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-          What is {NAME}?
-        </Link>
+        {expired && (
+          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+            What is {NAME}?
+          </Link>
+        )}
       </main>
     );
   }
@@ -91,9 +118,6 @@ export default async function UltimatumLanding({
 
         <div className="game-card">
           <Respond id={pair.id} finished={false} />
-          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-            What is {NAME}?
-          </Link>
         </div>
       </div>
     </main>

@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { NAME, TRUST_MAX_STAKE, TRUST_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { trustOpen } from "@/lib/payout";
 import { randomWorkedExample, findWaitingRound, payoff } from "@/lib/pair";
 import Flow from "./flow";
+
+export const metadata: Metadata = {
+  title: "Trust · Hunch",
+  description: "Hand it over, or keep it? Trusted, your stake triples in their hands. Played with real NIM.",
+  openGraph: {
+    title: "Trust · Hunch",
+    description: "Hand it over, or keep it? Trusted, your stake triples in their hands. Played with real NIM.",
+    url: "/trust",
+  },
+  twitter: {
+    card: "summary",
+    title: "Trust · Hunch",
+    description: "Hand it over, or keep it? Trusted, your stake triples in their hands. Played with real NIM.",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

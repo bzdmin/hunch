@@ -1,9 +1,34 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { NAME } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { nim } from "@/lib/message";
 import { getPair } from "@/lib/pair";
 import Respond from "./respond";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const title = "Trust · Hunch";
+  const desc = "A stranger just trusted you with real NIM that tripled in your hands. How much will you send back?";
+  return {
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      url: `/t/${id}`,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description: desc,
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -70,9 +95,11 @@ export default async function TrustLanding({
         )}
         <div className="grow" />
         <Respond id={pair.id} stake={pair.stake} multiplier={pair.multiplier} finished />
-        <Link href="/about" className="faint" style={{ textAlign: "center" }}>
-          What is {NAME}?
-        </Link>
+        {expired && (
+          <Link href="/about" className="faint" style={{ textAlign: "center" }}>
+            What is {NAME}?
+          </Link>
+        )}
       </main>
     );
   }

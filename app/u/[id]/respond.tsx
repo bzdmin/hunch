@@ -5,9 +5,12 @@ import { NAME } from "@/lib/brand";
 import { nim, ref as makeRef, ultimatumMessage } from "@/lib/message";
 import { ultimatumTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
+import Link from "next/link";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
 import { addHistory } from "@/lib/history";
+import { OtherExperiments } from "@/app/other-experiments";
+import type { UltimatumResultData } from "@/lib/share-card-generator";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
 const PLAY_STORE = "https://play.google.com/store/apps/details?id=com.nimiq.pay";
@@ -157,16 +160,24 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
           verdictValue={verdictValue(reveal.percentile, guessAccuracyClause(guessPct, offerPct))}
           settlementHash={reveal.settlementHash}
         >
-          <div className="split-readout" style={{ marginBottom: "1rem" }}>
-            <div>
-              <span className="k">They end with</span>
-              <span className="v">{nim(reveal.payoff.a)} NIM</span>
+          {!accepted ? (
+            <div className="ultimatum-result-frame" role="status" aria-label="Outcome: YOU BOTH GET 0 NIM">
+              <span className="frame-line" aria-hidden="true" />
+              <span className="frame-text">YOU BOTH GET 0 NIM</span>
+              <span className="frame-line" aria-hidden="true" />
             </div>
-            <div className="right">
-              <span className="k">You end with</span>
-              <span className="v">{nim(reveal.payoff.b)} NIM</span>
+          ) : (
+            <div className="split-readout" style={{ marginBottom: "1rem" }}>
+              <div>
+                <span className="k">They end with</span>
+                <span className="v">{nim(reveal.payoff.a)} NIM</span>
+              </div>
+              <div className="right">
+                <span className="k">You end with</span>
+                <span className="v">{nim(reveal.payoff.b)} NIM</span>
+              </div>
             </div>
-          </div>
+          )}
         </ReportCard>
 
         <p className="faint">
@@ -190,6 +201,21 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
           experiment="Ultimatum"
           color="var(--warm)"
           path="/ultimatum"
+          shareType="result"
+          ultimatumData={{
+            stake,
+            offer: reveal.a!.move,
+            offerPct,
+            thresholdPct,
+            yourGuess: guessPct,
+            accepted,
+            role: "b",
+            payoffA: reveal.payoff.a,
+            payoffB: reveal.payoff.b,
+            tier: ultimatumTier(offerPct, accepted),
+            verdict: verdictValue(reveal.percentile, guessAccuracyClause(guessPct, offerPct)),
+            settlementHash: reveal.settlementHash,
+          }}
           predicted={<>A stranger offered me {offerPct}% of {nim(stake)} NIM.</>}
           happened={accepted ? <>I took it.</> : <>I refused, so we both got nothing.</>}
           challenge="Would you have taken it?"
@@ -200,7 +226,10 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
           }
         />
 
-        <a className="btn ghost" href="/ultimatum">Start your own round</a>
+        <OtherExperiments current="ultimatum" />
+
+        <div className="grow" />
+        <a className="btn ghost" href="/ultimatum" style={{ marginTop: "1rem" }}>Start your own round</a>
       </>
     );
   }
@@ -308,6 +337,9 @@ export default function Respond({ id, finished }: { id: string; finished: boolea
 
       {err && <p className="err">{err}</p>}
       <button onClick={() => setStage("predict")}>Continue</button>
+      <Link href="/about" className="faint" style={{ textAlign: "center", display: "block", marginTop: "1rem" }}>
+        What is {NAME}?
+      </Link>
     </>
   );
 }

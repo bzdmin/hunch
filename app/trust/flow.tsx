@@ -10,6 +10,7 @@ import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_
 import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
+import { OtherExperiments } from "@/app/other-experiments";
 import { addHistory } from "@/lib/history";
 
 type Stage = "loading" | "choose" | "predict" | "working" | "waiting" | "kept" | "unavailable" | "resolved";
@@ -343,6 +344,18 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
               experiment="Trust"
               color="var(--good)"
               path="/trust"
+              shareType="result"
+              trustData={{
+                stake: resolved.stake,
+                pot: resolved.pot,
+                returned: resolved.returned,
+                returnPct: sharePct,
+                predictPct,
+                role: "a",
+                tier: trustReturnTier(sharePct),
+                verdict: verdictValue(resolved.percentile, guessAccuracyClause(predictPct, sharePct)),
+                settlementHash: resolved.settlementHash,
+              }}
               predicted={<>I predicted they&rsquo;d return {nim(resolved.predict)} NIM.</>}
               happened={<>They returned {nim(resolved.returned)} NIM.</>}
               challenge="How well would you read them?"
@@ -353,8 +366,10 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
               }
             />
 
+            <OtherExperiments current="trust" />
+
             <div className="grow" />
-            <a className="btn ghost" href="/trust">Play again</a>
+            <a className="btn ghost" href="/trust" style={{ marginTop: "1rem" }}>Play Trust again</a>
           </div>
         </div>
       </main>
@@ -604,6 +619,27 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
           You&rsquo;re predicting they&rsquo;ll return {sentPredictPct}%.
         </p>
       </div>
+
+      {round?.id && (
+        <div style={{ marginTop: "0.8rem", width: "100%" }}>
+          <p className="faint" style={{ marginBottom: "0.5rem", textAlign: "center" }}>
+            Or invite someone directly:
+          </p>
+          <ShareCard
+            experiment="Trust"
+            color="var(--good)"
+            path={`/t/${round.id}`}
+            shareType="invite"
+            inviteData={{
+              experiment: "trust",
+              stake: round.stake,
+              id: round.id,
+              path: `/t/${round.id}`,
+            }}
+            shareText="I made a Hunch. Think you can predict what someone else will do?"
+          />
+        </div>
+      )}
 
       {err && <p className="err">{err}</p>}
 

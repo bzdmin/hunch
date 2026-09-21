@@ -604,6 +604,173 @@ input[type="range"] {
   word-break: break-all;
 }
 
+/* Ultimatum completed result zero-payoff frame:
+   Framed with signature Hunch yellow accent lines (--highlight = #ffd84d).
+   Flexbox layout guarantees identical, consistent line lengths on both sides,
+   clean vertical alignment, and zero detached fragments across desktop and mobile. */
+.ultimatum-result-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  width: 100%;
+  margin: 1.1rem 0;
+  padding: 0.2rem 0;
+}
+.ultimatum-result-frame .frame-line {
+  flex: 1;
+  height: 2px;
+  background: var(--highlight);
+  border-radius: 1px;
+}
+.ultimatum-result-frame .frame-text {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .ultimatum-result-frame {
+    gap: 0.6rem;
+    margin: 0.85rem 0;
+  }
+  .ultimatum-result-frame .frame-text {
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* Dynamic Image Share Card */
+.share-card-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.share-image-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid var(--pick-color, var(--accent));
+  box-shadow: var(--shadow);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+  position: relative;
+}
+.share-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.share-image-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  color: var(--ink-faint);
+  font-size: 0.88rem;
+  padding: 2rem;
+  text-align: center;
+}
+.share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+.share-feedback {
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--good);
+  margin-top: 0.4rem;
+}
+
+/* Other experiments post-game navigation:
+   Subtle secondary hierarchy below result and share controls. */
+.other-experiments {
+  margin-top: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+.other-experiments-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.other-experiments-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+@media (max-width: 540px) {
+  .other-experiments-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.other-experiment-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-left: 4px solid var(--exp-color, var(--accent));
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.other-experiment-card:hover {
+  border-color: var(--ink-faint);
+  background: #1e1c16;
+}
+.other-experiment-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+.other-experiment-card .name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--exp-color, var(--accent));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.other-experiment-card .index {
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+}
+.other-experiment-card .tagline {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+.other-experiment-card .desc {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
 /* ------------------------------------------------------------ home sections */
 
 /* A quiet divider label, so the home reads as a few deliberate sections rather

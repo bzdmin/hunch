@@ -11,6 +11,8 @@ import { loadOpenRound, saveOpenRound, clearOpenRound } from "@/lib/resume";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
 import { addHistory } from "@/lib/history";
+import { OtherExperiments } from "@/app/other-experiments";
+import type { UltimatumResultData } from "@/lib/share-card-generator";
 
 type Stage = "loading" | "unavailable" | "offer" | "predict" | "working" | "waiting" | "resolved";
 type Round = { id: string; stake: number };
@@ -264,22 +266,45 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
               verdictValue={verdictValue(resolved.percentile, guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold))}
               settlementHash={resolved.settlementHash}
             >
-              <div className="split-readout" style={{ marginBottom: "1rem" }}>
-                <div>
-                  <span className="k">You end with</span>
-                  <span className="v">{nim(resolved.payoff.a)} NIM</span>
+              {!accepted ? (
+                <div className="ultimatum-result-frame" role="status" aria-label="Outcome: YOU BOTH GET 0 NIM">
+                  <span className="frame-line" aria-hidden="true" />
+                  <span className="frame-text">YOU BOTH GET 0 NIM</span>
+                  <span className="frame-line" aria-hidden="true" />
                 </div>
-                <div className="right">
-                  <span className="k">They end with</span>
-                  <span className="v">{nim(resolved.payoff.b)} NIM</span>
+              ) : (
+                <div className="split-readout" style={{ marginBottom: "1rem" }}>
+                  <div>
+                    <span className="k">You end with</span>
+                    <span className="v">{nim(resolved.payoff.a)} NIM</span>
+                  </div>
+                  <div className="right">
+                    <span className="k">They end with</span>
+                    <span className="v">{nim(resolved.payoff.b)} NIM</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </ReportCard>
 
             <ShareCard
               experiment="Ultimatum"
               color="var(--warm)"
               path="/ultimatum"
+              shareType="result"
+              ultimatumData={{
+                stake: resolved.stake,
+                offer: resolved.offer,
+                offerPct: resolved.offerPct,
+                thresholdPct: resolved.theirThreshold,
+                yourGuess: resolved.yourGuess,
+                accepted,
+                role: "a",
+                payoffA: resolved.payoff.a,
+                payoffB: resolved.payoff.b,
+                tier: ultimatumTier(resolved.offerPct, accepted),
+                verdict: verdictValue(resolved.percentile, guessAccuracyClause(resolved.yourGuess, resolved.theirThreshold)),
+                settlementHash: resolved.settlementHash,
+              }}
               predicted={<>I guessed they&rsquo;d accept anything above {resolved.yourGuess}%.</>}
               happened={<>The least they&rsquo;d take was {resolved.theirThreshold}%.</>}
               challenge="Could you have read them?"
@@ -290,8 +315,10 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
               }
             />
 
+            <OtherExperiments current="ultimatum" />
+
             <div className="grow" />
-            <a className="btn ghost" href="/ultimatum">Play again</a>
+            <a className="btn ghost" href="/ultimatum" style={{ marginTop: "1rem" }}>Play Ultimatum again</a>
           </div>
         </div>
       </main>
@@ -361,7 +388,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
             <p className="soft">
               They&rsquo;ll set the minimum share they&rsquo;re willing to accept
               before they see your offer. Offer less than that, and the deal
-              fails. <span className="hl">You both get 0 NIM.</span>
+              fails. <span className="hl">YOU BOTH GET 0 NIM.</span>
             </p>
 
             {example && (
@@ -529,6 +556,27 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
         <span className="k">You offered</span>
         <div className="amount">{nim(sentOffer)}<small>NIM</small></div>
       </div>
+
+      {round?.id && (
+        <div style={{ marginTop: "0.8rem", width: "100%" }}>
+          <p className="faint" style={{ marginBottom: "0.5rem", textAlign: "center" }}>
+            Or invite someone directly:
+          </p>
+          <ShareCard
+            experiment="Ultimatum"
+            color="var(--warm)"
+            path={`/u/${round.id}`}
+            shareType="invite"
+            inviteData={{
+              experiment: "ultimatum",
+              stake: round.stake,
+              id: round.id,
+              path: `/u/${round.id}`,
+            }}
+            shareText="I made a Hunch. Think you can predict what someone else will do?"
+          />
+        </div>
+      )}
 
       {err && <p className="err">{err}</p>}
 

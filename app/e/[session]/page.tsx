@@ -1,9 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Enter from "./enter";
 import { NAME } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { nim } from "@/lib/message";
 import { get } from "@/lib/store";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ session: string }>;
+}): Promise<Metadata> {
+  const { session } = await params;
+  const from = await get(session);
+  const waiting = from?.give ?? 0;
+  const title = waiting > 0 ? `Someone passed you ${nim(waiting)} NIM · Hunch` : "Split · Hunch";
+  const desc = "You've been invited to make a decision in Hunch. What will you keep, and what will you pass on?";
+  return {
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      url: `/e/${session}`,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description: desc,
+    },
+  };
+}
 
 /**
  * What a stranger sees when they tap a shared link.

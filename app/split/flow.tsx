@@ -7,6 +7,7 @@ import { build, nim, ref as makeRef, session as makeSession, type Decision } fro
 import { SPLIT_MEAN_GIVEN, SPLIT_GAVE_SOMETHING } from "@/lib/benchmarks";
 import { signWithAddress, sendNim, readable, available } from "@/lib/wallet";
 import { ShareCard } from "@/app/share-card";
+import { OtherExperiments } from "@/app/other-experiments";
 import { addHistory } from "@/lib/history";
 
 const POOL = process.env.NEXT_PUBLIC_POOL_ADDRESS ?? "";
@@ -497,6 +498,17 @@ export default function Flow({
             experiment="Split"
             color="var(--accent)"
             path={`/e/${session}`}
+            shareType="result"
+            splitData={{
+              give,
+              stake,
+              givePct,
+              predict,
+              benchmark: live ? Math.round(pop!.meanPct) : SPLIT_MEAN_GIVEN.value,
+              gap: Math.round((predict - (live ? Math.round(pop!.meanPct) : SPLIT_MEAN_GIVEN.value)) * 10) / 10,
+              mode: house ? "house" : "self",
+              session,
+            }}
             predicted={<>I predicted the average person passes on {predict}%.</>}
             happened={<>Research puts the average at {SPLIT_MEAN_GIVEN.value}%.</>}
             challenge="Think you can read people better?"
@@ -507,9 +519,11 @@ export default function Flow({
             }
           />
 
-          <p className="faint" style={{ textAlign: "center" }}>
+          <p className="faint" style={{ textAlign: "center", marginTop: "0.5rem" }}>
             They see what you predicted, not what you kept.
           </p>
+
+          <OtherExperiments current="split" />
         </div>
       </div>
     </main>

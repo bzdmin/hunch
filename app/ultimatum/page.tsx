@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { NAME, ULTIMATUM_MAX_STAKE, ULTIMATUM_STAKE_OPTIONS_NIM } from "@/lib/brand";
 import { ExperimentHeader } from "@/app/experiment-header";
 import { ultimatumOpen } from "@/lib/payout";
 import { randomWorkedExample, findWaitingRound, payoff } from "@/lib/pair";
 import Flow from "./flow";
+
+export const metadata: Metadata = {
+  title: "Ultimatum · Hunch",
+  description: "Offer a share, or lose it all? If they refuse your offer, neither of you gets anything. Played with real NIM.",
+  openGraph: {
+    title: "Ultimatum · Hunch",
+    description: "Offer a share, or lose it all? If they refuse your offer, neither of you gets anything. Played with real NIM.",
+    url: "/ultimatum",
+  },
+  twitter: {
+    card: "summary",
+    title: "Ultimatum · Hunch",
+    description: "Offer a share, or lose it all? If they refuse your offer, neither of you gets anything. Played with real NIM.",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

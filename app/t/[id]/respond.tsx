@@ -8,6 +8,7 @@ import { trustReturnTier, guessAccuracyClause, verdictValue } from "@/lib/copy";
 import { signWithAddress, readable, available, deviceId, environment, DEVICE_ID_REASON } from "@/lib/wallet";
 import { ReportCard } from "@/app/report-card";
 import { ShareCard } from "@/app/share-card";
+import { OtherExperiments } from "@/app/other-experiments";
 import { addHistory } from "@/lib/history";
 
 const APP_STORE = "https://apps.apple.com/app/id6471844738";
@@ -190,6 +191,19 @@ export default function Respond({
           experiment="Trust"
           color="var(--good)"
           path="/trust"
+          shareType="result"
+          trustData={{
+            stake,
+            pot,
+            returned: give,
+            returnPct: sharePct,
+            predictPct,
+            expectedPct,
+            role: "b",
+            tier: trustReturnTier(sharePct),
+            verdict: verdictValue(reveal.percentile, guessAccuracyClause(predictPct, expectedPct)),
+            settlementHash: reveal.settlementHash,
+          }}
           predicted={<>A stranger trusted me with {nim(pot)} NIM.</>}
           happened={<>I sent back {sharePct}% of it.</>}
           challenge="What would you have done?"
@@ -199,7 +213,10 @@ export default function Respond({
           }
         />
 
-        <a className="btn ghost" href="/trust">Start your own round</a>
+        <OtherExperiments current="trust" />
+
+        <div className="grow" />
+        <a className="btn ghost" href="/trust" style={{ marginTop: "1rem" }}>Start your own round</a>
       </>
     );
   }
