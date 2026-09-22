@@ -388,7 +388,7 @@ export default function Flow({ example, waiting }: { example: WorkedExample; wai
             <p className="soft">
               They&rsquo;ll set the minimum share they&rsquo;re willing to accept
               before they see your offer. Offer less than that, and the deal
-              fails. <span className="hl">YOU BOTH GET 0 NIM.</span>
+              fails. You both get 0 NIM.
             </p>
 
             {example && (

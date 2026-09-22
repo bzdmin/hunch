@@ -66,7 +66,7 @@ export default async function UltimatumPage() {
           {ULTIMATUM_STAKE_OPTIONS_NIM[0]} and{" "}
           {ULTIMATUM_STAKE_OPTIONS_NIM[ULTIMATUM_STAKE_OPTIONS_NIM.length - 1]} NIM.
           They set the least they&rsquo;ll accept before they ever see your offer. If
-          it&rsquo;s too low, <span className="hl">you both walk away with nothing</span>.
+          it&rsquo;s too low, you both walk away with nothing.
         </p>
         <p className="soft">
           That money has to be sitting somewhere before the round can promise it.

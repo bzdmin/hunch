@@ -66,7 +66,7 @@ export default async function TrustPage() {
           In this one you hand over somewhere between{" "}
           {TRUST_STAKE_OPTIONS_NIM[0]} and{" "}
           {TRUST_STAKE_OPTIONS_NIM[TRUST_STAKE_OPTIONS_NIM.length - 1]} NIM, and it{" "}
-          <span className="hl">triples</span> in the other person&rsquo;s hands. They
+          triples in the other person&rsquo;s hands. They
           then decide how much comes back to you, possibly nothing.
         </p>
         <p className="soft">
